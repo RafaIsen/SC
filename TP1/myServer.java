@@ -71,7 +71,7 @@ public class myServer{
 					try {
 						user = (String)inStream.readObject();
 						passwd = (String)inStream.readObject();
-						System.out.println("thread: depois de receber a password e o user");
+						System.out.println("thread:depois de receber a password e o user");
 					}catch (ClassNotFoundException e1) {
 						e1.printStackTrace();
 					}

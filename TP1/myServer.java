@@ -5,13 +5,17 @@
 ***************************************************************************/
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
+
 
 //Servidor myServer
 
@@ -57,6 +61,17 @@ public class myServer{
 			socket = inSoc;
 			System.out.println("thread do server para cada cliente");
 		}
+		
+		class Client {
+			
+			private String name;
+			private String pass;
+			
+			public Client(String name, String pass){
+				this.name = name;
+				this.pass = pass;
+			}
+		}
  
 		public void run(){
 			try {
@@ -86,8 +101,28 @@ public class myServer{
 						outStream.writeObject(new Boolean(false));
 					}	
 				}
+				
+				Client c = new Client(user, passwd);
+				File nomes = new File("C:\\Users\\HP\\Desktop\\nomes.txt");
+				//createClient(c, nomes);
+				boolean i = checkClient(c, nomes);
+				System.out.println(i);
 			
-				File pdf = new File("C:\\Users\\rafae\\Desktop\\SC\\b.pdf");
+				receiveFile(outStream, inStream);
+				
+				outStream.close();
+				inStream.close();
+ 			
+				socket.close();
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException{
+			int result = -1;
+			File pdf = new File("C:\\Users\\HP\\Desktop\\a_copy.pdf");
 				
 				FileOutputStream pdfOut = new FileOutputStream(pdf);
 				
@@ -105,15 +140,51 @@ public class myServer{
 				}
 				
 				pdfOut.close();
+				return result;
+		}
+		
+		public int autenticate(){
+			return 0;
+			
+			
+		}
+		
+		public int createClient(Client c, File f){
+			int result = -1;
+			StringBuilder ya = new StringBuilder();
+			ya.append(c.name);
+			ya.append(':');
+			ya.append(c.pass);
+			
+			try {
+				if(checkClient(c, f))
+					result = 0;
 				
-				outStream.close();
-				inStream.close();
- 			
-				socket.close();
-
+				else{
+					byte[] buf = ya.toString().getBytes(StandardCharsets.UTF_8);
+					Files.write(f.toPath(), buf);
+					result = 0;				
+				}
 			} catch (IOException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			return result;
+			
+		}
+		
+		public boolean checkClient(Client c, File f) throws FileNotFoundException {
+			boolean result = false;
+			Scanner scan = new Scanner(f);
+			
+			while(scan.hasNextLine()){
+				String[] split = scan.nextLine().split(":");
+				if(split[0].equals(c.name))
+					result = true;
+			}
+			scan.close();
+			return result;
+			
 		}
 	}
 }

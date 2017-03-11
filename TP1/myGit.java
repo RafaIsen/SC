@@ -22,12 +22,11 @@ public class myGit{
 	public static void main(String[] args) throws IOException, ClassNotFoundException{
 		System.out.println("cliente: main");
 		myGit client = new myGit();
-		client.startClient();
+		client.startClient(args);
 	}
 
-	public void startClient() throws ClassNotFoundException, IOException{
+	public void startClient(String[] args) throws ClassNotFoundException, IOException{
 			
-		Scanner scan = new Scanner(System.in);
 		Socket cSoc = null;
 		ObjectOutputStream outStream = null;
 		ObjectInputStream inStream = null;
@@ -35,19 +34,15 @@ public class myGit{
 		
 		while (continua == 1) {
 			
-			System.out.println("O seu comando ---->>>");
-			String in = scan.nextLine();
-			String[] split = in.split(" ");
 			String[] ip = null;
 			int port = 0;
 			
-			
-			if (split[0].equals("-init"))
-				initRep(split[1]);
+			if (args[0].equals("-init"))
+				new File("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\" + args[1]).mkdir();
 			else {	
 				
-				if (split[2] != null) {
-					ip = split[1].split(":");
+				if (args[2] != null) {
+					ip = args[1].split(":");
 					port = Integer.parseInt(ip[1]);
 					
 					try {
@@ -61,10 +56,10 @@ public class myGit{
 					e.printStackTrace();
 					}
 					
-					switch (split[2]) {
+					switch (args[2]) {
 					
 						case "-push":
-							if (split[3].contains(".")) {
+							if (args[3].contains(".")) {
 								pushFile(outStream, inStream);
 							}
 							else
@@ -72,8 +67,8 @@ public class myGit{
 							
 							break;
 						
-						case "pull":
-							if (split[3].contains("."))
+						case "-pull":
+							if (args[3].contains("."))
 								pullFile();
 							else
 								pullRep();
@@ -84,7 +79,7 @@ public class myGit{
 							shareRep();
 							break;
 							
-						case "remove":
+						case "-remove":
 							removeRep();
 							break;
 							
@@ -100,8 +95,6 @@ public class myGit{
 		
 		//sendFile(outStream, inStream);
 		
-		
-		scan.close();
 		cSoc.close();
 		
 	}
@@ -181,10 +174,4 @@ public class myGit{
 				}
 		return result;
 	}
-	
-	public void initRep(String repName) throws IOException {
-		Path dir = Paths.get("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\" + repName);
-		Files.createDirectory(dir);
-	}
-	
 }

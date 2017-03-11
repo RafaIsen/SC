@@ -7,6 +7,7 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +33,7 @@ public class myClient{
 		ObjectOutputStream outStream = null;
 		ObjectInputStream inStream = null;
 		
+		
 		while(true) {
 			String[] split = scan.nextLine().split(" ");
 			String[] ip = split[1].split(":");
@@ -45,22 +47,23 @@ public class myClient{
 					cSoc = new Socket(ip[0],port);
 					outStream = new ObjectOutputStream(cSoc.getOutputStream());
 					inStream = new ObjectInputStream(cSoc.getInputStream());
+					//PrintWriter pw = new PrintWriter(socket1.getOutputStream(), true);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
-				switch(split[2]){
+				switch (split[2]) {
 				
 					case "-push":
-						if(split[3].contains("."))
+						if (split[3].contains("."))
 							pushFile();
 						else
 							pushRep();
 						break;
 					
 					case "pull":
-						if(split[3].contains("."))
+						if (split[3].contains("."))
 							pullFile();
 						else
 							pullRep();
@@ -140,7 +143,7 @@ public class myClient{
 		int result = -1;
 		boolean resposta = false;
 				
-				while(resposta == false) {
+				while (resposta == false) {
 					System.out.println("Username: ");
 					String user = keyb.nextLine();
 					outStream.writeObject(user);
@@ -151,7 +154,7 @@ public class myClient{
 					
 					resposta = (boolean) inStream.readObject();
 					
-					if(resposta == true){ 
+					if (resposta == true) { 
 						System.out.println("Entraste!");
 						result = 0;
 					}

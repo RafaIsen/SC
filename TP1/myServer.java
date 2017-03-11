@@ -77,8 +77,9 @@ public class myServer{
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-
-				while (true) {
+				int continua = 1;
+				
+				while (continua == 1) {
 					String in = (String) inStream.readObject();
 					String[] split = in.split(" ");
 					
@@ -109,9 +110,8 @@ public class myServer{
 							break;
 						}
 					
-					break;
+					
 				}
-				
 				
 				
 				
@@ -132,7 +132,6 @@ public class myServer{
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -163,7 +162,8 @@ public class myServer{
 
 
 		private void pushFile(ObjectOutputStream outStream, ObjectInputStream inStream) {
-			// TODO Auto-generated method stub
+			// TODO 
+			
 			
 		}
 
@@ -197,6 +197,7 @@ public class myServer{
 				return result;
 		}
 		
+		
 		public int autenticate(ObjectOutputStream  outStream, ObjectInputStream inStream, Client c) throws IOException{
 			int result = -1;
 			String user = null;
@@ -226,6 +227,7 @@ public class myServer{
 			return result;
 		}
 		
+		
 		public int createClient(Client c, File f){
 			int result = -1;
 			StringBuilder ya = new StringBuilder();
@@ -249,6 +251,7 @@ public class myServer{
 			return result;
 			
 		}
+		
 		
 		public boolean checkClient(Client c, File f) throws FileNotFoundException {
 			boolean result = false;

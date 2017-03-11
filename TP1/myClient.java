@@ -31,9 +31,9 @@ public class myClient{
 		Socket cSoc = null;
 		ObjectOutputStream outStream = null;
 		ObjectInputStream inStream = null;
+		int continua = 1;
 		
-		
-		while(true) {
+		while (continua == 1) {
 			
 			System.out.println("O seu comando ---->>>");
 			String in = scan.nextLine();
@@ -42,7 +42,7 @@ public class myClient{
 			int port = 0;
 			
 			
-			if(split[0].equals("-init"))
+			if (split[0].equals("-init"))
 				initRep();
 			else {	
 				
@@ -94,8 +94,6 @@ public class myClient{
 					}
 				}
 			}
-			
-			break;		
 		}
 		
 		//autenticate(scan, outStream, inStream);
@@ -114,7 +112,7 @@ public class myClient{
 	}
 
 	private void pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException {
-		outStream.writeObject("push ya");
+		outStream.writeObject("pushFile ya");
 	}
 
 	private void pushRep() {

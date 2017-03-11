@@ -61,14 +61,6 @@ public class myClient{
 					e.printStackTrace();
 					}
 					
-<<<<<<< HEAD
-					case "-pull":
-						if (split[3].contains("."))
-							pullFile();
-						else
-							pullRep();
-						break;
-=======
 					switch (split[2]) {
 					
 						case "-push":
@@ -79,7 +71,6 @@ public class myClient{
 								pushRep();
 							
 							break;
->>>>>>> refs/heads/Andrade
 						
 						case "pull":
 							if (split[3].contains("."))

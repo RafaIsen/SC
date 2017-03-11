@@ -112,19 +112,7 @@ public class myServer{
 					
 					
 				}
-				
-<<<<<<< HEAD
-				Client c = new Client(user, passwd);
-				File nomes = new File("C:\\Users\\rafae\\git\\SC\\TP1\\nomes.txt");
-				boolean i = checkClient(c, nomes);
-				System.out.println(i);
-				if(!i)
-					createClient(c, nomes);
-			
-				receiveFile(outStream, inStream);
-=======
-				
-				
+						
 				//Client c= null;		
 				
 				//File nomes = new File("${user.home}/Rep/nomes.txt");
@@ -133,7 +121,6 @@ public class myServer{
 				//System.out.println(i);
 						
 				//receiveFile(outStream, inStream);
->>>>>>> refs/heads/Andrade
 				
 				outStream.close();
 				inStream.close();
@@ -206,8 +193,6 @@ public class myServer{
 				
 				pdfOut.close();
 				return result;
-<<<<<<< HEAD
-=======
 		}
 		
 		
@@ -238,7 +223,6 @@ public class myServer{
 			c = new Client(user, passwd);
 			}
 			return result;
->>>>>>> refs/heads/Andrade
 		}
 		
 		

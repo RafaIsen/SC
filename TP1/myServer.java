@@ -78,37 +78,50 @@ public class myServer{
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-				String user = null;
-				String passwd = null;
-				boolean autenticado = false;
-				
-				while(!autenticado){
-					try {
-						user = (String)inStream.readObject();
-						passwd = (String)inStream.readObject();
-						System.out.println("thread:depois de receber a password e o user");
-					}catch (ClassNotFoundException e1) {
-						e1.printStackTrace();
+				while (true) {
+					String in = (String) inStream.readObject();
+					String[] split = in.split(" ");
+					
+					switch (split[0]) {
+					
+					case "push":
+						if (split[3].contains(".")) {
+							pushFile(outStream, inStream);
+						}
+						else
+							pushRep();
+						break;
+						
+					case "pull":
+						if (split[3].contains("."))
+							pullFile();
+						else
+							pullRep();
+						break;
+					
+					case "share":
+						shareRep();
+						break;
+						
+					case "remove":
+						removeRep();
+						break;
 					}
-				
-					if(user.equals("Rafa") && passwd.equals("1234"))
-						autenticado = true;
-				
-					if (autenticado){
-						outStream.writeObject(new Boolean(true));
-					}
-					else {
-						outStream.writeObject(new Boolean(false));
-					}	
+					
+					break;
 				}
 				
-				Client c = new Client(user, passwd);
-				File nomes = new File("C:\\Users\\HP\\Desktop\\nomes.txt");
+				
+				
+				
+				//Client c= null;		
+				
+				//File nomes = new File("${user.home}/Rep/nomes.txt");
 				//createClient(c, nomes);
-				boolean i = checkClient(c, nomes);
-				System.out.println(i);
-			
-				receiveFile(outStream, inStream);
+				//boolean i = checkClient(c, nomes);
+				//System.out.println(i);
+						
+				//receiveFile(outStream, inStream);
 				
 				outStream.close();
 				inStream.close();
@@ -117,9 +130,49 @@ public class myServer{
 
 			} catch (IOException e) {
 				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 		
+			
+		private void shareRep() {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		private void removeRep() {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		private void pullRep() {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		private void pullFile() {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		private void pushFile(ObjectOutputStream outStream, ObjectInputStream inStream) {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		private void pushRep() {
+			// TODO Auto-generated method stub
+			
+		}
+
+
 		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException{
 			int result = -1;
 			File pdf = new File("C:\\Users\\HP\\Desktop\\a_copy.pdf");
@@ -143,10 +196,33 @@ public class myServer{
 				return result;
 		}
 		
-		public int autenticate(){
-			return 0;
-			
-			
+		public int autenticate(ObjectOutputStream  outStream, ObjectInputStream inStream, Client c) throws IOException{
+			int result = -1;
+			String user = null;
+			String passwd = null;
+			boolean autenticado = false;
+				
+			while(!autenticado){
+				try {
+					user = (String)inStream.readObject();
+					passwd = (String)inStream.readObject();
+					System.out.println("thread:depois de receber a password e o user");
+				}catch (ClassNotFoundException e1) {
+					e1.printStackTrace();
+				}
+				
+				if(user.equals("Rafa") && passwd.equals("1234"))
+					autenticado = true;
+				
+				if (autenticado){
+					outStream.writeObject(new Boolean(true));
+				}
+				else {
+					outStream.writeObject(new Boolean(false));
+				}	
+			c = new Client(user, passwd);
+			}
+			return result;
 		}
 		
 		public int createClient(Client c, File f){

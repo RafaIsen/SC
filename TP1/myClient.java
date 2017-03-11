@@ -35,66 +35,87 @@ public class myClient{
 		
 		
 		while(true) {
-			String[] split = scan.nextLine().split(" ");
-			String[] ip = split[1].split(":");
-			int port = Integer.parseInt(ip[1]);
+			
+			System.out.println("O seu comando ---->>>");
+			String in = scan.nextLine();
+			String[] split = in.split(" ");
+			String[] ip = null;
+			int port = 0;
+			
 			
 			if(split[0].equals("-init"))
 				initRep();
-			else {
-							
-				try {
-					cSoc = new Socket(ip[0],port);
-					outStream = new ObjectOutputStream(cSoc.getOutputStream());
-					inStream = new ObjectInputStream(cSoc.getInputStream());
-					//PrintWriter pw = new PrintWriter(socket1.getOutputStream(), true);
-				} catch (IOException e) {
+			else {	
+				
+				if (split[2] != null) {
+					ip = split[1].split(":");
+					port = Integer.parseInt(ip[1]);
+					
+					try {
+						if (cSoc == null) {
+							cSoc = new Socket(ip[0],port);
+							outStream = new ObjectOutputStream(cSoc.getOutputStream());
+							inStream = new ObjectInputStream(cSoc.getInputStream());
+						}
+					} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				
-				switch (split[2]) {
-				
-					case "-push":
-						if (split[3].contains("."))
-							pushFile();
-						else
-							pushRep();
-						break;
+					}
 					
-					case "pull":
-						if (split[3].contains("."))
-							pullFile();
-						else
-							pullRep();
-						break;
+					switch (split[2]) {
+					
+						case "-push":
+							if (split[3].contains(".")) {
+								pushFile(outStream, inStream);
+							}
+							else
+								pushRep();
+							
+							break;
 						
-					case "-share":
-						shareRep();
-						break;
-						
-					default:
-						System.out.println("Comando errado");
-						break;
+						case "pull":
+							if (split[3].contains("."))
+								pullFile();
+							else
+								pullRep();
+							
+							break;
+							
+						case "-share":
+							shareRep();
+							break;
+							
+						case "remove":
+							removeRep();
+							break;
+							
+						default:
+							System.out.println("Comando errado");
+							break;
+					}
 				}
 			}
 			
 			break;		
 		}
 		
-		autenticate(scan, outStream, inStream);
+		//autenticate(scan, outStream, inStream);
 		
-		sendFile(outStream, inStream);
+		//sendFile(outStream, inStream);
 		
-		//initRep();
+		
 		scan.close();
 		cSoc.close();
 		
 	}
 	
-	private void pushFile() {
+	private void removeRep() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	private void pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException {
+		outStream.writeObject("push ya");
 	}
 
 	private void pushRep() {
@@ -166,7 +187,7 @@ public class myClient{
 	
 	public boolean initRep() throws IOException {
 		
-		Path dir = Paths.get("C:\\Users\\HP\\Documents\\SC1\\1");
+		Path dir = Paths.get("C:\\Users\\HP\\Documents\\SC1");
 		Files.createDirectory(dir);
 		return false;
 		

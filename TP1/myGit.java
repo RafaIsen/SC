@@ -15,13 +15,13 @@ import java.util.Scanner;
 import java.io.File;
 import java.io.FileInputStream;
 
-//Cliente myClient
+//Cliente myGit
 
-public class myClient{
+public class myGit{
 	
 	public static void main(String[] args) throws IOException, ClassNotFoundException{
 		System.out.println("cliente: main");
-		myClient client = new myClient();
+		myGit client = new myGit();
 		client.startClient();
 	}
 
@@ -43,7 +43,7 @@ public class myClient{
 			
 			
 			if (split[0].equals("-init"))
-				initRep();
+				initRep(split[1]);
 			else {	
 				
 				if (split[2] != null) {
@@ -182,12 +182,9 @@ public class myClient{
 		return result;
 	}
 	
-	public boolean initRep() throws IOException {
-		
-		Path dir = Paths.get("C:\\Users\\HP\\Documents\\SC1");
+	public void initRep(String repName) throws IOException {
+		Path dir = Paths.get("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\" + repName);
 		Files.createDirectory(dir);
-		return false;
-		
 	}
 	
 }

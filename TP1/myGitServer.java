@@ -17,13 +17,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 
-//Servidor myServer
+//Servidor myGitServer
 
-public class myServer{
+public class myGitServer{
 
 	public static void main(String[] args) {
 		System.out.println("servidor: main");
-		myServer server = new myServer();
+		myGitServer server = new myGitServer();
 		server.startServer();
 	}
 

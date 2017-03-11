@@ -27,75 +27,76 @@ public class myGit{
 
 	public void startClient(String[] args) throws ClassNotFoundException, IOException{
 			
-		Socket cSoc = null;
-		ObjectOutputStream outStream = null;
-		ObjectInputStream inStream = null;
-		int continua = 1;
+		String[] ip = null;
+		int port = 0;
 		
-		while (continua == 1) {
+		if (args[0].equals("-init")){
+			new File("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\" + args[1]).mkdir();
+			System.out.println("-- O repositório " + args[1] + " foi criado localmente ");
+		}
+		else {	
 			
-			String[] ip = null;
-			int port = 0;
-			
-			if (args[0].equals("-init"))
-				new File("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\" + args[1]).mkdir();
-			else {	
+			if (args[2] != null) {
 				
-				if (args[2] != null) {
-					ip = args[1].split(":");
-					port = Integer.parseInt(ip[1]);
-					
-					try {
-						if (cSoc == null) {
-							cSoc = new Socket(ip[0],port);
-							outStream = new ObjectOutputStream(cSoc.getOutputStream());
-							inStream = new ObjectInputStream(cSoc.getInputStream());
-						}
-					} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				Socket cSoc = null;
+				
+				ObjectOutputStream outStream = null;
+				ObjectInputStream inStream = null;
+				
+				ip = args[1].split(":");
+				port = Integer.parseInt(ip[1]);
+				
+				try {
+					if (cSoc == null) {
+						cSoc = new Socket(ip[0],port);
+						outStream = new ObjectOutputStream(cSoc.getOutputStream());
+						inStream = new ObjectInputStream(cSoc.getInputStream());
 					}
-					
-					switch (args[2]) {
-					
-						case "-push":
-							if (args[3].contains(".")) {
-								pushFile(outStream, inStream);
-							}
-							else
-								pushRep();
-							
-							break;
-						
-						case "-pull":
-							if (args[3].contains("."))
-								pullFile();
-							else
-								pullRep();
-							
-							break;
-							
-						case "-share":
-							shareRep();
-							break;
-							
-						case "-remove":
-							removeRep();
-							break;
-							
-						default:
-							System.out.println("Comando errado");
-							break;
-					}
+				} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 				}
+				
+				switch (args[2]) {
+				
+					case "-push":
+						if (args[3].contains(".")) {
+							pushFile(outStream, inStream);
+						}
+						else
+							pushRep();
+						
+						break;
+					
+					case "-pull":
+						if (args[3].contains("."))
+							pullFile();
+						else
+							pullRep();
+						
+						break;
+						
+					case "-share":
+						shareRep();
+						break;
+						
+					case "-remove":
+						removeRep();
+						break;
+						
+					default:
+						System.out.println("Comando errado");
+						break;
+				}
+				
+				cSoc.close();
+			
 			}
 		}
 		
 		//autenticate(scan, outStream, inStream);
 		
 		//sendFile(outStream, inStream);
-		
-		cSoc.close();
 		
 	}
 	

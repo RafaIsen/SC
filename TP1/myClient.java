@@ -62,7 +62,7 @@ public class myClient{
 							pushRep();
 						break;
 					
-					case "pull":
+					case "-pull":
 						if (split[3].contains("."))
 							pullFile();
 						else

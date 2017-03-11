@@ -103,10 +103,11 @@ public class myServer{
 				}
 				
 				Client c = new Client(user, passwd);
-				File nomes = new File("C:\\Users\\HP\\Desktop\\nomes.txt");
-				//createClient(c, nomes);
+				File nomes = new File("C:\\Users\\rafae\\git\\SC\\TP1\\nomes.txt");
 				boolean i = checkClient(c, nomes);
 				System.out.println(i);
+				if(!i)
+					createClient(c, nomes);
 			
 				receiveFile(outStream, inStream);
 				
@@ -122,7 +123,7 @@ public class myServer{
 		
 		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException{
 			int result = -1;
-			File pdf = new File("C:\\Users\\HP\\Desktop\\a_copy.pdf");
+			File pdf = new File("C:\\Users\\rafae\\git\\SC\\TP1\\a_copy.pdf");
 				
 				FileOutputStream pdfOut = new FileOutputStream(pdf);
 				
@@ -141,12 +142,6 @@ public class myServer{
 				
 				pdfOut.close();
 				return result;
-		}
-		
-		public int autenticate(){
-			return 0;
-			
-			
 		}
 		
 		public int createClient(Client c, File f){
@@ -180,7 +175,7 @@ public class myServer{
 			while(scan.hasNextLine()){
 				String[] split = scan.nextLine().split(":");
 				if(split[0].equals(c.name))
-					result = true;
+					result = true; 
 			}
 			scan.close();
 			return result;

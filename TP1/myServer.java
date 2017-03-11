@@ -84,29 +84,30 @@ public class myServer{
 					
 					switch (split[0]) {
 					
-					case "push":
-						if (split[3].contains(".")) {
+						case "pushFile":
 							pushFile(outStream, inStream);
-						}
-						else
+							break;
+							
+						case "pushRep":
 							pushRep();
-						break;
-						
-					case "pull":
-						if (split[3].contains("."))
+							break;
+							
+						case "pullFile":
 							pullFile();
-						else
+							break;
+							
+						case "pullRep":
 							pullRep();
-						break;
-					
-					case "share":
-						shareRep();
-						break;
+							break;
 						
-					case "remove":
-						removeRep();
-						break;
-					}
+						case "share":
+							shareRep();
+							break;
+							
+						case "remove":
+							removeRep();
+							break;
+						}
 					
 					break;
 				}

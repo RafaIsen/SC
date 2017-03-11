@@ -77,31 +77,43 @@ public class myServer{
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-
-				String user = null;
-				String passwd = null;
-				boolean autenticado = false;
+				int continua = 1;
 				
-				while(!autenticado){
-					try {
-						user = (String)inStream.readObject();
-						passwd = (String)inStream.readObject();
-						System.out.println("thread:depois de receber a password e o user");
-					}catch (ClassNotFoundException e1) {
-						e1.printStackTrace();
-					}
-				
-					if(user.equals("Rafa") && passwd.equals("1234"))
-						autenticado = true;
-				
-					if (autenticado){
-						outStream.writeObject(new Boolean(true));
-					}
-					else {
-						outStream.writeObject(new Boolean(false));
-					}	
+				while (continua == 1) {
+					String in = (String) inStream.readObject();
+					String[] split = in.split(" ");
+					
+					switch (split[0]) {
+					
+						case "pushFile":
+							pushFile(outStream, inStream);
+							break;
+							
+						case "pushRep":
+							pushRep();
+							break;
+							
+						case "pullFile":
+							pullFile();
+							break;
+							
+						case "pullRep":
+							pullRep();
+							break;
+						
+						case "share":
+							shareRep();
+							break;
+							
+						case "remove":
+							removeRep();
+							break;
+						}
+					
+					
 				}
 				
+<<<<<<< HEAD
 				Client c = new Client(user, passwd);
 				File nomes = new File("C:\\Users\\rafae\\git\\SC\\TP1\\nomes.txt");
 				boolean i = checkClient(c, nomes);
@@ -110,6 +122,18 @@ public class myServer{
 					createClient(c, nomes);
 			
 				receiveFile(outStream, inStream);
+=======
+				
+				
+				//Client c= null;		
+				
+				//File nomes = new File("${user.home}/Rep/nomes.txt");
+				//createClient(c, nomes);
+				//boolean i = checkClient(c, nomes);
+				//System.out.println(i);
+						
+				//receiveFile(outStream, inStream);
+>>>>>>> refs/heads/Andrade
 				
 				outStream.close();
 				inStream.close();
@@ -118,9 +142,49 @@ public class myServer{
 
 			} catch (IOException e) {
 				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
 			}
 		}
 		
+			
+		private void shareRep() {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		private void removeRep() {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		private void pullRep() {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		private void pullFile() {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		private void pushFile(ObjectOutputStream outStream, ObjectInputStream inStream) {
+			// TODO 
+			
+			
+		}
+
+
+		private void pushRep() {
+			// TODO Auto-generated method stub
+			
+		}
+
+
 		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException{
 			int result = -1;
 			File pdf = new File("C:\\Users\\rafae\\git\\SC\\TP1\\a_copy.pdf");
@@ -142,7 +206,41 @@ public class myServer{
 				
 				pdfOut.close();
 				return result;
+<<<<<<< HEAD
+=======
 		}
+		
+		
+		public int autenticate(ObjectOutputStream  outStream, ObjectInputStream inStream, Client c) throws IOException{
+			int result = -1;
+			String user = null;
+			String passwd = null;
+			boolean autenticado = false;
+				
+			while(!autenticado){
+				try {
+					user = (String)inStream.readObject();
+					passwd = (String)inStream.readObject();
+					System.out.println("thread:depois de receber a password e o user");
+				}catch (ClassNotFoundException e1) {
+					e1.printStackTrace();
+				}
+				
+				if(user.equals("Rafa") && passwd.equals("1234"))
+					autenticado = true;
+				
+				if (autenticado){
+					outStream.writeObject(new Boolean(true));
+				}
+				else {
+					outStream.writeObject(new Boolean(false));
+				}	
+			c = new Client(user, passwd);
+			}
+			return result;
+>>>>>>> refs/heads/Andrade
+		}
+		
 		
 		public int createClient(Client c, File f){
 			int result = -1;
@@ -167,6 +265,7 @@ public class myServer{
 			return result;
 			
 		}
+		
 		
 		public boolean checkClient(Client c, File f) throws FileNotFoundException {
 			boolean result = false;

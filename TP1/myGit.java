@@ -8,9 +8,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,102 +32,106 @@ public class myGit{
 			new File("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\" + args[1]).mkdir();
 			System.out.println("-- O repositório " + args[1] + " foi criado localmente ");
 		}
-		else {	
+		else {
+				
+			Socket cSoc = null;
 			
-			if (args[2] != null) {
-				
-				Socket cSoc = null;
-				
-				ObjectOutputStream outStream = null;
-				ObjectInputStream inStream = null;
-				
-				Scanner scan = new Scanner(System.in);
-				
-				boolean param_p = args[2] == "-p";
-				
-				ip = args[1].split(":");
-				port = Integer.parseInt(ip[1]);
-				
-				try {
-					if (cSoc == null) {
-						cSoc = new Socket(ip[0],port);
-						outStream = new ObjectOutputStream(cSoc.getOutputStream());
-						inStream = new ObjectInputStream(cSoc.getInputStream());
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
+			ObjectOutputStream outStream = null;
+			ObjectInputStream inStream = null;
+			
+			Scanner scan = new Scanner(System.in);
+			
+			boolean param_p = false;
+			
+			if(args.length > 2)
+				param_p = args[2] == "-p";
+			
+			ip = args[1].split(":");
+			port = Integer.parseInt(ip[1]);
+			
+			try {
+				if (cSoc == null) {
+					cSoc = new Socket(ip[0],port);
+					outStream = new ObjectOutputStream(cSoc.getOutputStream());
+					inStream = new ObjectInputStream(cSoc.getInputStream());
 				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			//warn the server that -p is a parameter
+			outStream.writeBoolean(param_p);
+			
+			/*/autenticate user/*/
+			
+			//sends user name to the server
+			outStream.writeObject(args[0]);
+			
+			//obtains response of the server
+			boolean exists = inStream.readBoolean();
+			
+			boolean autentic = false;
+			
+			if (!exists) {
 				
-				//warn the server that -p is a parameter
-				outStream.writeBoolean(param_p);
+				System.out.println("-- O utilizador " + args[0] + " vai ser criado ");
+				String pass = null;
+				if(param_p)
+					pass = confirmPwd(args[0], args[2], args[3]);
+				else 
+					pass = confirmPwd(args[0], "", "");
+				outStream.writeObject(pass);
+				if(inStream.readBoolean())
+					System.out.println("-- O utilizador " + args[0] + " foi criado");
+			
+			} else if (param_p) {
 				
-				/*/autenticate user/*/
-				
-				//sends user name to the server
-				outStream.writeObject(args[0]);
-				
-				//obtains response of the server
-				boolean exists = inStream.readBoolean();
-				
-				boolean autentic = false;
-				
-				if (!exists) {
+				while(!autentic){
 					
-					System.out.println("-- O utilizador " + args[0] + " vai ser criado ");
-					String pass = confirmPwd(args[0], args[2], args[3]);
-					outStream.writeObject(pass);
-					if(inStream.readBoolean())
-						System.out.println("-- O utilizador " + args[0] + " foi criado");
-				
-				} else if (param_p) {
-					
-					while(!autentic){
-						
-						outStream.writeObject(args[3]);
-						autentic = inStream.readBoolean();
-						if(!autentic){
-							System.out.println("Password errada!");
-							System.out.println("Tenta novamente:");
-							outStream.writeObject(scan.nextLine());
-							autentic = inStream.readBoolean();
-						}
-						
-					}
-						
-				} else {
-					
-					while(!autentic){
-						
-						System.out.println("Password: ");
+					outStream.writeObject(args[3]);
+					autentic = inStream.readBoolean();
+					if(!autentic){
+						System.out.println("Password errada!");
+						System.out.println("Tenta novamente:");
 						outStream.writeObject(scan.nextLine());
 						autentic = inStream.readBoolean();
-						if(!autentic){
-							System.out.println("Password errada!");
-							System.out.println("Tenta novamente:");
-							outStream.writeObject(scan.nextLine());
-							autentic = inStream.readBoolean();
-						}
-						
 					}
 					
 				}
 					
+			} else {
 				
-				//executes the command
-				if(param_p)
-					if(args.length == 7)
-						executeCommand(args[4], args[5], args[6]);
-					else if(args.length > 4)
-						executeCommand(args[4], args[5], "N");
-				else
-					if(args.length == 5)
-						executeCommand(args[2], args[3], args[4]);
-					else if(args.length > 2)
-						executeCommand(args[2], args[3], "N");
+				while(!autentic){
+					
+					System.out.println("Password: ");
+					outStream.writeObject(scan.nextLine());
+					autentic = inStream.readBoolean();
+					if(!autentic){
+						System.out.println("Password errada!");
+						System.out.println("Tenta novamente:");
+						outStream.writeObject(scan.nextLine());
+						autentic = inStream.readBoolean();
+					}
+					
+				}
 				
-				cSoc.close();
-			
 			}
+				
+			
+			//executes the command
+			if(param_p)
+				if(args.length == 7)
+					executeCommand(args[4], args[5], args[6]);
+				else if(args.length > 4)
+					executeCommand(args[4], args[5], "N");
+			else
+				if(args.length == 5)
+					executeCommand(args[2], args[3], args[4]);
+				else if(args.length > 2)
+					executeCommand(args[2], args[3], "N");
+			
+			cSoc.close();
+		
 		}
 		
 		//autenticate(scan, outStream, inStream);

@@ -90,10 +90,17 @@ public class myGitServer{
 				
 				/*Trying to get the path of the server*/
 				URI myGitPath = myGit.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-				java.nio.file.Path path = java.nio.file.Paths.get(myGitPath);
-				File users = new File(path + "/" + "users.txt");
-				if(!users.exists())
+				Path path = java.nio.file.Paths.get(myGitPath);
+				
+				//creates the directory users if it does not exist
+				File usersDir = new File(path + "/users");
+				if(!usersDir.exists())
+					usersDir.mkdir();
+				//creates the text file users if it does not exist
+				File users = new File(path + "/users/users.txt");
+				if(!users.exists()){
 					users.createNewFile();
+				}
 
 				boolean foundU = checkUser(username, users);
 				
@@ -103,7 +110,7 @@ public class myGitServer{
 				
 					String pass = (String) inStream.readObject();
 					User newUser = new User(username, pass);
-					outStream.writeObject(createUser(newUser, users));
+					outStream.writeObject(createUser(newUser, users, path));
 					
 				} else if(param_p){ //confirm password
 					
@@ -218,14 +225,14 @@ public class myGitServer{
 			boolean[] ya = new boolean[1];
 		
 			
-			if (exists) {
+			/*if (exists) {
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
 					File newFile = new File();
 					ya[0] = true;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
 					if (receiveFile(outStream, inStream, newFile) )
 				}
-			}
+			}*/
 				
 				
 			
@@ -281,7 +288,7 @@ public class myGitServer{
 		}
 		
 		
-		public boolean createUser(User u, File f){
+		public boolean createUser(User u, File f, Path path){
 			boolean result = false;
 			StringBuilder userPass = new StringBuilder();
 			userPass.append(u.name);
@@ -292,8 +299,11 @@ public class myGitServer{
 				if(checkUser(u.name, f))
 					result = true;
 				else{
+					//writes the name and pass in the file
 					byte[] buf = userPass.toString().getBytes(StandardCharsets.UTF_8);
 					Files.write(f.toPath(), buf);
+					//creates a directory to the user
+					new File(path + "/users/" + u.name).mkdir();
 					result = true;				
 				}
 			} catch (IOException e) {

@@ -1,6 +1,10 @@
 import java.io.Serializable;
 
 public class Message implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -293738311238270888L;
 	public String method;
 	public String[] fileName;
 	public String[] fileVersion;
@@ -8,7 +12,8 @@ public class Message implements Serializable {
 	public int numFiles;
 	//
 	public boolean[] toBeUpdated; 
-	//public File[] files;
+	//public String id;
+	//public String rep;
 	
 	public Message(String method, String[] fileName, String[] fileVersion, long[] fileDate, boolean[] toBeUpdated) {
 		this.method = method;

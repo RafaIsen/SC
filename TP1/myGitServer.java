@@ -127,7 +127,6 @@ public class myGitServer{
 				
 				while (continua == 1) {
 					Message messIn = (Message) inStream.readObject();
-					Message messOut = null;
 					//String[] split = in.split(" ");
 					
 					switch (messIn.method) {
@@ -209,8 +208,8 @@ public class myGitServer{
 
 
 		private void pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) {
-			// TODO 
-			
+			int result = -1;
+			//File file = new File();
 			
 		}
 

@@ -79,7 +79,7 @@ public class myGit{
 				if(param_p)
 					pass = confirmPwd(args[0], args[2], args[3]);
 				else 
-					pass = confirmPwd(args[0], "", "");
+					pass = confirmPwd(args[0], " ", " ");
 				outStream.writeObject(pass);
 				if(inStream.readBoolean())
 					System.out.println("-- O utilizador " + args[0] + " foi criado");
@@ -194,8 +194,8 @@ public class myGit{
 	public String confirmPwd(String username, String command, String pwd){
 		
 		Scanner scan = new Scanner(System.in);
-		String pass = "";
-		String passConf = "";
+		String pass = " ";
+		String passConf = " ";
 		
 		if (command == "-p") {
 			

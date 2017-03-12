@@ -168,15 +168,7 @@ public class myGitServer{
 					
 				}
 						
-				//Client c= null;		
-				
-				//File nomes = new File("${user.home}/Rep/nomes.txt");
-				//createClient(c, nomes);
-				//boolean i = checkClient(c, nomes);
-				//System.out.println(i);
-						
-				//receiveFile(outStream, inStream);
-				
+								
 				outStream.close();
 				inStream.close();
  			

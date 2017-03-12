@@ -13,6 +13,8 @@ import java.net.URISyntaxException;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 //Cliente myGit
 
@@ -31,7 +33,7 @@ public class myGit{
 		
 		/*Trying to get the path of the client*/
 		URI myGitPath = myGit.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-		java.nio.file.Path path = java.nio.file.Paths.get(myGitPath);
+		Path path = Paths.get(myGitPath);
 		
 		//creates a local repository
 		if (args[0].equals("-init")){
@@ -120,14 +122,14 @@ public class myGit{
 				//executes the command
 				if(param_p)
 					if(args.length == 7)
-						executeCommand(args[4], args[5], args[6], outStream, inStream);
+						executeCommand(args[4], args[5], args[6], outStream, inStream, path);
 					else if(args.length > 4)
-						executeCommand(args[4], args[5], "N", outStream, inStream);
+						executeCommand(args[4], args[5], "N", outStream, inStream, path);
 				else
 					if(args.length == 5)
-						executeCommand(args[2], args[3], args[4], outStream, inStream);
+						executeCommand(args[2], args[3], args[4], outStream, inStream, path);
 					else if(args.length > 2)
-						executeCommand(args[2], args[3], "N", outStream, inStream);
+						executeCommand(args[2], args[3], "N", outStream, inStream, path);
 				
 				cSoc.close();
 			
@@ -146,9 +148,9 @@ public class myGit{
 		
 	}
 
-	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName) throws IOException, ClassNotFoundException {
+	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, Path path) throws IOException, ClassNotFoundException {
 		int result = -1; 
-		File file = new File(fileName);
+		File file = new File(path + "/" + fileName);
 		
 		String[] name = new String[1];
 		name[0] = fileName;
@@ -268,14 +270,14 @@ public class myGit{
 		
 	}
 	
-	public void executeCommand(String command, String param1, String param2, ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException, ClassNotFoundException{
+	public void executeCommand(String command, String param1, String param2, ObjectOutputStream  outStream, ObjectInputStream inStream, Path path) throws IOException, ClassNotFoundException{
 		
 		switch (command) {
 		
 			case "-push":
 				if (param1.contains(".")) {
 					System.out.println("asd");
-					pushFile(outStream, inStream, param1);
+					pushFile(outStream, inStream, param1, path);
 				}
 				else
 					pushRep();

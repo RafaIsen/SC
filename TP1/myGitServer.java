@@ -81,6 +81,8 @@ public class myGitServer{
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 				int continua = 1;
 				
+				int num_args = (int) inStream.readObject();
+				
 				boolean param_p = (boolean) inStream.readObject();
 				
 				String username = (String) inStream.readObject();
@@ -123,39 +125,46 @@ public class myGitServer{
 					}
 					
 				}
-					
 				
-				while (continua == 1) {
-					Message messIn = (Message) inStream.readObject();
-					//String[] split = in.split(" ");
-					
-					switch (messIn.method) {
-					
-						case "pushFile":
-							pushFile(outStream, inStream, messIn);
-							break;
-							
-						case "pushRep":
-							pushRep();
-							break;
-							
-						case "pullFile":
-							pullFile();
-							break;
-							
-						case "pullRep":
-							pullRep();
-							break;
+
+				//verifies if it has any methods in args
+				if ((param_p && num_args > 4) || (!param_p && num_args > 2)) {
+				
+					while (continua == 1) {
+
 						
-						case "share":
-							shareRep();
-							break;
+						Message messIn = (Message) inStream.readObject();
+						Message messOut = null;
+						//String[] split = in.split(" ");
+						
+						switch (messIn.method) {
+						
+							case "pushFile":
+								pushFile(outStream, inStream, messIn);
+								break;
+								
+							case "pushRep":
+								pushRep();
+								break;
+								
+							case "pullFile":
+								pullFile();
+								break;
+								
+							case "pullRep":
+								pullRep();
+								break;
 							
-						case "remove":
-							removeRep();
-							break;
-						}
-					
+							case "share":
+								shareRep();
+								break;
+								
+							case "remove":
+								removeRep();
+								break;
+							}
+			
+					}
 					
 				}
 						

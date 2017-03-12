@@ -15,7 +15,9 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.Scanner;
 
 //Servidor myGitServer
@@ -133,13 +135,11 @@ public class myGitServer{
 
 						
 						Message messIn = (Message) inStream.readObject();
-						Message messOut = null;
-						//String[] split = in.split(" ");
-						
+											
 						switch (messIn.method) {
 						
 							case "pushFile":
-								pushFile(outStream, inStream, messIn);
+								pushFile(outStream, inStream, messIn, path);
 								break;
 								
 							case "pushRep":
@@ -207,9 +207,27 @@ public class myGitServer{
 		}
 
 
-		private void pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) {
+		private void pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
 			int result = -1;
-			//File file = new File();
+			File file = new File(path + "/" + messIn.fileName[0]);
+			
+			boolean exists = file.exists();
+			Date date = new Date(file.lastModified());
+			
+			Message messOut = null;
+			boolean[] ya = new boolean[1];
+		
+			
+			if (exists) {
+				if (date.compareTo(messIn.fileDate[0]) < 0) {
+					File newFile = new File();
+					ya[0] = true;
+					messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
+					if (receiveFile(outStream, inStream, newFile) )
+				}
+			}
+				
+				
 			
 		}
 
@@ -220,19 +238,18 @@ public class myGitServer{
 		}
 
 
-		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException{
+		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException{
 			int result = -1;
-			File pdf = new File("C:\\Users\\rafae\\git\\SC\\TP1\\a_copy.pdf");
 				
-				FileOutputStream pdfOut = new FileOutputStream(pdf);
+			FileOutputStream pdfOut = new FileOutputStream(file);
 				
-				int lengthFile = inStream.readInt();
+			int lengthFile = inStream.readInt();
 				
-				int n = 0;
+			int n = 0;
 				
-				byte[] buf = new byte[1024];
+			byte[] buf = new byte[1024];
 				
-				while(lengthFile > 0){
+			while(lengthFile > 0){
 					n = inStream.read(buf, 0, buf.length);
 					lengthFile -= n;
 					pdfOut.write(buf, 0, n);

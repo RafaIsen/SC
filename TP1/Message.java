@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.util.Date;
 
 public class Message implements Serializable {
 	/**
@@ -8,14 +9,14 @@ public class Message implements Serializable {
 	public String method;
 	public String[] fileName;
 	public String[] fileVersion;
-	public long[] fileDate;
+	public Date[] fileDate;
 	public int numFiles;
 	//
 	public boolean[] toBeUpdated; 
 	//public String id;
 	//public String rep;
 	
-	public Message(String method, String[] fileName, String[] fileVersion, long[] fileDate, boolean[] toBeUpdated) {
+	public Message(String method, String[] fileName, String[] fileVersion, Date[] fileDate, boolean[] toBeUpdated) {
 		this.method = method;
 		this.fileName = fileName;
 		this.fileVersion = fileVersion;

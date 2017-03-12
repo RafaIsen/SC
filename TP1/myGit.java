@@ -10,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileInputStream;
@@ -155,8 +156,8 @@ public class myGit{
 		String[] name = new String[1];
 		name[0] = fileName;
 		
-		long[] dates = new long[1];
-		long date = file.lastModified();
+		Date[] dates = new Date[1];
+		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
 		Message messOut = new Message("pushFile", name, null, dates, null);
@@ -176,6 +177,11 @@ public class myGit{
 			result = 0;
 		
 		return result;		
+	}
+
+	private Date Date(long lastModified) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	private void pushRep() {

@@ -55,6 +55,9 @@ public class myGit{
 				ObjectOutputStream outStream = new ObjectOutputStream(cSoc.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(cSoc.getInputStream());
 				
+				//gives the server the number of args
+				outStream.writeObject(args.length);
+				
 				//warn the server that -p is a parameter
 				outStream.writeObject(param_p);
 				

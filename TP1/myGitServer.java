@@ -16,7 +16,6 @@ import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
-
 //Servidor myGitServer
 
 public class myGitServer{
@@ -62,12 +61,12 @@ public class myGitServer{
 			System.out.println("thread do server para cada cliente");
 		}
 		
-		class Client {
+		class User {
 			
 			private String name;
 			private String pass;
 			
-			public Client(String name, String pass){
+			public User(String name, String pass){
 				this.name = name;
 				this.pass = pass;
 			}
@@ -78,6 +77,28 @@ public class myGitServer{
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 				int continua = 1;
+				
+				String username = (String) inStream.readObject();
+				
+				File users = new File("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\myGitServer\\users.txt");
+				
+				boolean foundU = checkUser(username, users);
+				
+				outStream.writeBoolean(foundU);
+				
+				if (!foundU) {
+				
+					String pass = (String) inStream.readObject();
+					User newUser = new User(username, pass);
+					outStream.writeBoolean(createUser(newUser, users));
+					
+				} else {
+					
+					String pass = (String) inStream.readObject();
+					outStream.writeBoolean(autenticate(username, pass, users));
+					
+				}
+					
 				
 				while (continua == 1) {
 					String in = (String) inStream.readObject();
@@ -196,70 +217,61 @@ public class myGitServer{
 		}
 		
 		
-		public int autenticate(ObjectOutputStream  outStream, ObjectInputStream inStream, Client c) throws IOException{
-			int result = -1;
-			String user = null;
-			String passwd = null;
+		public boolean autenticate(String username, String pass, File f) throws IOException{
+			
 			boolean autenticado = false;
+	
+			Scanner scan = new Scanner(f);
+			
+			while (scan.hasNextLine() || !autenticado) {
 				
-			while(!autenticado){
-				try {
-					user = (String)inStream.readObject();
-					passwd = (String)inStream.readObject();
-					System.out.println("thread:depois de receber a password e o user");
-				}catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				}
-				
-				if(user.equals("Rafa") && passwd.equals("1234"))
-					autenticado = true;
-				
-				if (autenticado){
-					outStream.writeObject(new Boolean(true));
-				}
-				else {
-					outStream.writeObject(new Boolean(false));
-				}	
-			c = new Client(user, passwd);
+				String[] split = scan.nextLine().split(":");
+				if(split[0].equals(username) && split[1].equals(pass))
+					autenticado = true; 
+			
 			}
-			return result;
+			
+			scan.close();
+			
+			return autenticado;
 		}
 		
 		
-		public int createClient(Client c, File f){
-			int result = -1;
-			StringBuilder ya = new StringBuilder();
-			ya.append(c.name);
-			ya.append(':');
-			ya.append(c.pass);
+		public boolean createUser(User u, File f){
+			boolean result = false;
+			StringBuilder userPass = new StringBuilder();
+			userPass.append(u.name);
+			userPass.append(':');
+			userPass.append(u.pass);
 			
 			try {
-				if(checkClient(c, f))
-					result = 0;
-				
+				if(checkUser(u.name, f))
+					result = true;
 				else{
-					byte[] buf = ya.toString().getBytes(StandardCharsets.UTF_8);
+					byte[] buf = userPass.toString().getBytes(StandardCharsets.UTF_8);
 					Files.write(f.toPath(), buf);
-					result = 0;				
+					result = true;				
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			return result;
-			
 		}
 		
 		
-		public boolean checkClient(Client c, File f) throws FileNotFoundException {
+		public boolean checkUser(String username, File f) throws FileNotFoundException {
+			
 			boolean result = false;
 			Scanner scan = new Scanner(f);
 			
-			while(scan.hasNextLine()){
+			while (scan.hasNextLine()) {
+				
 				String[] split = scan.nextLine().split(":");
-				if(split[0].equals(c.name))
+				if(split[0].equals(username))
 					result = true; 
+			
 			}
+			
 			scan.close();
 			return result;
 			

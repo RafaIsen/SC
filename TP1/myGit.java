@@ -30,6 +30,7 @@ public class myGit{
 		String[] ip = null;
 		int port = 0;
 		
+		//creates a local repository
 		if (args[0].equals("-init")){
 			new File("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\" + args[1]).mkdir();
 			System.out.println("-- O repositório " + args[1] + " foi criado localmente ");
@@ -43,6 +44,8 @@ public class myGit{
 				ObjectOutputStream outStream = null;
 				ObjectInputStream inStream = null;
 				
+				Scanner scan = new Scanner(System.in);
+				
 				ip = args[1].split(":");
 				port = Integer.parseInt(ip[1]);
 				
@@ -53,41 +56,65 @@ public class myGit{
 						inStream = new ObjectInputStream(cSoc.getInputStream());
 					}
 				} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+					e.printStackTrace();
 				}
 				
-				switch (args[2]) {
+				/*/autenticate user/*/
 				
-					case "-push":
-						if (args[3].contains(".")) {
-							pushFile(outStream, inStream);
-						}
-						else
-							pushRep();
-						
-						break;
+				//sends user name to the server
+				outStream.writeObject(args[0]);
+				
+				//obtains response of the server
+				boolean exists = inStream.readBoolean();
+				
+				boolean autentic = false;
+				
+				if (!exists) {
 					
-					case "-pull":
-						if (args[3].contains("."))
-							pullFile();
-						else
-							pullRep();
+					System.out.println("-- O utilizador " + args[0] + " vai ser criado ");
+					String pass = confirmPwd(args[0], args[2], args[3]);
+					outStream.writeObject(pass);
+					if(inStream.readBoolean())
+						System.out.println("-- O utilizador " + args[0] + " foi criado");
+				
+				} else if (args[2] == "-p") {
+					
+					while(!autentic){
 						
-						break;
+						outStream.writeObject(args[3]);
+						autentic = inStream.readBoolean();
+						if(!autentic){
+							System.out.println("Password errada!");
+							System.out.println("Tenta novamente:");
+							outStream.writeObject(scan.nextLine());
+						}
 						
-					case "-share":
-						shareRep();
-						break;
+					}
 						
-					case "-remove":
-						removeRep();
-						break;
+				} else {
+					
+					while(!autentic){
 						
-					default:
-						System.out.println("Comando errado");
-						break;
+						System.out.println("Password: ");
+						outStream.writeObject(scan.nextLine());
+						autentic = inStream.readBoolean();
+						
+					}
+					
 				}
+					
+				
+				//executes the command
+				if(args[2] == "-p")
+					if(args.length == 7)
+						executeCommand(args[4], args[5], args[6]);
+					else
+						executeCommand(args[4], args[5], "N");
+				else
+					if(args.length == 7)
+						executeCommand(args[2], args[3], args[4]);
+					else
+						executeCommand(args[2], args[3], "N");
 				
 				cSoc.close();
 			
@@ -151,28 +178,92 @@ public class myGit{
 		return result;
 	}
 	
-	public int autenticate(Scanner keyb, ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException, ClassNotFoundException {
-		int result = -1;
-		boolean resposta = false;
+	public String confirmPwd(String username, String command, String pwd){
+		
+		Scanner scan = new Scanner(System.in);
+		String pass = "";
+		String passConf = "";
+		
+		if (command == "-p") {
+			
+			System.out.println("Confirmar password do utilizador " + username + ":");
+		
+			passConf = scan.nextLine();
+			
+			while(pass != pwd || pass != passConf) {
 				
-				while (resposta == false) {
-					System.out.println("Username: ");
-					String user = keyb.nextLine();
-					outStream.writeObject(user);
-					
-					System.out.println("Password: ");
-					String pass = keyb.nextLine();
-					outStream.writeObject(pass);
-					
-					resposta = (boolean) inStream.readObject();
-					
-					if (resposta == true) { 
-						System.out.println("Entraste!");
-						result = 0;
-					}
-					else
-						System.out.println("Erro! Tenta novamente:");
-				}
-		return result;
+				System.out.println("Essa não foi a password que escreveu primeiro");
+				System.out.println("Escreva a password:");
+				pass = scan.nextLine();
+				
+				System.out.println("Confirmar password do utilizador " + username + ":");
+				passConf = scan.nextLine();
+				
+			}
+			
+		} else {
+			
+			System.out.println("Escreva uma password para a sua conta:");
+			
+			pass = scan.nextLine();
+			
+			System.out.println("Confirmar password do utilizador " + username + ":");
+			
+			passConf = scan.nextLine();
+			
+			while(pass != passConf) {
+				
+				System.out.println("Essa não foi a password que escreveu primeiro");
+				System.out.println("Escreva a password:");
+				pass = scan.nextLine();
+				
+				System.out.println("Confirmar password do utilizador " + username + ":");
+				passConf = scan.nextLine();
+				
+			}
+
+		}
+		
+		return pass;
+		
 	}
+	
+	public void executeCommand(String command, String param1, String param2){
+		
+		switch (command) {
+		
+			case "-push":
+				if (param1.contains(".")) {
+					System.out.println("asd");
+					//pushFile(outStream, inStream);
+				}
+				else
+					pushRep();
+				
+				break;
+			
+			case "-pull":
+				if (param1.contains("."))
+					pullFile();
+				else
+					pullRep();
+				
+				break;
+				
+			case "-share":
+				shareRep();
+				break;
+				
+			case "-remove":
+				removeRep();
+				break;
+				
+			default:
+				System.out.println("Esse commando não existe!");
+				break;
+			
+		}
+		
+	}
+
 }

@@ -223,19 +223,13 @@ public class myGitServer{
 			
 			Message messOut = null;
 			boolean[] ya = new boolean[1];
-		
-			
-<<<<<<< HEAD
+
 			if (exists) {
 				date = new Date(file.lastModified());
-=======
-			/*if (exists) {
->>>>>>> refs/heads/Rafa
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
 					File newFile = new File();
 					ya[0] = true;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
-<<<<<<< HEAD
 					if (receiveFile(outStream, inStream, newFile) >= 0)
 						result = 0;						
 				} else {
@@ -251,14 +245,6 @@ public class myGitServer{
 					result = 0;
 			}
 			return result;			
-=======
-					if (receiveFile(outStream, inStream, newFile) )
-				}
-			}*/
-				
-				
-			
->>>>>>> refs/heads/Rafa
 		}
 
 

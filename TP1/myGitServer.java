@@ -10,8 +10,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
@@ -82,8 +85,13 @@ public class myGitServer{
 				
 				String username = (String) inStream.readObject();
 				
-				File users = new File("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\myGitServer\\users.txt");
-				
+				/*Trying to get the path of the server*/
+				URI myGitPath = myGit.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+				java.nio.file.Path path = java.nio.file.Paths.get(myGitPath);
+				File users = new File(path + "/" + "users.txt");
+				if(!users.exists())
+					users.createNewFile();
+
 				boolean foundU = checkUser(username, users);
 				
 				outStream.writeObject(foundU);
@@ -168,6 +176,8 @@ public class myGitServer{
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (URISyntaxException e) {
 				e.printStackTrace();
 			}
 		}

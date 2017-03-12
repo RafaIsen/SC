@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,25 +18,29 @@ import java.io.FileInputStream;
 
 public class myGit{
 	
-	public static void main(String[] args) throws IOException, ClassNotFoundException{
+	public static void main(String[] args) throws IOException, ClassNotFoundException, URISyntaxException{
 		System.out.println("cliente: main");
 		myGit client = new myGit();
 		client.startClient(args);
 	}
 
-	public void startClient(String[] args) throws ClassNotFoundException, IOException{
+	public void startClient(String[] args) throws ClassNotFoundException, IOException, URISyntaxException{
 			
 		String[] ip = null;
 		int port = 0;
 		
+		/*Trying to get the path of the client*/
+		URI myGitPath = myGit.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+		java.nio.file.Path path = java.nio.file.Paths.get(myGitPath);
+		
 		//creates a local repository
 		if (args[0].equals("-init")){
-			new File("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\" + args[1]).mkdir();
+			new File(path + "/" + args[1]).mkdir();
 			System.out.println("-- O repositório " + args[1] + " foi criado localmente ");
 		}
 		else {
 			try {		
-	
+				
 				Scanner scan = new Scanner(System.in);
 				
 				boolean param_p = false;
@@ -52,8 +58,7 @@ public class myGit{
 				//warn the server that -p is a parameter
 				outStream.writeObject(param_p);
 				
-				/*/autenticate user/*/
-				
+				/*autenticate user*/
 				//sends user name to the server
 				outStream.writeObject(args[0]);
 				
@@ -108,8 +113,7 @@ public class myGit{
 					}
 					
 				}
-					
-				
+
 				//executes the command
 				if(param_p)
 					if(args.length == 7)

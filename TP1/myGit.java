@@ -223,8 +223,8 @@ public class myGit{
 	public String confirmPwd(String username, String command, String pwd){
 		
 		Scanner scan = new Scanner(System.in);
-		String pass = " ";
-		String passConf = " ";
+		String pass = pwd;
+		String passConf = null;
 		
 		if (command.equals("-p")) {
 			
@@ -232,16 +232,17 @@ public class myGit{
 		
 			passConf = scan.nextLine();
 			
-			while(!pass.equals(pwd) && !pass.equals(passConf)) {
-				
-				System.out.println("Essa não foi a password que escreveu primeiro");
-				System.out.println("Escreva a password:");
-				pass = scan.nextLine();
-				
-				System.out.println("Confirmar password do utilizador " + username + ":");
-				passConf = scan.nextLine();
-				
-			}
+			if(!passConf.equals(pwd))
+				while(!pass.equals(passConf)) {
+					
+					System.out.println("Essa não foi a password que escreveu primeiro");
+					System.out.println("Escreva a password:");
+					pass = scan.nextLine();
+					
+					System.out.println("Confirmar password do utilizador " + username + ":");
+					passConf = scan.nextLine();
+					
+				}
 			
 		} else {
 			

@@ -208,28 +208,38 @@ public class myGitServer{
 		}
 
 
-		private void pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
+		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
 			int result = -1;
-			File file = new File(path + "/" + messIn.fileName[0]);
 			
+			File file = new File(path + "/" + messIn.fileName[0]);
+			Date date = null;
 			boolean exists = file.exists();
-			Date date = new Date(file.lastModified());
 			
 			Message messOut = null;
 			boolean[] ya = new boolean[1];
 		
 			
 			if (exists) {
+				date = new Date(file.lastModified());
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
 					File newFile = new File();
 					ya[0] = true;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
-					if (receiveFile(outStream, inStream, newFile) )
-				}
+					if (receiveFile(outStream, inStream, newFile) >= 0)
+						result = 0;						
+				} else {
+					ya[0] = false;
+					messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
+					result = 0;
+				}	
+			} else {
+				file.createNewFile();
+				ya[0] = true;
+				messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
+				if (receiveFile(outStream, inStream, file) >= 0)
+					result = 0;
 			}
-				
-				
-			
+			return result;			
 		}
 
 
@@ -258,6 +268,7 @@ public class myGitServer{
 				}
 				
 				pdfOut.close();
+				result = 0;
 				return result;
 		}
 		

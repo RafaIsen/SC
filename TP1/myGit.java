@@ -133,15 +133,13 @@ public class myGit{
 						executeCommand(args[2], args[3], "N", outStream, inStream, path);
 				
 				cSoc.close();
+				scan.close();
 			
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		//autenticate(scan, outStream, inStream);
-		
-		//sendFile(outStream, inStream);
-		
+				
 	}
 	
 	private void removeRep() {
@@ -179,13 +177,9 @@ public class myGit{
 		return result;		
 	}
 
-	private Date Date(long lastModified) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	
 	private void pushRep() {
-		// TODO Auto-generated method stub
+		
 		
 	}
 
@@ -271,7 +265,7 @@ public class myGit{
 			}
 
 		}
-		
+		scan.close();
 		return pass;
 		
 	}

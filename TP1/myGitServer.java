@@ -240,7 +240,7 @@ public class myGitServer{
 	
 			Scanner scan = new Scanner(f);
 			
-			while (scan.hasNextLine() || !autenticado) {
+			while (scan.hasNextLine()) {
 				
 				String[] split = scan.nextLine().split(":");
 				if(split[0].equals(u.name) && split[1].equals(u.pass))

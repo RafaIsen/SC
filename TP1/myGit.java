@@ -90,18 +90,20 @@ public class myGit{
 					}
 						
 				} else {
-					
-					while(!autentic){
 						
 						System.out.println("Password: ");
 						outStream.writeObject(scan.nextLine());
 						autentic = (boolean) inStream.readObject();
-						if(!autentic){
-							System.out.println("Password errada!");
-							System.out.println("Tenta novamente:");
-							outStream.writeObject(scan.nextLine());
-							autentic = (boolean) inStream.readObject();
-						}
+						
+						while(!autentic){	
+							
+							if(!autentic){
+								System.out.println("Password errada!");
+								System.out.println("Tenta novamente:");
+								outStream.writeObject(scan.nextLine());
+								autentic = (boolean) inStream.readObject();
+								
+						}	
 						
 					}
 					

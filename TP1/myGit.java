@@ -120,12 +120,12 @@ public class myGit{
 				if(param_p)
 					if(args.length == 7)
 						executeCommand(args[4], args[5], args[6]);
-					else
+					else if(args.length > 4)
 						executeCommand(args[4], args[5], "N");
 				else
-					if(args.length == 7)
+					if(args.length == 5)
 						executeCommand(args[2], args[3], args[4]);
-					else
+					else if(args.length > 2)
 						executeCommand(args[2], args[3], "N");
 				
 				cSoc.close();

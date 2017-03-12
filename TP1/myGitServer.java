@@ -87,14 +87,14 @@ public class myGitServer{
 				boolean foundU = checkUser(username, users);
 				
 				outStream.writeBoolean(foundU);
-				
-				if (!foundU) {
+								
+				if (!foundU) { //create user
 				
 					String pass = (String) inStream.readObject();
 					User newUser = new User(username, pass);
 					outStream.writeBoolean(createUser(newUser, users));
 					
-				} else if(param_p){
+				} else if(param_p){ //confirm password
 					
 					boolean autentic = false;
 					while(!autentic){
@@ -104,7 +104,7 @@ public class myGitServer{
 						outStream.writeBoolean(autentic);
 					}
 					
-				} else {
+				} else { //recive pass
 					
 					boolean autentic = false;
 					while(!autentic){

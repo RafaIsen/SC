@@ -78,6 +78,8 @@ public class myGitServer{
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 				int continua = 1;
 				
+				boolean param_p = inStream.readBoolean();
+				
 				String username = (String) inStream.readObject();
 				
 				File users = new File("C:\\Users\\rafae\\Desktop\\SC\\Trabalho1\\myGitServer\\users.txt");
@@ -92,10 +94,25 @@ public class myGitServer{
 					User newUser = new User(username, pass);
 					outStream.writeBoolean(createUser(newUser, users));
 					
+				} else if(param_p){
+					
+					boolean autentic = false;
+					while(!autentic){
+						String pass = (String) inStream.readObject();
+						User user = new User(username, pass);
+						autentic = autenticate(user, users);
+						outStream.writeBoolean(autentic);
+					}
+					
 				} else {
 					
-					String pass = (String) inStream.readObject();
-					outStream.writeBoolean(autenticate(username, pass, users));
+					boolean autentic = false;
+					while(!autentic){
+						String pass = (String) inStream.readObject();
+						User user = new User(username, pass);
+						autentic = autenticate(user, users);
+						outStream.writeBoolean(autentic);
+					}
 					
 				}
 					
@@ -217,7 +234,7 @@ public class myGitServer{
 		}
 		
 		
-		public boolean autenticate(String username, String pass, File f) throws IOException{
+		public boolean autenticate(User u, File f) throws IOException{
 			
 			boolean autenticado = false;
 	
@@ -226,7 +243,7 @@ public class myGitServer{
 			while (scan.hasNextLine() || !autenticado) {
 				
 				String[] split = scan.nextLine().split(":");
-				if(split[0].equals(username) && split[1].equals(pass))
+				if(split[0].equals(u.name) && split[1].equals(u.pass))
 					autenticado = true; 
 			
 			}

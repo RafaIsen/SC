@@ -46,6 +46,8 @@ public class myGit{
 				
 				Scanner scan = new Scanner(System.in);
 				
+				boolean param_p = args[2] == "-p";
+				
 				ip = args[1].split(":");
 				port = Integer.parseInt(ip[1]);
 				
@@ -58,6 +60,9 @@ public class myGit{
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				
+				//warn the server that -p is a parameter
+				outStream.writeBoolean(param_p);
 				
 				/*/autenticate user/*/
 				
@@ -77,7 +82,7 @@ public class myGit{
 					if(inStream.readBoolean())
 						System.out.println("-- O utilizador " + args[0] + " foi criado");
 				
-				} else if (args[2] == "-p") {
+				} else if (param_p) {
 					
 					while(!autentic){
 						
@@ -87,6 +92,7 @@ public class myGit{
 							System.out.println("Password errada!");
 							System.out.println("Tenta novamente:");
 							outStream.writeObject(scan.nextLine());
+							autentic = inStream.readBoolean();
 						}
 						
 					}
@@ -98,6 +104,12 @@ public class myGit{
 						System.out.println("Password: ");
 						outStream.writeObject(scan.nextLine());
 						autentic = inStream.readBoolean();
+						if(!autentic){
+							System.out.println("Password errada!");
+							System.out.println("Tenta novamente:");
+							outStream.writeObject(scan.nextLine());
+							autentic = inStream.readBoolean();
+						}
 						
 					}
 					
@@ -105,7 +117,7 @@ public class myGit{
 					
 				
 				//executes the command
-				if(args[2] == "-p")
+				if(param_p)
 					if(args.length == 7)
 						executeCommand(args[4], args[5], args[6]);
 					else

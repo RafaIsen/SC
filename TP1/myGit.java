@@ -33,107 +33,99 @@ public class myGit{
 			System.out.println("-- O repositório " + args[1] + " foi criado localmente ");
 		}
 		else {
+			try {		
+	
+				Scanner scan = new Scanner(System.in);
 				
-			Socket cSoc = null;
-			
-			ObjectOutputStream outStream = null;
-			ObjectInputStream inStream = null;
-			
-			Scanner scan = new Scanner(System.in);
-			
-			boolean param_p = false;
-			
-			if(args.length > 2)
-				param_p = args[2] == "-p";
-			
-			ip = args[1].split(":");
-			port = Integer.parseInt(ip[1]);
-			
-			try {
-				if (cSoc == null) {
-					cSoc = new Socket(ip[0],port);
-					outStream = new ObjectOutputStream(cSoc.getOutputStream());
-					inStream = new ObjectInputStream(cSoc.getInputStream());
+				boolean param_p = false;
+				
+				if(args.length > 2)
+					param_p = args[2].equals("-p");
+				
+				ip = args[1].split(":");
+				port = Integer.parseInt(ip[1]);
+					
+				Socket cSoc = new Socket(ip[0],port);
+				ObjectOutputStream outStream = new ObjectOutputStream(cSoc.getOutputStream());
+				ObjectInputStream inStream = new ObjectInputStream(cSoc.getInputStream());
+				
+				//warn the server that -p is a parameter
+				outStream.writeObject(param_p);
+				
+				/*/autenticate user/*/
+				
+				//sends user name to the server
+				outStream.writeObject(args[0]);
+				
+				//obtains response of the server
+				boolean exists = (boolean) inStream.readObject();
+				
+				boolean autentic = false;
+				
+				if (!exists) {
+					
+					System.out.println("-- O utilizador " + args[0] + " vai ser criado ");
+					String pass = null;
+					if(param_p)
+						pass = confirmPwd(args[0], args[2], args[3]);
+					else 
+						pass = confirmPwd(args[0], " ", " ");
+					outStream.writeObject(pass);
+					if((boolean) inStream.readObject())
+						System.out.println("-- O utilizador " + args[0] + " foi criado");
+				
+				} else if (param_p) {
+					
+					while(!autentic){
+						
+						outStream.writeObject(args[3]);
+						autentic = (boolean) inStream.readObject();
+						if(!autentic){
+							System.out.println("Password errada!");
+							System.out.println("Tenta novamente:");
+							outStream.writeObject(scan.nextLine());
+							autentic = (boolean) inStream.readObject();
+						}
+						
+					}
+						
+				} else {
+					
+					while(!autentic){
+						
+						System.out.println("Password: ");
+						outStream.writeObject(scan.nextLine());
+						autentic = (boolean) inStream.readObject();
+						if(!autentic){
+							System.out.println("Password errada!");
+							System.out.println("Tenta novamente:");
+							outStream.writeObject(scan.nextLine());
+							autentic = (boolean) inStream.readObject();
+						}
+						
+					}
+					
 				}
+					
+				
+				//executes the command
+				if(param_p)
+					if(args.length == 7)
+						executeCommand(args[4], args[5], args[6]);
+					else if(args.length > 4)
+						executeCommand(args[4], args[5], "N");
+				else
+					if(args.length == 5)
+						executeCommand(args[2], args[3], args[4]);
+					else if(args.length > 2)
+						executeCommand(args[2], args[3], "N");
+				
+				cSoc.close();
+			
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
-			//warn the server that -p is a parameter
-			outStream.writeBoolean(param_p);
-			
-			/*/autenticate user/*/
-			
-			//sends user name to the server
-			outStream.writeObject(args[0]);
-			
-			//obtains response of the server
-			boolean exists = inStream.readBoolean();
-			
-			boolean autentic = false;
-			
-			if (!exists) {
-				
-				System.out.println("-- O utilizador " + args[0] + " vai ser criado ");
-				String pass = null;
-				if(param_p)
-					pass = confirmPwd(args[0], args[2], args[3]);
-				else 
-					pass = confirmPwd(args[0], " ", " ");
-				outStream.writeObject(pass);
-				if(inStream.readBoolean())
-					System.out.println("-- O utilizador " + args[0] + " foi criado");
-			
-			} else if (param_p) {
-				
-				while(!autentic){
-					
-					outStream.writeObject(args[3]);
-					autentic = inStream.readBoolean();
-					if(!autentic){
-						System.out.println("Password errada!");
-						System.out.println("Tenta novamente:");
-						outStream.writeObject(scan.nextLine());
-						autentic = inStream.readBoolean();
-					}
-					
-				}
-					
-			} else {
-				
-				while(!autentic){
-					
-					System.out.println("Password: ");
-					outStream.writeObject(scan.nextLine());
-					autentic = inStream.readBoolean();
-					if(!autentic){
-						System.out.println("Password errada!");
-						System.out.println("Tenta novamente:");
-						outStream.writeObject(scan.nextLine());
-						autentic = inStream.readBoolean();
-					}
-					
-				}
-				
-			}
-				
-			
-			//executes the command
-			if(param_p)
-				if(args.length == 7)
-					executeCommand(args[4], args[5], args[6]);
-				else if(args.length > 4)
-					executeCommand(args[4], args[5], "N");
-			else
-				if(args.length == 5)
-					executeCommand(args[2], args[3], args[4]);
-				else if(args.length > 2)
-					executeCommand(args[2], args[3], "N");
-			
-			cSoc.close();
-		
 		}
-		
 		//autenticate(scan, outStream, inStream);
 		
 		//sendFile(outStream, inStream);
@@ -197,13 +189,13 @@ public class myGit{
 		String pass = " ";
 		String passConf = " ";
 		
-		if (command == "-p") {
+		if (command.equals("-p")) {
 			
 			System.out.println("Confirmar password do utilizador " + username + ":");
 		
 			passConf = scan.nextLine();
 			
-			while(pass != pwd || pass != passConf) {
+			while(!pass.equals(pwd) && !pass.equals(passConf)) {
 				
 				System.out.println("Essa não foi a password que escreveu primeiro");
 				System.out.println("Escreva a password:");
@@ -224,7 +216,7 @@ public class myGit{
 			
 			passConf = scan.nextLine();
 			
-			while(pass != passConf) {
+			while(!pass.equals(passConf)) {
 				
 				System.out.println("Essa não foi a password que escreveu primeiro");
 				System.out.println("Escreva a password:");

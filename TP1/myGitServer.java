@@ -78,7 +78,7 @@ public class myGitServer{
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 				int continua = 1;
 				
-				boolean param_p = inStream.readBoolean();
+				boolean param_p = (boolean) inStream.readObject();
 				
 				String username = (String) inStream.readObject();
 				
@@ -86,13 +86,13 @@ public class myGitServer{
 				
 				boolean foundU = checkUser(username, users);
 				
-				outStream.writeBoolean(foundU);
+				outStream.writeObject(foundU);
 								
 				if (!foundU) { //create user
 				
 					String pass = (String) inStream.readObject();
 					User newUser = new User(username, pass);
-					outStream.writeBoolean(createUser(newUser, users));
+					outStream.writeObject(createUser(newUser, users));
 					
 				} else if(param_p){ //confirm password
 					
@@ -101,7 +101,7 @@ public class myGitServer{
 						String pass = (String) inStream.readObject();
 						User user = new User(username, pass);
 						autentic = autenticate(user, users);
-						outStream.writeBoolean(autentic);
+						outStream.writeObject(autentic);
 					}
 					
 				} else { //recive pass
@@ -111,7 +111,7 @@ public class myGitServer{
 						String pass = (String) inStream.readObject();
 						User user = new User(username, pass);
 						autentic = autenticate(user, users);
-						outStream.writeBoolean(autentic);
+						outStream.writeObject(autentic);
 					}
 					
 				}

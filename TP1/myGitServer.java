@@ -104,7 +104,7 @@ public class myGitServer{
 						outStream.writeObject(autentic);
 					}
 					
-				} else { //recive pass
+				} else { //Receive pass
 					
 					boolean autentic = false;
 					while(!autentic){
@@ -118,10 +118,11 @@ public class myGitServer{
 					
 				
 				while (continua == 1) {
-					String in = (String) inStream.readObject();
-					String[] split = in.split(" ");
+					Message messIn = (Message) inStream.readObject();
+					Message messOut = null;
+					//String[] split = in.split(" ");
 					
-					switch (split[0]) {
+					switch (messIn.method) {
 					
 						case "pushFile":
 							pushFile(outStream, inStream);

@@ -113,14 +113,14 @@ public class myGit{
 				//executes the command
 				if(param_p)
 					if(args.length == 7)
-						executeCommand(args[4], args[5], args[6]);
+						executeCommand(args[4], args[5], args[6], outStream, inStream);
 					else if(args.length > 4)
-						executeCommand(args[4], args[5], "N");
+						executeCommand(args[4], args[5], "N", outStream, inStream);
 				else
 					if(args.length == 5)
-						executeCommand(args[2], args[3], args[4]);
+						executeCommand(args[2], args[3], args[4], outStream, inStream);
 					else if(args.length > 2)
-						executeCommand(args[2], args[3], "N");
+						executeCommand(args[2], args[3], "N", outStream, inStream);
 				
 				cSoc.close();
 			
@@ -139,8 +139,34 @@ public class myGit{
 		
 	}
 
-	private void pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException {
-		outStream.writeObject("pushFile ya");
+	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName) throws IOException, ClassNotFoundException {
+		int result = -1; 
+		File file = new File(fileName);
+		
+		String[] name = new String[1];
+		name[0] = fileName;
+		
+		long[] dates = new long[1];
+		long date = file.lastModified();
+		dates[0] = date;
+		
+		Message messOut = new Message("pushFile", name, null, dates, null);
+		Message messIn = null;
+		
+		
+		outStream.writeObject(messOut);
+		
+		messIn = (Message) inStream.readObject();
+		
+		if (messIn == null)
+			result = -1;
+		else if (messIn.toBeUpdated[0] == true){
+			sendFile(outStream, inStream, file);
+			result = 0;
+		} else
+			result = 0;
+		
+		return result;		
 	}
 
 	private void pushRep() {
@@ -163,12 +189,12 @@ public class myGit{
 		
 	}
 
-	public boolean sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException {
+	public boolean sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException {
 		boolean result = false;
-		File pdf = new File("C:\\Users\\HP\\Desktop\\a.pdf");
-		int lengthPdf = (int) pdf.length();
+		//File pdf = new File(file);
+		int lengthPdf = (int) file.length();
 		byte[] buf = new byte[1024];
-        FileInputStream is = new FileInputStream(pdf);
+        FileInputStream is = new FileInputStream(file);
         
         outStream.writeInt(lengthPdf);
         
@@ -180,8 +206,8 @@ public class myGit{
         }
         
         is.close();
-		inStream.close();
-		outStream.close();
+		//inStream.close();
+		//outStream.close();
 		return result;
 	}
 	
@@ -235,14 +261,14 @@ public class myGit{
 		
 	}
 	
-	public void executeCommand(String command, String param1, String param2){
+	public void executeCommand(String command, String param1, String param2, ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException, ClassNotFoundException{
 		
 		switch (command) {
 		
 			case "-push":
 				if (param1.contains(".")) {
 					System.out.println("asd");
-					//pushFile(outStream, inStream);
+					pushFile(outStream, inStream, param1);
 				}
 				else
 					pushRep();

@@ -125,7 +125,7 @@ public class myGitServer{
 					switch (messIn.method) {
 					
 						case "pushFile":
-							pushFile(outStream, inStream);
+							pushFile(outStream, inStream, messIn);
 							break;
 							
 						case "pushRep":
@@ -198,7 +198,7 @@ public class myGitServer{
 		}
 
 
-		private void pushFile(ObjectOutputStream outStream, ObjectInputStream inStream) {
+		private void pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) {
 			// TODO 
 			
 			

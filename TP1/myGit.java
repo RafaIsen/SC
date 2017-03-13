@@ -161,7 +161,6 @@ public class myGit{
 		Message messOut = new Message("pushFile", name, null, dates, null);
 		Message messIn = null;
 		
-		
 		outStream.writeObject(messOut);
 		
 		messIn = (Message) inStream.readObject();

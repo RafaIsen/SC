@@ -139,7 +139,6 @@ public class myGitServer{
 				if ((param_p && num_args > 4) || (!param_p && num_args > 2)) {
 				
 					while (continua == 1) {
-
 						
 						Message messIn = (Message) inStream.readObject();
 											
@@ -214,10 +213,10 @@ public class myGitServer{
 		}
 
 
-		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
+		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
 			
-			File file = new File(path + "/" + messIn.fileName[0]);
+			File file = new File(path + "/users/" + messIn.fileName[0]);
 			Date date = null;
 			boolean exists = file.exists();
 			
@@ -227,7 +226,8 @@ public class myGitServer{
 			if (exists) {
 				date = new Date(file.lastModified());
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
-					File newFile = new File();
+					updateFiles(path, file, messIn.fileName[0]);
+					File newFile = new File(path + "/users/" + messIn.fileName[0]);
 					ya[0] = true;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
 					if (receiveFile(outStream, inStream, newFile) >= 0)
@@ -252,7 +252,30 @@ public class myGitServer{
 			// TODO Auto-generated method stub
 			
 		}
-
+		
+		
+		public void updateFiles(Path path, File file, String filename) throws IOException{
+			
+			String[] pathFile = filename.split("/");
+			
+			File folder = null;
+			
+			if(pathFile.length == 3)
+				folder = new File(path + "/" + pathFile[0] + "/" + pathFile[1] + "/");
+			else
+				folder = new File(path + "/" + pathFile[0] + "/");
+				
+			File[] listOfFiles = folder.listFiles();
+			
+			int numVersion = listOfFiles.length;
+			
+			File renamedFile = new File(path + "/" + filename + "." + numVersion);
+			file.renameTo(renamedFile);
+			
+			File newFile = new File(path + filename);
+			newFile.createNewFile();
+			
+		}
 
 		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException{
 			int result = -1;
@@ -277,7 +300,6 @@ public class myGitServer{
 				return result;
 		}
 		
-		
 		public boolean autenticate(User u, File f) throws IOException{
 			
 			boolean autenticado = false;
@@ -296,7 +318,6 @@ public class myGitServer{
 			
 			return autenticado;
 		}
-		
 		
 		public boolean createUser(User u, File f, Path path){
 			boolean result = false;

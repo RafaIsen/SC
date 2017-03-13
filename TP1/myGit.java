@@ -168,6 +168,7 @@ public class myGit{
 		
 		if (messIn == null)
 			result = -1;
+		
 		else if (messIn.toBeUpdated[0] == true){
 			sendFile(outStream, inStream, file);
 			result = 0;

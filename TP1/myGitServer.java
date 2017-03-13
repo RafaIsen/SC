@@ -146,7 +146,7 @@ public class myGitServer{
 						switch (messIn.method) {
 						
 							case "pushFile":
-								pushFile(outStream, inStream, messIn, path);
+								if (pushFile(outStream, inStream, messIn, path) > 0)
 								break;
 								
 							case "pushRep":
@@ -214,35 +214,53 @@ public class myGitServer{
 		}
 
 
-		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
+		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
 			
-			File file = new File(path + "/" + messIn.fileName[0]);
+			File file = new File(path + "/Users/" + messIn.fileName[0]);
+			File newFile = null;
 			Date date = null;
 			boolean exists = file.exists();
 			
 			Message messOut = null;
 			boolean[] ya = new boolean[1];
+			
+			int versao = 1;
 
 			if (exists) {
+				//actualiza o ficheiro para uma versao mais recente
 				date = new Date(file.lastModified());
+				
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
-					File newFile = new File();
+					newFile = new File(path + "/Users/" + messIn.fileName[0] + "temp");
 					ya[0] = true;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
+					outStream.writeObject(messOut);
+					
 					if (receiveFile(outStream, inStream, newFile) >= 0)
-						result = 0;						
+						result = 0;	
+					file.renameTo(new File(path + "/Users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
+					newFile.renameTo(new File(path + "/Users/" + messIn.fileName[0]));
+					
 				} else {
+					//nao actualiza o ficheiro porque nao he mais recente
 					ya[0] = false;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
+					outStream.writeObject(messOut);
 					result = 0;
 				}	
+				
+			//cria o ficheiro porque ainda existe
 			} else {
-				file.createNewFile();
+				
 				ya[0] = true;
 				messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
-				if (receiveFile(outStream, inStream, file) >= 0)
+				outStream.writeObject(messOut);
+				if (receiveFile(outStream, inStream, file) >= 0) {
 					result = 0;
+					file.createNewFile();
+				}
+				
 			}
 			return result;			
 		}

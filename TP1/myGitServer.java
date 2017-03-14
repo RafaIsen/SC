@@ -242,8 +242,11 @@ public class myGitServer{
 				date = new Date(file.lastModified());
 				
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
-
-					versao = countNumVersions(path, messIn.fileName[0]);
+					
+					if(secondI == -1)
+						versao = countNumVersions(path, messIn.fileName[0], messIn.user);
+					else
+						versao = countNumVersions(path, messIn.fileName[0], null);
 					newFile = new File(path + "/users/" + messIn.fileName[0] + "temp");
 					
 					ya[0] = true;
@@ -299,7 +302,7 @@ public class myGitServer{
 		}
 		
 		
-		public int countNumVersions(Path path, String filename) throws IOException{
+		public int countNumVersions(Path path, String filename, String username) throws IOException{
 			
 			String[] pathFile = filename.split("/");
 			
@@ -309,13 +312,17 @@ public class myGitServer{
 			
 			String name = null;
 			
-			if(pathFile.length == 3){
+			if (pathFile.length == 3) {
+				
 				folder = new File(path + "/" + pathFile[0] + "/" + pathFile[1] + "/");
 				name = pathFile[2];
+			
 			}
-			else{
-				folder = new File(path + "/" + pathFile[0] + "/");
+			else {
+				
+				folder = new File(path + "/" + username + "/" + pathFile[0] + "/");
 				name = pathFile[1];
+			
 			}
 				
 			File[] listOfFiles = folder.listFiles();

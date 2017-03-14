@@ -307,7 +307,6 @@ public class myGit{
 		
 			case "-push":
 				if (param1.contains(".")) {
-					System.out.println("asd");
 					pushFile(outStream, inStream, param1, user, path);
 				}
 				else

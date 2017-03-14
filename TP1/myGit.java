@@ -150,10 +150,6 @@ public class myGit{
 	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
 		int result = -1; 
 		
-		String[] pathName = fileName.split("/");
-		
-		String pathFile = pathName[pathName.length-1];
-		
 		File file = new File(path + "/" + fileName);
 		
 		String[] name = new String[1];

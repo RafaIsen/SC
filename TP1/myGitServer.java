@@ -215,8 +215,18 @@ public class myGitServer{
 
 		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
+
+			StringBuilder sb = new StringBuilder();
+			sb.append(messIn.fileName);
+			int firstI = sb.indexOf("/");
+			int secondI = sb.indexOf("/", firstI);
 			
-			File file = new File(path + "/users/" + messIn.fileName[0]);
+			File file = null;
+			
+			if(secondI == -1)
+				file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
+			else
+				file = new File(path + "/users/" + messIn.fileName[0]);
 			File newFile = null;
 
 			Date date = null;
@@ -242,8 +252,8 @@ public class myGitServer{
 					
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
 						result = 0;	
-						file.renameTo(new File(path + "/Users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
-						newFile.renameTo(new File(path + "/Users/" + messIn.fileName[0]));
+						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
+						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
 					}
 					
 				} else {

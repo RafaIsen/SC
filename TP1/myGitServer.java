@@ -216,7 +216,8 @@ public class myGitServer{
 		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
 			
-			File file = new File(path + "/users/" + messIn.fileName[0]);
+			//if (messIn.fileName[0].contai)
+			File file = new File(path + "/users/" + messIn.user + messIn.fileName[0]);
 			File newFile = null;
 
 			Date date = null;
@@ -242,8 +243,8 @@ public class myGitServer{
 					
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
 						result = 0;	
-						file.renameTo(new File(path + "/Users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
-						newFile.renameTo(new File(path + "/Users/" + messIn.fileName[0]));
+						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
+						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
 					}
 					
 				} else {
@@ -270,19 +271,55 @@ public class myGitServer{
 		}
 
 
-		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
+		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
+			File file  = null;
+			Path currPath = null;
+			if (messIn.repName.contains("/")) {
+				file = new File(path + "/users/" + messIn.repName);
+				currPath = file.toPath();
+			} else { 
+				file = new File(path + "/users/" + messIn.user + messIn.repName);
+				currPath = file.toPath();
 			
-			File file = new File(path + "/users/" + messIn.fileName[0]);
+			if (!file.exists())
+				file.mkdir();
+			
 			File newFile = null;
-
+			File currFile = null;
+			
+			if (messIn.fileName.length > 0)
+				currFile = new File(currPath + messIn.fileName[0]);
+						
 			Date date = null;
 			boolean exists = file.exists();
 			
 			Message messOut = null;
-			boolean[] ya = new boolean[1];
-			
+			boolean[] ya = new boolean[messIn.fileName.length];
 			int versao = 0;
+			
+			for (int i = 0; i < messIn.fileName.length; i++) {
+				if (currFile.exists()) {
+					date = new Date(currFile.lastModified());
+					
+					if (date.compareTo(messIn.fileDate[i]) < 0) {
+						versao = countNumVersions(path, messIn.fileName[i]);
+						ya[i] = true;
+					}
+					
+				} else
+					ya[i] = true;
+				
+				currFile = new File(currPath + messIn.fileName[i]);
+			}	
+			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user);
+			outStream.writeObject(messOut);
+					
+			newFile = new File(currPath + messIn.fileName[i] + "temp");	
+			
+				
+			}
+			
 			return result;
 			
 			

@@ -184,10 +184,14 @@ public class myGit{
 		File[] repFiles = rep.listFiles();
 		int numFiles = repFiles.length;
 		
-		String[] name = new String[numFiles];
-				
-		Date[] dates = new Date[numFiles];
-				
+		String[] name = null;
+		Date[] dates = null;
+		
+		if (numFiles != 0) {
+			name = new String[numFiles];
+			dates = new Date[numFiles];
+		}	
+		
 		for(int i = 0; i < numFiles; i++) {
 			name[i] = repFiles[i].toString();
 			dates[i] = new Date(repFiles[i].lastModified());

@@ -149,7 +149,7 @@ public class myGitServer{
 								break;
 								
 							case "pushRep":
-								pushRep();
+								if (pushRep(outStream, inStream, messIn, path) > 0)
 								break;
 								
 							case "pullFile":
@@ -225,7 +225,7 @@ public class myGitServer{
 			Message messOut = null;
 			boolean[] ya = new boolean[1];
 			
-			int versao = 1;
+			int versao = 0;
 
 			if (exists) {
 				//actualiza o ficheiro para uma versao mais recente
@@ -233,22 +233,23 @@ public class myGitServer{
 				
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
 
-					countNumVersions(path, messIn.fileName[0]);
+					versao = countNumVersions(path, messIn.fileName[0]);
 					newFile = new File(path + "/users/" + messIn.fileName[0] + "temp");
 					
 					ya[0] = true;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user);
 					outStream.writeObject(messOut);
 					
-					if (receiveFile(outStream, inStream, newFile) >= 0)
+					if (receiveFile(outStream, inStream, newFile) >= 0) {
 						result = 0;	
-					file.renameTo(new File(path + "/Users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
-					newFile.renameTo(new File(path + "/Users/" + messIn.fileName[0]));
+						file.renameTo(new File(path + "/Users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
+						newFile.renameTo(new File(path + "/Users/" + messIn.fileName[0]));
+					}
 					
 				} else {
 					//nao actualiza o ficheiro porque nao he mais recente
 					ya[0] = false;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user);
 					outStream.writeObject(messOut);
 					result = 0;
 				}	
@@ -257,7 +258,7 @@ public class myGitServer{
 			} else {
 				
 				ya[0] = true;
-				messOut = new Message(messIn.method, messIn.fileName, messIn.fileVersion, messIn.fileDate, ya);
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user);
 				outStream.writeObject(messOut);
 				if (receiveFile(outStream, inStream, file) >= 0) {
 					result = 0;
@@ -269,8 +270,21 @@ public class myGitServer{
 		}
 
 
-		private void pushRep() {
-			// TODO Auto-generated method stub
+		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
+			int result = -1;
+			
+			File file = new File(path + "/users/" + messIn.fileName[0]);
+			File newFile = null;
+
+			Date date = null;
+			boolean exists = file.exists();
+			
+			Message messOut = null;
+			boolean[] ya = new boolean[1];
+			
+			int versao = 0;
+			return result;
+			
 			
 		}
 		

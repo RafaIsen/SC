@@ -8,21 +8,18 @@ public class Message implements Serializable {
 	private static final long serialVersionUID = -293738311238270888L;
 	public String method;
 	public String[] fileName;
-	public String[] fileVersion;
+	public String repName;
 	public Date[] fileDate;
-	public int numFiles;
-	//
 	public boolean[] toBeUpdated; 
-	//public String id;
-	//public String rep;
+	public String user;
 	
-	public Message(String method, String[] fileName, String[] fileVersion, Date[] fileDate, boolean[] toBeUpdated) {
+	public Message(String method, String[] fileName, String repName, Date[] fileDate, boolean[] toBeUpdated, String user) {
 		this.method = method;
 		this.fileName = fileName;
-		this.fileVersion = fileVersion;
+		this.repName = repName;
 		this.fileDate = fileDate;
-		this.numFiles = fileName.length;
 		this.toBeUpdated = toBeUpdated;
+		this.user = user;
 	}
 
 }

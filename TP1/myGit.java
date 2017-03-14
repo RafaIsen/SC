@@ -123,14 +123,14 @@ public class myGit{
 				//executes the command
 				if(param_p)
 					if(args.length == 7)
-						executeCommand(args[4], args[5], args[6], outStream, inStream, path);
+						executeCommand(args[4], args[5], args[6], args[0], outStream, inStream, path);
 					else if(args.length > 4)
-						executeCommand(args[4], args[5], "N", outStream, inStream, path);
+						executeCommand(args[4], args[5], "N", args[0], outStream, inStream, path);
 				else
 					if(args.length == 5)
-						executeCommand(args[2], args[3], args[4], outStream, inStream, path);
+						executeCommand(args[2], args[3], args[4], args[0], outStream, inStream, path);
 					else if(args.length > 2)
-						executeCommand(args[2], args[3], "N", outStream, inStream, path);
+						executeCommand(args[2], args[3], "N", args[0], outStream, inStream, path);
 				
 				cSoc.close();
 				scan.close();
@@ -147,7 +147,7 @@ public class myGit{
 		
 	}
 
-	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, Path path) throws IOException, ClassNotFoundException {
+	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
 		int result = -1; 
 		File file = new File(path + "/" + fileName);
 		
@@ -158,7 +158,7 @@ public class myGit{
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
-		Message messOut = new Message("pushFile", name, null, dates, null);
+		Message messOut = new Message("pushFile", name, null, dates, null, user);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -168,19 +168,48 @@ public class myGit{
 		if (messIn == null)
 			result = -1;
 		
-		else if (messIn.toBeUpdated[0] == true){
+		else if (messIn.toBeUpdated[0] == true) {
 			sendFile(outStream, inStream, file);
 			result = 0;
 		} else
-			result = 0;
+			result = -1;
 		
 		return result;		
 	}
 
 	
-	private void pushRep() {
+	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
+		int result = -1; 
+		File rep = new File(path + "/" + repName);
+		File[] repFiles = rep.listFiles();
+		int numFiles = repFiles.length;
 		
+		String[] name = new String[numFiles];
+				
+		Date[] dates = new Date[numFiles];
+				
+		for(int i = 0; i < numFiles; i++) {
+			name[i] = repFiles[i].toString();
+			dates[i] = new Date(repFiles[i].lastModified());
+		}
+		Message messOut = new Message("pushRep", name, repName, dates, null, user);
+		Message messIn = null;
 		
+		outStream.writeObject(messOut);
+		
+		messIn = (Message) inStream.readObject();
+		
+		if (messIn == null)
+			result = -1;
+		else if (messIn.toBeUpdated.length > 0) {
+			for(int i = 0; i < messIn.toBeUpdated.length; i++) {
+				if (messIn.toBeUpdated[i] == true) 
+					sendFile(outStream, inStream, repFiles[i]);
+				}
+			result = 0;
+		} else
+			result = -1;
+		return result;			
 	}
 
 	private void pullFile() {
@@ -271,17 +300,17 @@ public class myGit{
 		
 	}
 	
-	public void executeCommand(String command, String param1, String param2, ObjectOutputStream  outStream, ObjectInputStream inStream, Path path) throws IOException, ClassNotFoundException{
+	public void executeCommand(String command, String param1, String param2, String user, ObjectOutputStream  outStream, ObjectInputStream inStream, Path path) throws IOException, ClassNotFoundException{
 		
 		switch (command) {
 		
 			case "-push":
 				if (param1.contains(".")) {
 					System.out.println("asd");
-					pushFile(outStream, inStream, param1, path);
+					pushFile(outStream, inStream, param1, user, path);
 				}
 				else
-					pushRep();
+					pushRep(outStream, inStream, param1, user, path);
 				
 				break;
 			

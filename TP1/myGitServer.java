@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -153,7 +154,7 @@ public class myGitServer{
 								break;
 								
 							case "pullFile":
-								pullFile();
+								pullFile(outStream, inStream, messIn, path);
 								break;
 								
 							case "pullRep":
@@ -207,9 +208,49 @@ public class myGitServer{
 		}
 
 
-		private void pullFile() {
-			// TODO Auto-generated method stub
+		private int pullFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
+			int result = -1;
+			File file = null;
 			
+			//criar path para o rep
+			if (messIn.repName.contains("/")) 
+				file = new File(path + "/users/" + messIn.fileName[0]);
+				
+			 else  
+				file = new File(path + "/users/" + messIn.user + messIn.fileName[0]);
+						
+			Date date = null;
+					
+			Message messOut = null;
+			boolean[] ya = new boolean[1];
+								
+			if (file.exists()) {
+				//actualiza o ficheiro para uma versao mais recente
+				date = new Date(file.lastModified());
+				
+				if (date.compareTo(messIn.fileDate[0]) > 0) {
+					ya[0] = true;
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user);
+					outStream.writeObject(messOut);
+					
+					if (sendFile(outStream, inStream, file) >= 0) 
+						result = 0;
+										
+				} else {
+					//nao actualiza o ficheiro porque nao he mais recente
+					ya[0] = false;
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user);
+					outStream.writeObject(messOut);
+					result = 0;
+				}	
+				
+			//cria o ficheiro porque ainda existe
+			} else {
+				ya[0] = false;
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user);
+				outStream.writeObject(messOut);
+			}
+			return result;
 		}
 
 
@@ -414,6 +455,28 @@ public class myGitServer{
 				pdfOut.close();
 				result = 0;
 				return result;
+		}
+		
+		public int sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException {
+			int result = 0;
+			//File pdf = new File(file);
+			int lengthPdf = (int) file.length();
+			byte[] buf = new byte[1024];
+	        FileInputStream is = new FileInputStream(file);
+	        
+	        outStream.writeInt(lengthPdf);
+	        
+	        int n = 0;
+	        
+	        while(((n = is.read(buf, 0, buf.length)) != -1)) {
+	        	outStream.write(buf, 0, n);
+	        	outStream.flush();        
+	        }
+	        
+	        is.close();
+			//inStream.close();
+			//outStream.close();
+			return result;
 		}
 		
 		public boolean autenticate(User u, File f) throws IOException{

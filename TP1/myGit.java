@@ -180,7 +180,9 @@ public class myGit{
 	
 	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
 		int result = -1; 
-		File rep = new File(path + "/" + repName);
+		File rep = null;
+		//if (repName.contains("/"))
+		rep = new File(path + "/" + repName);
 		File[] repFiles = rep.listFiles();
 		int numFiles = repFiles.length;
 		

@@ -242,9 +242,10 @@ public class myGitServer{
 					outStream.writeObject(messOut);
 					
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
-						result = 0;	
 						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
 						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
+						newFile.createNewFile();
+						result = 0;
 					}
 					
 				} else {
@@ -257,7 +258,6 @@ public class myGitServer{
 				
 			//cria o ficheiro porque ainda existe
 			} else {
-				
 				ya[0] = true;
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user);
 				outStream.writeObject(messOut);
@@ -273,56 +273,89 @@ public class myGitServer{
 
 		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
-			File file  = null;
+			File rep  = null;
 			Path currPath = null;
-			if (messIn.repName.contains("/")) {
-				file = new File(path + "/users/" + messIn.repName);
-				currPath = file.toPath();
-			} else { 
-				file = new File(path + "/users/" + messIn.user + messIn.repName);
-				currPath = file.toPath();
-			
-			if (!file.exists())
-				file.mkdir();
-			
 			File newFile = null;
 			File currFile = null;
-			
-			if (messIn.fileName.length > 0)
-				currFile = new File(currPath + messIn.fileName[0]);
-						
+			File[] fileRep = null;
 			Date date = null;
-			boolean exists = file.exists();
+			boolean[] exists = null;
 			
 			Message messOut = null;
-			boolean[] ya = new boolean[messIn.fileName.length];
-			int versao = 0;
+			boolean[] ya = null;
+			int[] versions = null;
 			
+			//criar path para o rep
+			if (messIn.repName.contains("/")) {
+				rep = new File(path + "/users/" + messIn.repName);
+				currPath = rep.toPath();
+			} else { 
+				rep = new File(path + "/users/" + messIn.user + messIn.repName);
+				currPath = rep.toPath();
+			}
+			//criar rep caso nao exista
+			if (!rep.exists())
+				rep.mkdir();
+			//criar lista com todos os ficheiros
+			else 
+				fileRep = rep.listFiles();
+			
+			//
+			if (messIn.fileName.length > 0) {
+				currFile = new File(currPath + messIn.fileName[0]);
+				ya = new boolean[messIn.fileName.length];
+				versions = new int[messIn.fileName.length];
+				exists = new boolean[fileRep.length];
+			}
+			
+			//
 			for (int i = 0; i < messIn.fileName.length; i++) {
 				if (currFile.exists()) {
 					date = new Date(currFile.lastModified());
 					
+					//verificar quais os ficheiros que precisam de ser actualizados
 					if (date.compareTo(messIn.fileDate[i]) < 0) {
-						versao = countNumVersions(path, messIn.fileName[i]);
+						versions[i] = countNumVersions(path, messIn.fileName[i]);
 						ya[i] = true;
+						
 					}
 					
-				} else
+					//verificar quais os ficheiros q foram "apagados"
+					//if (fileRep.)
+					
+				} else {
 					ya[i] = true;
-				
+					versions[i] = 0;
+				}
 				currFile = new File(currPath + messIn.fileName[i]);
-			}	
+			}
+			
 			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user);
 			outStream.writeObject(messOut);
 					
-			newFile = new File(currPath + messIn.fileName[i] + "temp");	
-			
-				
+			//receber os ficheiros para acrualizar	
+			for (int i = 0; i < messIn.fileName.length; i++) {
+				//saber quais os ficheiros q vai client vai mandar
+				if (messOut.toBeUpdated[i] == true) {
+					currFile = new File(currPath + messIn.fileName[i]);
+					newFile = new File(currPath + messIn.fileName[i] + "temp");
+					
+					//receber os ficheiros
+					if (receiveFile(outStream, inStream, newFile) >= 0) {
+						//saber se o ficheiro e novo nao tem versao
+						if (versions[i] == 0)
+							currFile.renameTo(new File(currPath + messIn.fileName[i]));
+						else
+							currFile.renameTo(new File(currPath + messIn.fileName[i] + "." + Integer.toString(versions[i])));
+						
+						newFile.renameTo(new File(currPath + messIn.fileName[i]));
+						newFile.createNewFile();
+						result = 0;
+						
+					}
+				}
 			}
-			
 			return result;
-			
-			
 		}
 		
 		

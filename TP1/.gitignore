@@ -1,3 +1,12 @@
 /myClient.class
 /myServer$ServerThread.class
 /myServer.class
+<<<<<<< HEAD
+=======
+/myServer$ServerThread$Client.class
+/Message.class
+/myGit.class
+/myGitServer$ServerThread$User.class
+/myGitServer$ServerThread.class
+/myGitServer.class
+>>>>>>> branch 'master' of https://github.com/RafaIsen/SC.git

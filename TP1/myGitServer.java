@@ -258,7 +258,7 @@ public class myGitServer{
 			int result = -1;
 			
 			//if (messIn.fileName[0].contai)
-			File file = new File(path + "/users/" + messIn.user + messIn.fileName[0]);
+			File file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
 			File newFile = null;
 
 			Date date = null;

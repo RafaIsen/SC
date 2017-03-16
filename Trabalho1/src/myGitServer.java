@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -138,41 +139,38 @@ public class myGitServer{
 
 				//verifies if it has any methods in args
 				if ((param_p && num_args > 4) || (!param_p && num_args > 2)) {
-				
-					while (inStream.available() > 0) {
 						
-						Message messIn = (Message) inStream.readObject();
-											
-						switch (messIn.method) {
-						
-							case "pushFile":
-								pushFile(outStream, inStream, messIn, path);
-								break;
-								
-							case "pushRep":
-								pushRep(outStream, inStream, messIn, path);
-								break;
-								
-							case "pullFile":
-								pullFile(outStream, inStream, messIn, path);
-								break;
-								
-							case "pullRep":
-								pullRep();
-								break;
-							
-							case "share":
-								shareRep();
-								break;
-								
-							case "remove":
-								removeRep();
-								break;
-							}
-			
-					}
+					Message messIn = (Message) inStream.readObject();
+										
+					switch (messIn.method) {
 					
+						case "pushFile":
+							pushFile(outStream, inStream, messIn, path);
+							break;
+							
+						case "pushRep":
+							pushRep(outStream, inStream, messIn, path);
+							break;
+							
+						case "pullFile":
+							pullFile(outStream, inStream, messIn, path);
+							break;
+							
+						case "pullRep":
+							pullRep();
+							break;
+						
+						case "share":
+							shareRep();
+							break;
+							
+						case "remove":
+							removeRep();
+							break;
+						}
+		
 				}
+					
 						
 								
 				outStream.close();
@@ -427,25 +425,25 @@ public class myGitServer{
 			if (pathFile.length == 3) {
 				
 				folder = new File(path + "/users/" + pathFile[0] + "/" + pathFile[1] + "/");
-
 				name = pathFile[2];
 			
 			}
-			else{
+			else {
+				
 				folder = new File(path + "/users/" + username + "/" + pathFile[0] + "/");
-
 				name = pathFile[1];
 			
 			}
 				
 			File[] listOfFiles = folder.listFiles();
-			//String [] fileVersions = folder.list(name+"*");
 			
 			for (int i = 0; i < listOfFiles.length; i++) {
 				
-				String[] nameFile = listOfFiles[i].getAbsolutePath().split(".");
+				String[] pathFile = listOfFiles[i].getAbsoluteFile().split("/");
+				String[] nameFile = pathFile[pathFile.length-1].split(".");
+				System.out.println(name);
 				
-				if(nameFile[0].equals(name))
+				if(nameFile[1].equals(name))
 					numVersions++;
 				
 			}

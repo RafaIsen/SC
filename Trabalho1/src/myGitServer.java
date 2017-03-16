@@ -284,16 +284,12 @@ public class myGitServer{
 				date = new Date(file.lastModified());
 				
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
-<<<<<<< HEAD
 					
 					if(secondI == -1)
 						versao = countNumVersions(path, messIn.fileName[0], messIn.user);
 					else
 						versao = countNumVersions(path, messIn.fileName[0], null);
-=======
 
-					versao = countNumVersions(path, messIn.fileName[0], messIn.user);
->>>>>>> refs/heads/Andrade
 					newFile = new File(path + "/users/" + messIn.fileName[0] + "temp");
 					
 					ya[0] = true;
@@ -428,25 +424,17 @@ public class myGitServer{
 			
 			String name = null;
 			
-<<<<<<< HEAD
-			if (pathFile.length == 3) {
-				
-				folder = new File(path + "/" + pathFile[0] + "/" + pathFile[1] + "/");
-=======
+
 			if(pathFile.length == 3){
 				folder = new File(path + "/users/" + pathFile[0] + "/" + pathFile[1] + "/");
->>>>>>> refs/heads/Andrade
+
 				name = pathFile[2];
 			
 			}
-<<<<<<< HEAD
-			else {
-				
-				folder = new File(path + "/" + username + "/" + pathFile[0] + "/");
-=======
+
 			else{
 				folder = new File(path + "/users/" + username + "/" + pathFile[0] + "/");
->>>>>>> refs/heads/Andrade
+
 				name = pathFile[1];
 			
 			}

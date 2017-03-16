@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -138,41 +139,38 @@ public class myGitServer{
 
 				//verifies if it has any methods in args
 				if ((param_p && num_args > 4) || (!param_p && num_args > 2)) {
-				
-					while (inStream.available() > 0) {
 						
-						Message messIn = (Message) inStream.readObject();
-											
-						switch (messIn.method) {
-						
-							case "pushFile":
-								pushFile(outStream, inStream, messIn, path);
-								break;
-								
-							case "pushRep":
-								pushRep(outStream, inStream, messIn, path);
-								break;
-								
-							case "pullFile":
-								pullFile(outStream, inStream, messIn, path);
-								break;
-								
-							case "pullRep":
-								pullRep();
-								break;
-							
-							case "share":
-								shareRep();
-								break;
-								
-							case "remove":
-								removeRep();
-								break;
-							}
-			
-					}
+					Message messIn = (Message) inStream.readObject();
+										
+					switch (messIn.method) {
 					
+						case "pushFile":
+							pushFile(outStream, inStream, messIn, path);
+							break;
+							
+						case "pushRep":
+							pushRep(outStream, inStream, messIn, path);
+							break;
+							
+						case "pullFile":
+							pullFile(outStream, inStream, messIn, path);
+							break;
+							
+						case "pullRep":
+							pullRep();
+							break;
+						
+						case "share":
+							shareRep();
+							break;
+							
+						case "remove":
+							removeRep();
+							break;
+						}
+		
 				}
+					
 						
 								
 				outStream.close();
@@ -255,16 +253,7 @@ public class myGitServer{
 
 
 		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
-<<<<<<< HEAD
 			int result = -1;
-=======
-<<<<<<< HEAD
-			int result = -1;
-=======
-			int result = -1;
-<<<<<<< HEAD
->>>>>>> refs/heads/Rafa
->>>>>>> branch 'master' of https://github.com/RafaIsen/SC
 
 			StringBuilder sb = new StringBuilder();
 			sb.append(messIn.fileName);
@@ -277,19 +266,7 @@ public class myGitServer{
 				file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
 			else
 				file = new File(path + "/users/" + messIn.fileName[0]);
-<<<<<<< HEAD
-
-=======
-<<<<<<< HEAD
 			
-=======
-=======
-			
-			//if (messIn.fileName[0].contai)
-			File file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
->>>>>>> refs/heads/Andrade
->>>>>>> refs/heads/Rafa
->>>>>>> branch 'master' of https://github.com/RafaIsen/SC
 			File newFile = null;
 
 			Date date = null;
@@ -305,49 +282,23 @@ public class myGitServer{
 				date = new Date(file.lastModified());
 				
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
-<<<<<<< HEAD
 					
 					if(secondI == -1)
 						versao = countNumVersions(path, messIn.fileName[0], messIn.user);
 					else
 						versao = countNumVersions(path, messIn.fileName[0], null);
-=======
 
-					versao = countNumVersions(path, messIn.fileName[0], messIn.user);
->>>>>>> refs/heads/Andrade
 					newFile = new File(path + "/users/" + messIn.fileName[0] + "temp");
 					
 					ya[0] = true;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user);
 					outStream.writeObject(messOut);
 					
-<<<<<<< HEAD
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
 						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
 						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
 						newFile.createNewFile();
 						result = 0;
-=======
-<<<<<<< HEAD
-					if (receiveFile(outStream, inStream, newFile) >= 0) {
-=======
-					if (receiveFile(outStream, inStream, newFile) >= 0) {
-<<<<<<< HEAD
-						result = 0;	
-						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
-						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
-=======
->>>>>>> refs/heads/Rafa
-						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
-						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
-						newFile.createNewFile();
-<<<<<<< HEAD
-						result = 0;
-=======
-						result = 0;
->>>>>>> refs/heads/Andrade
->>>>>>> refs/heads/Rafa
->>>>>>> branch 'master' of https://github.com/RafaIsen/SC
 					}
 					
 				} else {
@@ -471,38 +422,29 @@ public class myGitServer{
 			
 			String name = null;
 			
-<<<<<<< HEAD
 			if (pathFile.length == 3) {
 				
-				folder = new File(path + "/" + pathFile[0] + "/" + pathFile[1] + "/");
-=======
-			if(pathFile.length == 3){
 				folder = new File(path + "/users/" + pathFile[0] + "/" + pathFile[1] + "/");
->>>>>>> refs/heads/Andrade
 				name = pathFile[2];
 			
 			}
-<<<<<<< HEAD
 			else {
 				
-				folder = new File(path + "/" + username + "/" + pathFile[0] + "/");
-=======
-			else{
 				folder = new File(path + "/users/" + username + "/" + pathFile[0] + "/");
->>>>>>> refs/heads/Andrade
 				name = pathFile[1];
 			
 			}
 				
 			File[] listOfFiles = folder.listFiles();
-			//String [] fileVersions = folder.list(name+"*");
 			
 			for (int i = 0; i < listOfFiles.length; i++) {
 				
-				String[] nameFile = listOfFiles[i].getAbsolutePath().split(".");
+				String[] pathFile = listOfFiles[i].getAbsoluteFile().split("/");
+				String[] nameFile = pathFile[pathFile.length-1].split(".");
+				System.out.println(name);
 				
-				if(nameFile[0].equals(name))
-					numVersions ++;
+				if(nameFile[1].equals(name))
+					numVersions++;
 				
 			}
 			

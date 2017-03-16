@@ -40,7 +40,7 @@ public class myGit{
 		//creates a local repository
 		if (args[0].equals("-init")){
 			new File(path + "/" + args[1]).mkdir();
-			System.out.println("-- O repositï¿½rio " + args[1] + " foi criado localmente ");
+			System.out.println("-- O repositório " + args[1] + " foi criado localmente ");
 		}
 		else {
 			try {		
@@ -179,6 +179,7 @@ public class myGit{
 		return result;		
 	}
 
+	
 	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
 		int result = -1; 
 		File rep = null;
@@ -255,43 +256,9 @@ public class myGit{
 		
 	}
 
-	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
-		int result = -1; 
-		File rep = null;
+	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
 		
-		rep = new File(path + "/" + repName);
-		File[] repFiles = rep.listFiles();
-		int numFiles = repFiles.length;
-		
-		String[] name = null;
-		Date[] dates = null;
-		
-		if (numFiles != 0) {
-			name = new String[numFiles];
-			dates = new Date[numFiles];
-		}	
-		
-		for(int i = 0; i < numFiles; i++) {
-			name[i] = repFiles[i].toString();
-			dates[i] = new Date(repFiles[i].lastModified());
-		}
-		Message messOut = new Message("pushRep", name, repName, dates, null, user);
-		Message messIn = null;
-		
-		outStream.writeObject(messOut);
-		
-		messIn = (Message) inStream.readObject();
-		if (messIn == null)
-			result = -1;
-		
-		else
-			for (int i = 0; i < messIn.toBeUpdated.length; i++)	{
-				if (messIn.toBeUpdated[i] == true) {
-					newFile = new File(path + "/" + fileName + "temp");
-				}
-			}
-		
-		return result;
+		return 0;
 	}
 
 	private void shareRep() {
@@ -358,7 +325,7 @@ public class myGit{
 			if(!passConf.equals(pwd))
 				while(!pass.equals(passConf)) {
 					
-					System.out.println("Essa nï¿½o foi a password que escreveu primeiro");
+					System.out.println("Essa não foi a password que escreveu primeiro");
 					System.out.println("Escreva a password:");
 					pass = scan.nextLine();
 					
@@ -379,7 +346,7 @@ public class myGit{
 			
 			while(!pass.equals(passConf)) {
 				
-				System.out.println("Essa nï¿½o foi a password que escreveu primeiro");
+				System.out.println("Essa não foi a password que escreveu primeiro");
 				System.out.println("Escreva a password:");
 				pass = scan.nextLine();
 				
@@ -424,7 +391,7 @@ public class myGit{
 				break;
 				
 			default:
-				System.out.println("Esse commando nï¿½o existe!");
+				System.out.println("Esse commando não existe!");
 				break;
 			
 		}

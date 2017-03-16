@@ -1,0 +1,5 @@
+grant codeBase "file:Trabalho1/*" {
+	permission java.net.SocketPermission "*:1024-", "connect";
+	permission java.io.FilePermission "${user.home}/*", "write";
+	permission java.io.FilePermission "${user.home}/*", "read";
+};

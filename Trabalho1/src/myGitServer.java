@@ -360,7 +360,7 @@ public class myGitServer{
 				rep = new File(path + "/users/" + messIn.repName);
 				currPath = rep.toPath();
 			} else { 
-				rep = new File(path + "/users/" + messIn.user + messIn.repName);
+				rep = new File(path + "/users/" + messIn.user + "/" + messIn.repName);
 				currPath = rep.toPath();
 			}
 			//criar rep caso nao exista

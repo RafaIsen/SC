@@ -372,7 +372,8 @@ public class myGitServer{
 			
 			//
 			if (messIn.fileName.length > 0) {
-				currFile = new File(currPath + messIn.fileName[0]);
+				currFile = new File(currPath + "/" + messIn.fileName[0]);
+				System.out.println(currPath + "/" + messIn.fileName[0]);
 				ya = new boolean[messIn.fileName.length];
 				versions = new int[messIn.fileName.length];
 				exists = new boolean[fileRep.length];
@@ -382,7 +383,8 @@ public class myGitServer{
 			for (int i = 0; i < messIn.fileName.length; i++) {
 				if (currFile.exists()) {
 					date = new Date(currFile.lastModified());
-					
+					System.out.println(date);
+					System.out.println(messIn.fileDate[i]);
 					//verificar quais os ficheiros que precisam de ser actualizados
 					if (date.compareTo(messIn.fileDate[i]) < 0) {
 						versions[i] = countNumVersions(path, messIn.fileName[i], messIn.user);
@@ -397,7 +399,7 @@ public class myGitServer{
 					ya[i] = true;
 					versions[i] = 0;
 				}
-				currFile = new File(currPath + messIn.fileName[i]);
+				currFile = new File(currPath + "/" + messIn.fileName[i]);
 			}
 			
 			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user);
@@ -407,8 +409,8 @@ public class myGitServer{
 			for (int i = 0; i < messIn.fileName.length; i++) {
 				//saber quais os ficheiros q vai client vai mandar
 				if (messOut.toBeUpdated[i] == true) {
-					currFile = new File(currPath + messIn.fileName[i]);
-					newFile = new File(currPath + messIn.fileName[i] + "temp");
+					currFile = new File(currPath + "/" + messIn.fileName[i]);
+					newFile = new File(currPath + "/" + messIn.fileName[i] + ".temp");
 					
 					//receber os ficheiros
 					if (receiveFile(outStream, inStream, newFile) >= 0) {

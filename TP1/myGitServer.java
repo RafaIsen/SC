@@ -139,7 +139,7 @@ public class myGitServer{
 				//verifies if it has any methods in args
 				if ((param_p && num_args > 4) || (!param_p && num_args > 2)) {
 				
-					while (continua == 1) {
+					while (inStream.available() > 0) {
 						
 						Message messIn = (Message) inStream.readObject();
 											
@@ -256,7 +256,6 @@ public class myGitServer{
 
 		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
-<<<<<<< HEAD
 
 			StringBuilder sb = new StringBuilder();
 			sb.append(messIn.fileName);
@@ -269,11 +268,7 @@ public class myGitServer{
 				file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
 			else
 				file = new File(path + "/users/" + messIn.fileName[0]);
-=======
 			
-			//if (messIn.fileName[0].contai)
-			File file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
->>>>>>> branch 'Andrade' of https://github.com/RafaIsen/SC
 			File newFile = null;
 
 			Date date = null;
@@ -301,16 +296,10 @@ public class myGitServer{
 					outStream.writeObject(messOut);
 					
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
-<<<<<<< HEAD
-						result = 0;	
-						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
-						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
-=======
 						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
 						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
 						newFile.createNewFile();
 						result = 0;
->>>>>>> branch 'Andrade' of https://github.com/RafaIsen/SC
 					}
 					
 				} else {
@@ -380,7 +369,7 @@ public class myGitServer{
 					
 					//verificar quais os ficheiros que precisam de ser actualizados
 					if (date.compareTo(messIn.fileDate[i]) < 0) {
-						versions[i] = countNumVersions(path, messIn.fileName[i]);
+						versions[i] = countNumVersions(path, messIn.fileName[i], messIn.user);
 						ya[i] = true;
 						
 					}

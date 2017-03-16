@@ -1,6 +1,6 @@
 /***************************************************************************
 *   Seguranca e Confiabilidade 2016/17
-*
+*dd
 *
 ***************************************************************************/
 
@@ -146,11 +146,11 @@ public class myGitServer{
 						switch (messIn.method) {
 						
 							case "pushFile":
-								if (pushFile(outStream, inStream, messIn, path) > 0)
+								pushFile(outStream, inStream, messIn, path);
 								break;
 								
 							case "pushRep":
-								if (pushRep(outStream, inStream, messIn, path) > 0)
+								pushRep(outStream, inStream, messIn, path);
 								break;
 								
 							case "pullFile":
@@ -275,7 +275,7 @@ public class myGitServer{
 				
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
 
-					versao = countNumVersions(path, messIn.fileName[0]);
+					versao = countNumVersions(path, messIn.fileName[0], messIn.user);
 					newFile = new File(path + "/users/" + messIn.fileName[0] + "temp");
 					
 					ya[0] = true;
@@ -356,7 +356,7 @@ public class myGitServer{
 					
 					//verificar quais os ficheiros que precisam de ser actualizados
 					if (date.compareTo(messIn.fileDate[i]) < 0) {
-						versions[i] = countNumVersions(path, messIn.fileName[i]);
+						versions[i] = countNumVersions(path, messIn.fileName[i], messIn.user);
 						ya[i] = true;
 						
 					}
@@ -400,7 +400,7 @@ public class myGitServer{
 		}
 		
 		
-		public int countNumVersions(Path path, String filename) throws IOException{
+		public int countNumVersions(Path path, String filename, String username) throws IOException{
 			
 			String[] pathFile = filename.split("/");
 			
@@ -411,19 +411,20 @@ public class myGitServer{
 			String name = null;
 			
 			if(pathFile.length == 3){
-				folder = new File(path + "/" + pathFile[0] + "/" + pathFile[1] + "/");
+				folder = new File(path + "/users/" + pathFile[0] + "/" + pathFile[1] + "/");
 				name = pathFile[2];
 			}
 			else{
-				folder = new File(path + "/" + pathFile[0] + "/");
+				folder = new File(path + "/users/" + username + "/" + pathFile[0] + "/");
 				name = pathFile[1];
 			}
 				
 			File[] listOfFiles = folder.listFiles();
+			//String [] fileVersions = folder.list(name+"*");
 			
 			for (int i = 0; i < listOfFiles.length; i++) {
 				
-				String[] nameFile = listOfFiles[i].getName().split(".");
+				String[] nameFile = listOfFiles[i].getAbsolutePath().split(".");
 				
 				if(nameFile[0].equals(name))
 					numVersions ++;

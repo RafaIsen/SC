@@ -255,12 +255,7 @@ public class myGitServer{
 
 
 		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
-<<<<<<< HEAD
 			int result = -1;
-=======
-			int result = -1;
-<<<<<<< HEAD
->>>>>>> refs/heads/Rafa
 
 			StringBuilder sb = new StringBuilder();
 			sb.append(messIn.fileName);
@@ -273,15 +268,7 @@ public class myGitServer{
 				file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
 			else
 				file = new File(path + "/users/" + messIn.fileName[0]);
-<<<<<<< HEAD
 			
-=======
-=======
-			
-			//if (messIn.fileName[0].contai)
-			File file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
->>>>>>> refs/heads/Andrade
->>>>>>> refs/heads/Rafa
 			File newFile = null;
 
 			Date date = null;
@@ -313,25 +300,11 @@ public class myGitServer{
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user);
 					outStream.writeObject(messOut);
 					
-<<<<<<< HEAD
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
-=======
-					if (receiveFile(outStream, inStream, newFile) >= 0) {
-<<<<<<< HEAD
-						result = 0;	
-						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
-						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
-=======
->>>>>>> refs/heads/Rafa
 						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
 						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
 						newFile.createNewFile();
-<<<<<<< HEAD
 						result = 0;
-=======
-						result = 0;
->>>>>>> refs/heads/Andrade
->>>>>>> refs/heads/Rafa
 					}
 					
 				} else {

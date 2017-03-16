@@ -12,14 +12,16 @@ public class Message implements Serializable {
 	public Date[] fileDate;
 	public boolean[] toBeUpdated; 
 	public String user;
+	public boolean[] delete;
 	
-	public Message(String method, String[] fileName, String repName, Date[] fileDate, boolean[] toBeUpdated, String user) {
+	public Message(String method, String[] fileName, String repName, Date[] fileDate, boolean[] toBeUpdated, String user, boolean[] delete) {
 		this.method = method;
 		this.fileName = fileName;
 		this.repName = repName;
 		this.fileDate = fileDate;
 		this.toBeUpdated = toBeUpdated;
 		this.user = user;
+		this.delete = delete;
 	}
 
 }

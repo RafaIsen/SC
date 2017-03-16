@@ -403,6 +403,7 @@ public class myGitServer{
 			int result = -1;
 			File rep  = null;
 			Path currPath = null;
+			Path currPath2 = null;
 			File newFile = null;
 			File currFile = null;
 			File[] fileRep = null;
@@ -416,10 +417,12 @@ public class myGitServer{
 			//criar path para o rep
 			if (messIn.repName.contains("/")) {
 				rep = new File(path + "/users/" + messIn.repName);
-				currPath = rep.toPath();
+				currPath2 = new File(path + "/users/").toPath();
+				currPath = new File(currPath2 + messIn.repName).toPath();
 			} else { 
 				rep = new File(path + "/users/" + messIn.user + "/" + messIn.repName);
-				currPath = rep.toPath();
+				currPath2 = new File(path + "/users/" + messIn.user).toPath();
+				currPath = new File(currPath2 + messIn.repName).toPath();
 			}
 			//criar rep caso nao exista
 			if (!rep.exists())
@@ -436,7 +439,7 @@ public class myGitServer{
 
 				//
 				for (int i = 0; i < messIn.fileName.length; i++) {
-					currFile = new File(currPath + "/" + messIn.fileName[i]);
+					currFile = new File(currPath2 + "/" + messIn.fileName[i]);
 					if (currFile.exists()) {
 						date = new Date(currFile.lastModified());
 
@@ -469,20 +472,20 @@ public class myGitServer{
 				
 				//saber quais os ficheiros q vai client vai mandar
 				if (messOut.toBeUpdated[i] == true) {
-					currFile = new File(currPath + "/" + messIn.fileName[i]);
+					currFile = new File(currPath2 + "/" + messIn.fileName[i]);
 
-					newFile = new File(currPath + "/" + messIn.fileName[i] + ".temp");
+					newFile = new File(currPath2 + "/" + messIn.fileName[i] + ".temp");
 					
 					//receber os ficheiros
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
 						//saber se o ficheiro e novo nao tem versao
 						if (versions[i] == 0)
-							currFile.renameTo(new File(currPath + "/" + messIn.fileName[i]));
+							currFile.renameTo(new File(currPath2 + "/" + messIn.fileName[i]));
 						else
-							currFile.renameTo(new File(currPath + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
+							currFile.renameTo(new File(currPath2 + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
 						
 						currFile.delete();
-						newFile.renameTo(new File(currPath + "/" + messIn.fileName[i]));
+						newFile.renameTo(new File(currPath2 + "/" + messIn.fileName[i]));
 						newFile.createNewFile();
 						result = 0;
 						

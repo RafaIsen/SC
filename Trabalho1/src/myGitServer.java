@@ -139,7 +139,7 @@ public class myGitServer{
 				//verifies if it has any methods in args
 				if ((param_p && num_args > 4) || (!param_p && num_args > 2)) {
 				
-					while (continua == 1) {
+					while (inStream.available() > 0) {
 						
 						Message messIn = (Message) inStream.readObject();
 											
@@ -256,7 +256,6 @@ public class myGitServer{
 
 		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
-<<<<<<< HEAD
 
 			StringBuilder sb = new StringBuilder();
 			sb.append(messIn.fileName);
@@ -269,11 +268,7 @@ public class myGitServer{
 				file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
 			else
 				file = new File(path + "/users/" + messIn.fileName[0]);
-=======
 			
-			//if (messIn.fileName[0].contai)
-			File file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
->>>>>>> refs/heads/Andrade
 			File newFile = null;
 
 			Date date = null;
@@ -289,16 +284,13 @@ public class myGitServer{
 				date = new Date(file.lastModified());
 				
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
-<<<<<<< HEAD
+
 					
 					if(secondI == -1)
 						versao = countNumVersions(path, messIn.fileName[0], messIn.user);
 					else
 						versao = countNumVersions(path, messIn.fileName[0], null);
-=======
 
-					versao = countNumVersions(path, messIn.fileName[0], messIn.user);
->>>>>>> refs/heads/Andrade
 					newFile = new File(path + "/users/" + messIn.fileName[0] + "temp");
 					
 					ya[0] = true;
@@ -306,16 +298,10 @@ public class myGitServer{
 					outStream.writeObject(messOut);
 					
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
-<<<<<<< HEAD
-						result = 0;	
-						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
-						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
-=======
 						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
 						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
 						newFile.createNewFile();
 						result = 0;
->>>>>>> refs/heads/Andrade
 					}
 					
 				} else {
@@ -439,25 +425,14 @@ public class myGitServer{
 			
 			String name = null;
 			
-<<<<<<< HEAD
 			if (pathFile.length == 3) {
 				
-				folder = new File(path + "/" + pathFile[0] + "/" + pathFile[1] + "/");
-=======
-			if(pathFile.length == 3){
 				folder = new File(path + "/users/" + pathFile[0] + "/" + pathFile[1] + "/");
->>>>>>> refs/heads/Andrade
 				name = pathFile[2];
-			
-			}
-<<<<<<< HEAD
-			else {
 				
-				folder = new File(path + "/" + username + "/" + pathFile[0] + "/");
-=======
-			else{
+			} else {
+				
 				folder = new File(path + "/users/" + username + "/" + pathFile[0] + "/");
->>>>>>> refs/heads/Andrade
 				name = pathFile[1];
 			
 			}
@@ -470,7 +445,7 @@ public class myGitServer{
 				String[] nameFile = listOfFiles[i].getAbsolutePath().split(".");
 				
 				if(nameFile[0].equals(name))
-					numVersions ++;
+					numVersions++;
 				
 			}
 			

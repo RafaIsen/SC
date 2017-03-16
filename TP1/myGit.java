@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -181,14 +182,20 @@ public class myGit{
 	
 	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
 		int result = -1; 
-		File rep = new File(path + "/" + repName);
+		File rep = null;
+		//if (repName.contains("/"))
+		rep = new File(path + "/" + repName);
 		File[] repFiles = rep.listFiles();
 		int numFiles = repFiles.length;
 		
-		String[] name = new String[numFiles];
-				
-		Date[] dates = new Date[numFiles];
-				
+		String[] name = null;
+		Date[] dates = null;
+		
+		if (numFiles != 0) {
+			name = new String[numFiles];
+			dates = new Date[numFiles];
+		}	
+		
 		for(int i = 0; i < numFiles; i++) {
 			name[i] = repFiles[i].toString();
 			dates[i] = new Date(repFiles[i].lastModified());
@@ -213,14 +220,45 @@ public class myGit{
 		return result;			
 	}
 
-	private void pullFile() {
-		// TODO Auto-generated method stub
+	private int pullFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
+		int result = 0;
+		File file = new File(path + "/" + fileName);
+		File newFile = null;
+		
+		String[] name = new String[1];
+		name[0] = fileName;
+		
+		Date[] dates = new Date[1];
+		Date date = new Date(file.lastModified());
+		dates[0] = date;
+		
+		Message messOut = new Message("pullFile", name, null, dates, null, user);
+		Message messIn = null;
+		
+		outStream.writeObject(messOut);
+		
+		messIn = (Message) inStream.readObject();
+		
+		if (messIn == null)
+			result = -1;
+		
+		else if (messIn.toBeUpdated[0] == true) {
+			newFile = new File(path + "/" + fileName + "temp");
+			receiveFile(outStream, inStream, newFile);
+			file.delete();
+			newFile.renameTo(new File(path + "/" + fileName));
+			newFile.createNewFile();
+			result = 0;
+		} else
+			result = -1;
+		return result;
+		
 		
 	}
 
-	private void pullRep() {
-		// TODO Auto-generated method stub
+	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
 		
+		return 0;
 	}
 
 	private void shareRep() {
@@ -228,9 +266,8 @@ public class myGit{
 		
 	}
 
-	public boolean sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException {
-		boolean result = false;
-		//File pdf = new File(file);
+	public int sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException {
+		int result = 0;
 		int lengthPdf = (int) file.length();
 		byte[] buf = new byte[1024];
         FileInputStream is = new FileInputStream(file);
@@ -241,13 +278,36 @@ public class myGit{
         
         while(((n = is.read(buf, 0, buf.length)) != -1)) {
         	outStream.write(buf, 0, n);
-        	outStream.flush();        
+        	outStream.flush();  
         }
         
         is.close();
 		//inStream.close();
 		//outStream.close();
 		return result;
+	}
+	
+	public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException{
+		int result = -1;
+			
+		FileOutputStream pdfOut = new FileOutputStream(file);
+			
+		int lengthFile = inStream.readInt();
+			
+		int n = 0;
+			
+		byte[] buf = new byte[1024];
+			
+		while(lengthFile > 0){
+				n = inStream.read(buf, 0, buf.length);
+				lengthFile -= n;
+				pdfOut.write(buf, 0, n);
+				pdfOut.flush();
+			}
+			
+			pdfOut.close();
+			result = 0;
+			return result;
 	}
 	
 	public String confirmPwd(String username, String command, String pwd){
@@ -316,9 +376,9 @@ public class myGit{
 			
 			case "-pull":
 				if (param1.contains("."))
-					pullFile();
+					pullFile(outStream, inStream, param1, user, path);
 				else
-					pullRep();
+					pullRep(outStream, inStream, param1, user, path);
 				
 				break;
 				

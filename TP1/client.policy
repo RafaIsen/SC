@@ -1,4 +1,4 @@
-grant codeBase "file:bin/*" {
+grant codeBase "file:*" {
 	permission java.net.SocketPermission "*:1024-", "connect";
 	permission java.io.FilePermission "${user.home}/-", "write";
 	permission java.io.FilePermission "${user.home}/-", "read";

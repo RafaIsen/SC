@@ -283,7 +283,12 @@ public class myGitServer{
 				//actualiza o ficheiro para uma versao mais recente
 				date = new Date(file.lastModified());
 				
+<<<<<<< HEAD
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
+=======
+				if (date.compareTo(messIn.fileDate[0]) < 0) {
+
+>>>>>>> refs/heads/Rafa
 					
 					if(secondI == -1)
 						versao = countNumVersions(path, messIn.fileName[0], messIn.user);
@@ -423,18 +428,32 @@ public class myGitServer{
 			int numVersions = 0;
 			
 			String name = null;
+<<<<<<< HEAD
 			
 
 			if(pathFile.length == 3){
 				folder = new File(path + "/users/" + pathFile[0] + "/" + pathFile[1] + "/");
 
+=======
+			
+			if (pathFile.length == 3) {
+				
+				folder = new File(path + "/users/" + pathFile[0] + "/" + pathFile[1] + "/");
+>>>>>>> refs/heads/Rafa
 				name = pathFile[2];
+<<<<<<< HEAD
 			
 			}
 
 			else{
 				folder = new File(path + "/users/" + username + "/" + pathFile[0] + "/");
 
+=======
+				
+			} else {
+				
+				folder = new File(path + "/users/" + username + "/" + pathFile[0] + "/");
+>>>>>>> refs/heads/Rafa
 				name = pathFile[1];
 			
 			}
@@ -447,7 +466,7 @@ public class myGitServer{
 				String[] nameFile = listOfFiles[i].getAbsolutePath().split(".");
 				
 				if(nameFile[0].equals(name))
-					numVersions ++;
+					numVersions++;
 				
 			}
 			

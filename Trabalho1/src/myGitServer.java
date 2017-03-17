@@ -242,7 +242,7 @@ public class myGitServer{
 						
 						//verificar quais os ficheiros que precisam de ser actualizados
 						if (date.compareTo(messIn.fileDate[i]) < 0) {
-							versions[i] = countNumVersions(path, messIn.fileName[i], messIn.user);
+							versions[i] = countNumVersions1(path, messIn.fileName[i], messIn.user);
 							ya[i] = true;
 							
 						}
@@ -346,7 +346,7 @@ public class myGitServer{
 				
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
 					
-					versao = countNumVersions1(pathFolder, split[split.length-1]);
+					versao = countNumVersions1(pathFolder, split[split.length-1], messIn.user);
 					newFile = new File(file + ".temp");
 					
 					ya[0] = true;
@@ -355,8 +355,8 @@ public class myGitServer{
 					newFile.createNewFile();
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
 																	
-						file.renameTo(new File(pathFolder.toString() + split[split.length-1] + "." + String.valueOf(versao)));
-						newFile.renameTo(new File(pathFolder.toString() + split[split.length-1]));
+						file.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1] + "." + String.valueOf(versao)));
+						newFile.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1]));
 						result = 0;
 					}
 					
@@ -429,7 +429,7 @@ public class myGitServer{
 						
 						//verificar quais os ficheiros que precisam de ser actualizados
 						if (date.compareTo(messIn.fileDate[i]) < 0) {
-							versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i]);
+							versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i], messIn.user);
 							//versions[i] = countNumVersions(path, messIn.fileName[i], messIn.user);
 							ya[i] = true;
 							
@@ -481,7 +481,7 @@ public class myGitServer{
 		}
 		
 		
-		public int countNumVersions1(Path path, String filename) throws IOException{
+		public int countNumVersions1(Path path, String filename, String username) throws IOException{
 
             
             File folder = new File(path.toString());

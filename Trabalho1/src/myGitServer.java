@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -596,22 +597,18 @@ public class myGitServer{
 			return autenticado;
 		}
 		
-		public boolean createUser(User u, File f, Path path){
+		public boolean createUser(User u, File f, Path path) throws IOException{
 			boolean result = false;
-			StringBuilder userPass = new StringBuilder();
-			userPass.append(u.name);
-			userPass.append(':');
-			userPass.append(u.pass);
+			FileWriter fw = new FileWriter(f, true);
 			
 			try {
 				if(checkUser(u.name, f))
 					result = true;
 				else{
 					//writes the name and pass in the file
-					byte[] buf = userPass.toString().getBytes(StandardCharsets.UTF_8);
-					byte[] buf1 =new String("\n").getBytes();
-					Files.write(f.toPath(),buf1, StandardOpenOption.APPEND);
-					Files.write(f.toPath(), buf, StandardOpenOption.APPEND);
+					fw.write(System.lineSeparator() + u.name + ":" + u.pass); 
+				    fw.flush();
+				    fw.close();
 					//creates a directory to the user
 					new File(path + "/users/" + u.name).mkdir();
 					result = true;				

@@ -160,7 +160,10 @@ public class myGit{
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
-		Message messOut = new Message("pushFile", name, null, dates, null, user, null);
+		String[] users = new String[1];
+		users[0] = user;
+		
+		Message messOut = new Message("pushFile", name, null, dates, null, users, null, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -191,6 +194,9 @@ public class myGit{
 		String[] name = null;
 		Date[] dates = null;
 		
+		String[] users = new String[1];
+		users[0] = user;
+		
 		if (numFiles != 0) {
 			name = new String[numFiles];
 			dates = new Date[numFiles];
@@ -200,7 +206,7 @@ public class myGit{
 			name[i] = repFiles[i].getName();
 			dates[i] = new Date(repFiles[i].lastModified());
 		}
-		Message messOut = new Message("pushRep", name, repName, dates, null, user, null);
+		Message messOut = new Message("pushRep", name, repName, dates, null, users, null, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -231,7 +237,10 @@ public class myGit{
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
-		Message messOut = new Message("pullFile", name, null, dates, null, user, null);
+		String[] users = new String[1];
+		users[0] = user;
+		
+		Message messOut = new Message("pullFile", name, null, dates, null, users, null, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -251,8 +260,6 @@ public class myGit{
 		} 
 			
 		return result;
-		
-		
 	}
 
 	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
@@ -266,6 +273,9 @@ public class myGit{
 		String[] names = null;
 		Date[] dates = null;
 		
+		String[] users = new String[1];
+		users[0] = user;
+		
 		if (numFiles != 0) {
 			names = new String[numFiles];
 			dates = new Date[numFiles];
@@ -275,7 +285,7 @@ public class myGit{
 			names[i] = repFiles[i].getName();
 			dates[i] = new Date(repFiles[i].lastModified());
 		}
-		Message messOut = new Message("pushRep", names, repName, dates, null, user, null);
+		Message messOut = new Message("pushRep", names, repName, dates, null, users, null, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -313,9 +323,18 @@ public class myGit{
 		return result;
 	}
 
-	private void shareRep() {
-		// TODO Auto-generated method stub
+	private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, String repName, String userSharedWith, String user, Path path) throws IOException, ClassNotFoundException {
+		String[] users = new String[2];
+		users[0] = user;
+		users[1] = userSharedWith;
 		
+		Message messOut = new Message("shareRep", null, repName, null, null, users, null, null);
+		Message messIn = null;
+		
+		outStream.writeObject(messOut);
+		messIn = (Message) inStream.readObject();
+		
+		System.out.println(messIn.result);
 	}
 
 	public int sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException {
@@ -435,7 +454,7 @@ public class myGit{
 				break;
 				
 			case "-share":
-				shareRep();
+				shareRep(outStream, inStream, param1, param2, user, path);
 				break;
 				
 			case "-remove":

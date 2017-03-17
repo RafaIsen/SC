@@ -301,12 +301,17 @@ public class myGitServer{
 			int result = -1;
 			File file = null;
 			
+			boolean myrep = false;
+			
 			//criar path para o rep
-			if (messIn.repName.contains("/")) 
+			if (messIn.repName.contains("/"))
 				file = new File(path + "/users/" + messIn.fileName[0]);
-				
-			 else  
+			 else {
 				file = new File(path + "/users/" + messIn.user[0] + messIn.fileName[0]);
+				myrep = true;
+			 }
+			
+			String otherUser = messIn.fileName[0].split("/")[0];
 						
 			Date date = null;
 					
@@ -319,7 +324,10 @@ public class myGitServer{
 				
 				if (date.compareTo(messIn.fileDate[0]) > 0) {
 					ya[0] = true;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null);
+					if(myrep)
+						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + messIn.repName + " foi copiado do servidor");
+					else
+						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + messIn.repName + " do utilizador " + otherUser + " foi copiado do servidor");
 					outStream.writeObject(messOut);
 					
 					if (sendFile(outStream, inStream, file) >= 0) 

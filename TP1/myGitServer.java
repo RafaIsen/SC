@@ -258,9 +258,13 @@ public class myGitServer{
 <<<<<<< HEAD
 			int result = -1;
 =======
+<<<<<<< HEAD
+			int result = -1;
+=======
 			int result = -1;
 <<<<<<< HEAD
 >>>>>>> refs/heads/Rafa
+>>>>>>> branch 'master' of https://github.com/RafaIsen/SC
 
 			StringBuilder sb = new StringBuilder();
 			sb.append(messIn.fileName);
@@ -274,6 +278,9 @@ public class myGitServer{
 			else
 				file = new File(path + "/users/" + messIn.fileName[0]);
 <<<<<<< HEAD
+
+=======
+<<<<<<< HEAD
 			
 =======
 =======
@@ -282,6 +289,7 @@ public class myGitServer{
 			File file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
 >>>>>>> refs/heads/Andrade
 >>>>>>> refs/heads/Rafa
+>>>>>>> branch 'master' of https://github.com/RafaIsen/SC
 			File newFile = null;
 
 			Date date = null;
@@ -315,6 +323,13 @@ public class myGitServer{
 					
 <<<<<<< HEAD
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
+						file.renameTo(new File(path + "/users/" + messIn.fileName[0] + "." + Integer.toString(versao)));
+						newFile.renameTo(new File(path + "/users/" + messIn.fileName[0]));
+						newFile.createNewFile();
+						result = 0;
+=======
+<<<<<<< HEAD
+					if (receiveFile(outStream, inStream, newFile) >= 0) {
 =======
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
 <<<<<<< HEAD
@@ -332,6 +347,7 @@ public class myGitServer{
 						result = 0;
 >>>>>>> refs/heads/Andrade
 >>>>>>> refs/heads/Rafa
+>>>>>>> branch 'master' of https://github.com/RafaIsen/SC
 					}
 					
 				} else {

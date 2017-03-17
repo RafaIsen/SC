@@ -160,7 +160,7 @@ public class myGit{
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
-		Message messOut = new Message("pushFile", name, null, dates, null, user);
+		Message messOut = new Message("pushFile", name, null, dates, null, user, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -197,10 +197,10 @@ public class myGit{
 		}	
 		
 		for(int i = 0; i < numFiles; i++) {
-			name[i] = repFiles[i].toString();
+			name[i] = repFiles[i].getName();
 			dates[i] = new Date(repFiles[i].lastModified());
 		}
-		Message messOut = new Message("pushRep", name, repName, dates, null, user);
+		Message messOut = new Message("pushRep", name, repName, dates, null, user, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -215,8 +215,7 @@ public class myGit{
 					sendFile(outStream, inStream, repFiles[i]);
 				}
 			result = 0;
-		} else
-			result = -1;
+		} 
 		return result;			
 	}
 
@@ -232,7 +231,7 @@ public class myGit{
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
-		Message messOut = new Message("pullFile", name, null, dates, null, user);
+		Message messOut = new Message("pullFile", name, null, dates, null, user, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -249,16 +248,69 @@ public class myGit{
 			newFile.renameTo(new File(path + "/" + fileName));
 			newFile.createNewFile();
 			result = 0;
-		} else
-			result = -1;
+		} 
+			
 		return result;
 		
 		
 	}
 
-	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
+	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
+		int result = -1; 
+			
+		File rep = new File(path + "/" + repName);
+		File currFile = null;
+		File[] repFiles = rep.listFiles();
+		int numFiles = repFiles.length;
 		
-		return 0;
+		String[] names = null;
+		Date[] dates = null;
+		
+		if (numFiles != 0) {
+			names = new String[numFiles];
+			dates = new Date[numFiles];
+		}	
+		
+		for(int i = 0; i < numFiles; i++) {
+			names[i] = repFiles[i].getName();
+			dates[i] = new Date(repFiles[i].lastModified());
+		}
+		Message messOut = new Message("pushRep", names, repName, dates, null, user, null);
+		Message messIn = null;
+		
+		outStream.writeObject(messOut);
+		
+		messIn = (Message) inStream.readObject();
+		
+		if (messIn == null)
+			result = -1;
+		else
+			//a actualizar os ficheiros novos q o cliente nao tem
+			for (int i = 0; i < messIn.toBeUpdated.length; i++) {
+				//so a actualizar os ficheiros antigos
+				if (i < messOut.toBeUpdated.length) {
+					
+					if (messIn.toBeUpdated[i] == true) {
+						
+						currFile = new File(path + "/" + repName + "/" + messIn.fileName[i] + "temp");
+						if (receiveFile(outStream, inStream, currFile) > 0) {
+							repFiles[i].delete();
+							currFile.renameTo(new File(path + "/" + repName + "/" + names[i]));
+							currFile.createNewFile();
+						}
+						
+					}
+					
+				} else {
+					currFile = new File(path + "/" + repName + "/" + messIn.fileName[i]);
+					if (receiveFile(outStream, inStream, currFile) > 0) 
+						currFile.createNewFile();
+					
+				}
+				if (messIn.delete[i] == true)
+					System.out.println("-- O ficheiro" + messIn.fileName[i] + "existe localmente mas foi eliminado no servidor");
+			}
+		return result;
 	}
 
 	private void shareRep() {

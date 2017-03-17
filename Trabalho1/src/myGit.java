@@ -154,13 +154,14 @@ public class myGit{
 		File file = new File(path + "/" + fileName);
 		
 		String[] name = new String[1];
+		String[] split = fileName.split("/");
 		name[0] = fileName;
 		
 		Date[] dates = new Date[1];
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
-		Message messOut = new Message("pushFile", name, null, dates, null, user, null);
+		Message messOut = new Message("pushFile", name, split[split.length-2], dates, null, user, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -223,7 +224,7 @@ public class myGit{
 		int result = 0;
 		File file = new File(path + "/" + fileName);
 		File newFile = null;
-		
+		String[] split = fileName.split("/");
 		String[] name = new String[1];
 		name[0] = fileName;
 		
@@ -231,7 +232,7 @@ public class myGit{
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
-		Message messOut = new Message("pullFile", name, null, dates, null, user, null);
+		Message messOut = new Message("pullFile", name, split[split.length-2], dates, null, user, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);

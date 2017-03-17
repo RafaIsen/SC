@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Scanner;
@@ -608,7 +609,9 @@ public class myGitServer{
 				else{
 					//writes the name and pass in the file
 					byte[] buf = userPass.toString().getBytes(StandardCharsets.UTF_8);
-					Files.write(f.toPath(), buf);
+					byte[] buf1 =new String("\n").getBytes();
+					Files.write(f.toPath(),buf1, StandardOpenOption.APPEND);
+					Files.write(f.toPath(), buf, StandardOpenOption.APPEND);
 					//creates a directory to the user
 					new File(path + "/users/" + u.name).mkdir();
 					result = true;				

@@ -11,10 +11,11 @@ public class Message implements Serializable {
 	public String repName;
 	public Date[] fileDate;
 	public boolean[] toBeUpdated; 
-	public String user;
+	public String[] user;
 	public boolean[] delete;
+	public String result;
 	
-	public Message(String method, String[] fileName, String repName, Date[] fileDate, boolean[] toBeUpdated, String user, boolean[] delete) {
+	public Message(String method, String[] fileName, String repName, Date[] fileDate, boolean[] toBeUpdated, String[] user, boolean[] delete, String result) {
 		this.method = method;
 		this.fileName = fileName;
 		this.repName = repName;
@@ -22,6 +23,7 @@ public class Message implements Serializable {
 		this.toBeUpdated = toBeUpdated;
 		this.user = user;
 		this.delete = delete;
+		this.result = result;
 	}
 
 }

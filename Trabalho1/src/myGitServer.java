@@ -417,12 +417,10 @@ public class myGitServer{
 			//criar path para o rep
 			if (messIn.repName.contains("/")) {
 				rep = new File(path + "/users/" + messIn.repName);
-				currPath2 = new File(path + "/users/").toPath();
-				currPath = new File(currPath2 + messIn.repName).toPath();
+				currPath = new File(path + "/" + messIn.repName).toPath();
 			} else { 
 				rep = new File(path + "/users/" + messIn.user + "/" + messIn.repName);
-				currPath2 = new File(path + "/users/" + messIn.user).toPath();
-				currPath = new File(currPath2 + messIn.repName).toPath();
+				currPath = new File(path + "/" + messIn.repName).toPath();
 			}
 			//criar rep caso nao exista
 			if (!rep.exists())
@@ -439,7 +437,7 @@ public class myGitServer{
 
 				//
 				for (int i = 0; i < messIn.fileName.length; i++) {
-					currFile = new File(currPath2 + "/" + messIn.fileName[i]);
+					currFile = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[i]);
 					if (currFile.exists()) {
 						date = new Date(currFile.lastModified());
 
@@ -472,21 +470,20 @@ public class myGitServer{
 				
 				//saber quais os ficheiros q vai client vai mandar
 				if (messOut.toBeUpdated[i] == true) {
-					currFile = new File(currPath2 + "/" + messIn.fileName[i]);
-
-					newFile = new File(currPath2 + "/" + messIn.fileName[i] + ".temp");
-					
+					currFile = new File(path + "/users/" + messIn.user + "/" + messIn.repName + "/" + messIn.fileName[i]);
+					if(!currFile.exists()){
+						newFile = new File(path + "/users/" + messIn.user + "/" + messIn.repName + "/" + messIn.fileName[i]);
+						newFile.createNewFile();
+					}else{
+						currFile.createNewFile();
+						newFile = new File(path + "/users/" + messIn.user + "/" + messIn.repName + "/" + messIn.fileName[i] + ".temp");
+						newFile.createNewFile();
+					}
 					//receber os ficheiros
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
 						//saber se o ficheiro e novo nao tem versao
-						if (versions[i] == 0)
-							currFile.renameTo(new File(currPath2 + "/" + messIn.fileName[i]));
-						else
-							currFile.renameTo(new File(currPath2 + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
-						
-						currFile.delete();
-						newFile.renameTo(new File(currPath2 + "/" + messIn.fileName[i]));
-						newFile.createNewFile();
+						if (!(versions[i] == 0))
+							currFile.renameTo(new File(path + "/users/" + messIn.user + "/" + messIn.repName + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
 						result = 0;
 						
 					}
@@ -527,7 +524,7 @@ public class myGitServer{
                     return nameA.contains(nameOfFile);
                 }
             });
-
+            
             numVersions = list.length;
 
             return numVersions;

@@ -277,7 +277,7 @@ public class myGitServer{
 						
 						//verificar quais os ficheiros que precisam de ser actualizados
 						if (date.compareTo(messIn.fileDate[i]) < 0) {
-							versions[i] = countNumVersions(path, messIn.fileName[i], messIn.user[0]);
+							versions[i] = countNumVersions(path, messIn.user[0]);
 							ya[i] = true;
 							
 						}
@@ -403,7 +403,7 @@ public class myGitServer{
 				
 				if (date.compareTo(messIn.fileDate[0]) < 0) {
 					
-					versao = countNumVersions1(pathFolder, split[split.length-1]);
+					versao = countNumVersions(pathFolder, split[split.length-1]);
 					newFile = new File(file + ".temp");
 					
 					ya[0] = true;
@@ -430,7 +430,7 @@ public class myGitServer{
 			//cria o ficheiro porque ainda existe
 			} else {
 				ya[0] = true;
-				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null);
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi enviado para o servidor");
 				outStream.writeObject(messOut);
 				file.createNewFile();
 				if (receiveFile(outStream, inStream, file) >= 0) {
@@ -453,22 +453,28 @@ public class myGitServer{
 			File[] fileRep = null;
 			Date date = null;
 			boolean[] exists = null;
+			String repName = null;
 			
 			Message messOut = null;
 			boolean[] ya = null;
 			int[] versions = null;
+			String res = null;
 			
 			//criar path para o rep
 			if (messIn.repName.contains("/")) {
 				rep = new File(path + "/users/" + messIn.repName);
 				//currPath = new File(path + "/" + messIn.repName).toPath();
+				repName = messIn.repName.split("/")[1];
 			} else { 
 				rep = new File(path + "/users/" + messIn.user + "/" + messIn.repName);
 				//currPath = new File(path + "/" + messIn.repName).toPath();
+				repName = messIn.repName;
 			}
 			//criar rep caso nao exista
-			if (!rep.exists())
+			if (!rep.exists()){
 				rep.mkdir();
+				res = "-- O repositório " + repName + " foi criado no servidor "; 
+			}
 			//criar lista com todos os ficheiros
 			else 
 				fileRep = rep.listFiles();
@@ -491,7 +497,7 @@ public class myGitServer{
 						//verificar quais os ficheiros que precisam de ser actualizados
 						if (date.compareTo(messIn.fileDate[i]) < 0) {
 
-							versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i]);
+							versions[i] = countNumVersions(rep.toPath(), messIn.fileName[i]);
 							//versions[i] = countNumVersions(path, messIn.fileName[i], messIn.user);
 
 							ya[i] = true;
@@ -511,7 +517,7 @@ public class myGitServer{
 			}
 			
 						
-			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null);
+			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null, res);
 			outStream.writeObject(messOut);
 					
 			//receber os ficheiros para actualizar	
@@ -552,8 +558,7 @@ public class myGitServer{
 		}
 		
 		
-		public int countNumVersions1(Path path, String filename) throws IOException{
-
+		public int countNumVersions(Path path, String filename) throws IOException{
             
             File folder = new File(path.toString());
 

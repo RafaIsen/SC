@@ -243,11 +243,12 @@ public class myGit{
 			result = -1;
 		
 		else if (messIn.toBeUpdated[0] == true) {
-			newFile = new File(path + "/" + fileName + "temp");
+			newFile = new File(path + "/" + fileName + ".temp");
+			newFile.createNewFile();
 			receiveFile(outStream, inStream, newFile);
 			file.delete();
 			newFile.renameTo(new File(path + "/" + fileName));
-			newFile.createNewFile();
+			
 			result = 0;
 		} 
 			
@@ -260,21 +261,27 @@ public class myGit{
 		int result = -1; 
 			
 		File rep = new File(path + "/" + repName);
-		File currFile = null;
-		File[] repFiles = rep.listFiles();
-		int numFiles = repFiles.length;
-		
+		File newFile = null;
+		File[] repFiles = null;
 		String[] names = null;
 		Date[] dates = null;
 		
-		if (numFiles != 0) {
-			names = new String[numFiles];
-			dates = new Date[numFiles];
-		}	
-		
-		for(int i = 0; i < numFiles; i++) {
-			names[i] = repFiles[i].getName();
-			dates[i] = new Date(repFiles[i].lastModified());
+		if (rep.exists()) {
+			repFiles = rep.listFiles();
+			int numFiles = repFiles.length;
+			
+			if (numFiles != 0) {
+				names = new String[numFiles];
+				dates = new Date[numFiles];
+			}	
+			
+			for(int i = 0; i < numFiles; i++) {
+				names[i] = repFiles[i].getName();
+				dates[i] = new Date(repFiles[i].lastModified());
+			}
+		} else {
+			names = new String[0];
+			dates = new Date[0];
 		}
 		Message messOut = new Message("pushRep", names, repName, dates, null, user, null);
 		Message messIn = null;
@@ -289,23 +296,22 @@ public class myGit{
 			//a actualizar os ficheiros novos q o cliente nao tem
 			for (int i = 0; i < messIn.toBeUpdated.length; i++) {
 				//so a actualizar os ficheiros antigos
-				if (i < messOut.toBeUpdated.length) {
+				if (i < names.length) 
 					
 					if (messIn.toBeUpdated[i] == true) {
-						
-						currFile = new File(path + "/" + repName + "/" + messIn.fileName[i] + "temp");
-						if (receiveFile(outStream, inStream, currFile) > 0) {
+						newFile.createNewFile();
+						newFile = new File(repFiles[i] + ".temp");
+						if (receiveFile(outStream, inStream, newFile) > 0) {
 							repFiles[i].delete();
-							currFile.renameTo(new File(path + "/" + repName + "/" + names[i]));
-							currFile.createNewFile();
+							newFile.renameTo(new File(path + "/" + repName + "/" + names[i]));
 						}
-						
-					}
+					
 					
 				} else {
-					currFile = new File(path + "/" + repName + "/" + messIn.fileName[i]);
-					if (receiveFile(outStream, inStream, currFile) > 0) 
-						currFile.createNewFile();
+					newFile.createNewFile();
+					newFile = new File(path + "/" + repName + "/" + messIn.fileName[i]);
+					receiveFile(outStream, inStream, newFile);
+						
 					
 				}
 				if (messIn.delete[i] == true)

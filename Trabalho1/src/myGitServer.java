@@ -229,9 +229,40 @@ public class myGitServer{
 		}
 
 
-		private void removeRep() {
-			// TODO Auto-generated method stub
+		private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
+			File users = new File(path + "/users/users.txt");
 			
+			boolean foundUser = checkUser(messIn.user[1], users);
+			
+			String res = null;
+			
+			String repName = messIn.repName;
+			
+			if(foundUser){
+				
+				File shareLog = new File(path + "/users/shareLog.txt");
+				if(!shareLog.exists())
+					res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName; 
+				
+				if(checkUser(messIn.user[0], shareLog)){
+					users.
+				}
+				else
+					res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName;	
+				
+				Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, "-- O repositório myrep foi partilhado com o utilizador " + messIn.user[1]);
+				outStream.writeObject(messOut);
+				
+			}else{	
+				
+				Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, "Erro: O utilizador " + messIn.user[1] + " não existe");
+				outStream.writeObject(messOut);
+				
+			}
+			
+		}catch(IOException e){
+			e.printStackTrace();
+		}
 		}
 
 

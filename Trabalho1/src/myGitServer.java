@@ -398,6 +398,12 @@ public class myGitServer{
 			String otherUser = null;
 			String repName = null;
 			
+			int result = -1;
+			
+			Message messOut = null;
+			
+			boolean hasAccess = false;
+			
 			if(split1.length > 1){
 				otherUser = split1[0];
 				repName = split1[1];
@@ -406,239 +412,283 @@ public class myGitServer{
 			
 			if (otherUser != null) {
 				
-				while ((currentLine = br.readLine()) != null) {
+				while ((currentLine = br.readLine()) != null && !hasAccess) {
 					
 					String[] split = currentLine.split(",");
 				    String[] split2 = split[0].split(":");
 				    
 				    if (split2[0].equals(otherUser)) {
 				    	
-				    	if (split2[1].equals(messIn.user[0])) {
-				    		
-				    		if (!(split.length == 1)) {
-				    			
-				    			writer.write(split2[0] + ":");
-				    			writer.write(split[0]);
-					    		for(int i = 1; i < split.length; i++)
-					    			writer.write("," + split[i]);
-					    		
-				    		}
-				    		
-				    	} else {
-				    		
-				    		writer.write(split2[0] + ":" + split2[1]);
-				    		
-				    		for(String s : split)
-				    			writer.write("," + s);
-				    		
-				    	}
-				    	
+				    	if (split2[1].equals(messIn.user[0]))
+				    		hasAccess = true;
+				    	else
+				    		for(int i = 1; i < split.length && !hasAccess; i++)
+				    			if(split[i].equals(messIn.user[0]))
+				    				hasAccess = true;
 				    }
+				    	
+				}
 				    
-				}
-				
 			}
 			
-			int result = -1;
-			File rep  = null;
-			File currFile = null;
-			File[] fileRep = null;
-			
-			Date date = null;
-			boolean[] delete = null;
-			
-			Message messOut = null;
-			boolean[] ya = null;
-			String[] names = null;
-			
-			Path currPath = null;
-			
-			String res = null;
-			
-			//criar path para o rep
-			if (messIn.repName.contains("/")) {
+			if (hasAccess) {
+		
+				File rep  = null;
+				File currFile = null;
+				File[] fileRep = null;
 				
-				rep = new File(path + "/users/" + messIn.repName);
-				currPath = rep.toPath();
-				res = "-- O respositório " + messIn.repName.split("/")[1] + " do utilizador " + messIn.repName.split("/")[0] + " foi copiado do servidor";
+				Date date = null;
+				boolean[] delete = null;
 				
-			} else { 
+				boolean[] ya = null;
+				String[] names = null;
 				
-				rep = new File(path + "/users/" + messIn.user[0] + messIn.repName);
-				currPath = rep.toPath();
-				res = "-- O respositório " + messIn.repName + " do utilizador " + messIn.user[0] + " foi copiado do servidor";
+				Path currPath = null;
 				
-			}
-			
-			//criar rep caso nao exista
-			if (!rep.exists())
-				return 0;
-			//criar lista com todos os ficheiros
-			else 
-				rep = new File(path + "/users/" + messIn.user + messIn.repName);
+				String res = null;
 				
-			//erro caso o rep nao exista
-			if (!rep.exists())
-				return -1;
-			//criar lista com todos os ficheiros
-			else {
-				//final String nameOfFile = filename;
-	             fileRep = rep.listFiles(new FilenameFilter() {
-	                @Override
-	                public boolean accept(File dir, String nameA) {
-	                    return !nameA.matches("(\\w*.\\w+.\\d)|(\\w+.\\d)");
-	                }
-	             });
-			}
-			
-			//so para actualizar os ficheiros
-			if (fileRep.length > 0) {
-				
-				ya = new boolean[fileRep.length];
-				names = new String[fileRep.length];
-				
-				if (fileRep.length > messIn.fileName.length)
-					delete = new boolean[fileRep.length];
-				else
-					delete = new boolean[messIn.fileName.length];
-				
-				for (int i = 0; i < fileRep.length; i++) {
+				//criar path para o rep
+				if (messIn.repName.contains("/")) {
 					
-					if (i < messIn.fileName.length) {
-						
-						names[i] = messIn.fileName[i];
-						currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
-						
-						//se o ficheiro ainda existe no servidor
-						if (currFile.exists()) {
-							
-							date = new Date(currFile.lastModified());
-							
-							//verificar se o ficheiro precisa de ser actualizado
-							if (date.compareTo(messIn.fileDate[i]) > 0) 
-								ya[i] = true;
-														
-						//ficheiros que o servidor ja nao tem	
-						} else 
-							delete[i] = true;	
-						
-					//ficheiros novos que o cliente nao tem	
-					} else {
-						
-						for (int j = 0;j < names.length; j++)
-							if (!Arrays.asList(names).contains(fileRep[j].getName()))
-								names[i] = fileRep[j].getName();
-				
-						ya[i] = true;
-						
-					}
-										
-				}
-				
-				if (messIn.fileName.length > fileRep.length)
-					Arrays.fill(delete, fileRep.length, delete.length-1, Boolean.TRUE);
+					rep = new File(path + "/users/" + messIn.repName);
+					currPath = rep.toPath();
+					res = "-- O respositório " + messIn.repName.split("/")[1] + " do utilizador " + messIn.repName.split("/")[0] + " foi copiado do servidor";
 					
-				messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, delete, res);
-				outStream.writeObject(messOut);
-				
-				for (int i = 0; i < ya.length; i++) {
-					if (ya[i] == true)
-						sendFile(outStream, inStream, new File(rep.toString() + "/" + names[i]));
+				} else { 
+					
+					rep = new File(path + "/users/" + messIn.user[0] + messIn.repName);
+					currPath = rep.toPath();
+					res = "-- O respositório " + messIn.repName + " do utilizador " + messIn.user[0] + " foi copiado do servidor";
+					
 				}
 				
-				result = 0;
+				//criar rep caso nao exista
+				if (!rep.exists())
+					return 0;
+				//criar lista com todos os ficheiros
+				else 
+					rep = new File(path + "/users/" + messIn.user + messIn.repName);
+					
+				//erro caso o rep nao exista
+				if (!rep.exists())
+					return -1;
+				//criar lista com todos os ficheiros
+				else {
+					//final String nameOfFile = filename;
+		             fileRep = rep.listFiles(new FilenameFilter() {
+		                @Override
+		                public boolean accept(File dir, String nameA) {
+		                    return !nameA.matches("(\\w*.\\w+.\\d)|(\\w+.\\d)");
+		                }
+		             });
+				}
 				
-				
-			//para inicializar o rep
-			} else {
-				ya = new boolean[fileRep.length];
-				names = new String[fileRep.length];
-				Arrays.fill(ya, 0, ya.length-1, Boolean.TRUE);
-				for(int i = 0; i < ya.length; i++)
-					names[i] = fileRep[i].getName();
-				messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, null, res);
-				outStream.writeObject(messOut);
-				
-				for (int i = 0; i < fileRep.length; i++) 
-					sendFile(outStream, inStream, fileRep[i]);
+				//so para actualizar os ficheiros
+				if (fileRep.length > 0) {
+					
+					ya = new boolean[fileRep.length];
+					names = new String[fileRep.length];
+					
+					if (fileRep.length > messIn.fileName.length)
+						delete = new boolean[fileRep.length];
+					else
+						delete = new boolean[messIn.fileName.length];
+					
+					for (int i = 0; i < fileRep.length; i++) {
+						
+						if (i < messIn.fileName.length) {
+							
+							names[i] = messIn.fileName[i];
+							currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
+							
+							//se o ficheiro ainda existe no servidor
+							if (currFile.exists()) {
 								
-				result = 0;
-			}
+								date = new Date(currFile.lastModified());
+								
+								//verificar se o ficheiro precisa de ser actualizado
+								if (date.compareTo(messIn.fileDate[i]) > 0) 
+									ya[i] = true;
+															
+							//ficheiros que o servidor ja nao tem	
+							} else 
+								delete[i] = true;	
+							
+						//ficheiros novos que o cliente nao tem	
+						} else {
+							
+							for (int j = 0;j < names.length; j++)
+								if (!Arrays.asList(names).contains(fileRep[j].getName()))
+									names[i] = fileRep[j].getName();
+					
+							ya[i] = true;
+							
+						}
+											
+					}
+					
+					if (messIn.fileName.length > fileRep.length)
+						Arrays.fill(delete, fileRep.length, delete.length-1, Boolean.TRUE);
+						
+					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, delete, res);
+					outStream.writeObject(messOut);
+					
+					for (int i = 0; i < ya.length; i++) {
+						if (ya[i] == true)
+							sendFile(outStream, inStream, new File(rep.toString() + "/" + names[i]));
+					}
+					
+					result = 0;
+					
+					
+				//para inicializar o rep
+				} else {
+					ya = new boolean[fileRep.length];
+					names = new String[fileRep.length];
+					Arrays.fill(ya, 0, ya.length-1, Boolean.TRUE);
+					for(int i = 0; i < ya.length; i++)
+						names[i] = fileRep[i].getName();
+					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, null, res);
+					outStream.writeObject(messOut);
+					
+					for (int i = 0; i < fileRep.length; i++) 
+						sendFile(outStream, inStream, fileRep[i]);
+									
+					result = 0;
+				}
 				
+			} else {
+				
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
+				outStream.writeObject(messOut);
+				result = -1;
+			
+			}
 			
 			return result;
 			
 		}
 			
-
-
 		private int pullFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
-			int result = -1;
-			File file = null;
-			String[] split = messIn.fileName[0].split("/");
 			
-			boolean myrep = false;
-			String repName = null;
+			File shareLog = new File(path + "/users/shareLog.txt");
+			
+			BufferedReader br = new BufferedReader(new FileReader(shareLog));
+			
+			String currentLine = null;
+			
+			String[] split1 = messIn.repName.split("/");
+			
 			String otherUser = null;
+			String repName = null;
 			String filename = null;
 			
-			Date date = null;
+			int result = -1;
+			
 			Message messOut = null;
-			boolean[] ya = new boolean[1];
 			
+			boolean hasAccess = false;
 			
-			//criar path para o rep
-			if (messIn.repName.contains("/")) {
-				
-				file = new File(path + "/users/" + messIn.fileName[0]);
-				otherUser = messIn.fileName[0].split("/")[0];
-				filename = messIn.fileName[0].split("/")[2];
-				repName = messIn.fileName[0].split("/")[1];
-			
-			} else {
-				 
-				file = new File(path + "/users/" + messIn.user[0] + messIn.fileName[0]);
-				myrep = true;
-				filename = messIn.fileName[0].split("/")[1];
-				repName = messIn.fileName[0].split("/")[0];
-				
-			 }
-								
-			if (file.exists()) {
-				
-				//actualiza o ficheiro para uma versao mais recente
-				date = new Date(file.lastModified());
-				
-				if (date.compareTo(messIn.fileDate[0]) > 0) {
-					
-					ya[0] = true;
-					if(myrep)
-						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " foi copiado do servidor");
-					else
-						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " do utilizador " + otherUser + " foi copiado do servidor");
-					outStream.writeObject(messOut);
-					sendFile(outStream, inStream, file);
-					result = 0;
-										
-				} else {
-					
-					//nao actualiza o ficheiro porque nao he mais recente
-					ya[0] = false;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro do seu repositório local é o mais recente");
-					outStream.writeObject(messOut);
-					result = 0;
-					
-				}	
-				
-			//erro o ficeiro nao existe
-			} else {
-				
-				ya[0] = false;
-				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi copiado do servidor");
-				outStream.writeObject(messOut);
-				
+			if(split1.length > 2){
+				otherUser = split1[0];
+				repName = split1[1];
+				filename = split1[2];
+			} else { 
+				repName = split1[0];
+				filename = split1[1];
 			}
 			
+			if (otherUser != null) {
+				
+				while ((currentLine = br.readLine()) != null && !hasAccess) {
+					
+					String[] split = currentLine.split(",");
+				    String[] split2 = split[0].split(":");
+				    
+				    if (split2[0].equals(otherUser)) {
+				    	
+				    	if (split2[1].equals(messIn.user[0]))
+				    		hasAccess = true;
+				    	else
+				    		for(int i = 1; i < split.length && !hasAccess; i++)
+				    			if(split[i].equals(messIn.user[0]))
+				    				hasAccess = true;
+				    }
+				    	
+				}
+				    
+			}
+			
+			if (hasAccess) {
+			
+				File file = null;
+				String[] split = messIn.fileName[0].split("/");
+				
+				boolean myrep = false;
+				
+				Date date = null;
+				boolean[] ya = new boolean[1];		
+				
+				//criar path para o rep
+				if (messIn.repName.contains("/")) {
+					
+					file = new File(path + "/users/" + messIn.fileName[0]);
+					otherUser = messIn.fileName[0].split("/")[0];
+					filename = messIn.fileName[0].split("/")[2];
+					repName = messIn.fileName[0].split("/")[1];
+				
+				} else {
+					 
+					file = new File(path + "/users/" + messIn.user[0] + messIn.fileName[0]);
+					myrep = true;
+					filename = messIn.fileName[0].split("/")[1];
+					repName = messIn.fileName[0].split("/")[0];
+					
+				 }
+									
+				if (file.exists()) {
+					
+					//actualiza o ficheiro para uma versao mais recente
+					date = new Date(file.lastModified());
+					
+					if (date.compareTo(messIn.fileDate[0]) > 0) {
+						
+						ya[0] = true;
+						if(myrep)
+							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " foi copiado do servidor");
+						else
+							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " do utilizador " + otherUser + " foi copiado do servidor");
+						outStream.writeObject(messOut);
+						sendFile(outStream, inStream, file);
+						result = 0;
+											
+					} else {
+						
+						//nao actualiza o ficheiro porque nao he mais recente
+						ya[0] = false;
+						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro do seu repositório local é o mais recente");
+						outStream.writeObject(messOut);
+						result = 0;
+						
+					}	
+					
+				//erro o ficeiro nao existe
+				} else {
+					
+					ya[0] = false;
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi copiado do servidor");
+					outStream.writeObject(messOut);
+					
+				}
+			
+			} else {
+				
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao ficheiro " + filename + " do utilizador " + otherUser);
+				outStream.writeObject(messOut);
+				result = -1;
+				
+			}
+				
 			return result;
 			
 		}

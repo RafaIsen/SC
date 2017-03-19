@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -169,7 +170,7 @@ public class myGitServer{
 							break;
 							
 						case "remove":
-							removeRep();
+							remove(outStream, inStream, messIn, path);
 							break;
 						}
 					
@@ -188,13 +189,16 @@ public class myGitServer{
 				e.printStackTrace();
 			}
 		}
-		
-			
+				
 		private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
 			try{
 				File users = new File(path + "/users/users.txt");
 				
 				boolean foundUser = checkUser(messIn.user[1], users);
+				
+				String res = null;
+				
+				String repName = messIn.repName;
 				
 				if(foundUser){
 					
@@ -202,21 +206,46 @@ public class myGitServer{
 					if(!shareLog.exists())
 						shareLog.createNewFile();
 					
-					FileWriter fw = new FileWriter(shareLog);
+					File tempFile = new File(path + "/users/users.txt.temp");
 					
-					if(checkUser(messIn.user[0], shareLog)){
-						fw.write("," + messIn.user[1]);
+					BufferedReader reader = new BufferedReader(new FileReader(users));
+					BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+					String userToAdd = messIn.user[1];
+					String currentLine = reader.readLine();
+
+					while ((currentLine = reader.readLine()) != null) {
+						
+						String[] split = currentLine.split(",");
+					    String[] split2 = split[0].split(":");
+					    
+					    if (split2[0].equals(messIn.user[0])) {
+					    	
+					    	for (String s : split)
+					    		if (s.equals(userToAdd))
+						    		res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
+					    	
+					    	if (split2[1].equals(userToAdd))
+					    		res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
+					    	else {
+					    		
+					    		writer.write(currentLine + "," + userToAdd + System.getProperty("line.separator"));
+					    		res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
+					    		
+					    	}
+					    	
+					    } else
+					    	writer.write(currentLine + System.getProperty("line.separator"));
 					}
-					else{
-						fw.write(System.lineSeparator() + messIn.user[0] + ":" + messIn.user[1]); 
-					    fw.flush();
-					    fw.close();			
-					}	
 					
-					Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, "-- O repositório myrep foi partilhado com o utilizador " + messIn.user[1]);
+					writer.close(); 
+					reader.close(); 
+					tempFile.renameTo(shareLog);
+					
+					Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
 					outStream.writeObject(messOut);
 					
-				}else{	
+				} else {	
 					
 					Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, "Erro: O utilizador " + messIn.user[1] + " não existe");
 					outStream.writeObject(messOut);
@@ -230,39 +259,82 @@ public class myGitServer{
 
 
 		private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
-			File users = new File(path + "/users/users.txt");
-			
-			boolean foundUser = checkUser(messIn.user[1], users);
-			
-			String res = null;
-			
-			String repName = messIn.repName;
-			
-			if(foundUser){
+			try{
+				File users = new File(path + "/users/users.txt");
 				
-				File shareLog = new File(path + "/users/shareLog.txt");
-				if(!shareLog.exists())
-					res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName; 
+				boolean foundUser = checkUser(messIn.user[1], users);
 				
-				if(checkUser(messIn.user[0], shareLog)){
-					users.
+				String res = null;
+				
+				String repName = messIn.repName;
+				
+				if (foundUser) {
+					
+					File shareLog = new File(path + "/users/shareLog.txt");
+					if (!shareLog.exists()){
+						res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName; 
+						Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
+						outStream.writeObject(messOut);
+					}
+					else {
+						if (checkUser(messIn.user[0], shareLog)) {
+							
+							File tempFile = new File(path + "/users/users.txt.temp");
+		
+							BufferedReader reader = new BufferedReader(new FileReader(users));
+							BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+		
+							String userToRemove = messIn.user[1];
+							String currentLine = reader.readLine();
+		
+							while ((currentLine = reader.readLine()) != null) {
+								
+								String[] split = currentLine.split(",");
+							    String[] split2 = split[0].split(":");
+							    
+							    if (split2[0].equals(messIn.user[0])) {
+							    	
+							    	if (split2[1].equals(userToRemove)) {
+							    		
+							    		writer.write(split2[0] + ":");
+							    		writer.write(split[0]);
+							    		
+							    		for(int i = 1; i < split.length; i++)
+							    			writer.write("," + split[i]);
+							    		
+							    	} else {
+							    		
+							    		writer.write(split2[0] + ":" + split2[1]);
+							    		
+							    		for(String s : split)
+							    			writer.write("," + s);
+							    		
+							    	}
+							    	
+							    } else
+							    	writer.write(currentLine + System.getProperty("line.separator"));
+							}
+							
+							writer.close(); 
+							reader.close(); 
+							tempFile.renameTo(shareLog);
+							res = "-- Foi retirado o acesso previamente dado ao utilizador " + messIn.user[1];
+							
+							Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
+							outStream.writeObject(messOut);
+							
+						} else {
+							res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName;	
+						
+						Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
+						outStream.writeObject(messOut);
+					
+						}
+					}
 				}
-				else
-					res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName;	
-				
-				Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, "-- O repositório myrep foi partilhado com o utilizador " + messIn.user[1]);
-				outStream.writeObject(messOut);
-				
-			}else{	
-				
-				Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, "Erro: O utilizador " + messIn.user[1] + " não existe");
-				outStream.writeObject(messOut);
-				
+			} catch(IOException e) {
+				e.printStackTrace();
 			}
-			
-		}catch(IOException e){
-			e.printStackTrace();
-		}
 		}
 
 

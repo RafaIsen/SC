@@ -324,10 +324,11 @@ public class myGitServer{
 							outStream.writeObject(messOut);
 							
 						} else {
+							
 							res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName;	
 						
-						Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
-						outStream.writeObject(messOut);
+							Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
+							outStream.writeObject(messOut);
 					
 						}
 					}
@@ -354,11 +355,15 @@ public class myGitServer{
 			
 			//criar path para o rep
 			if (messIn.repName.contains("/")) {
+				
 				rep = new File(path + "/users/" + messIn.repName);
 				currPath = rep.toPath();
+				
 			} else { 
+				
 				rep = new File(path + "/users/" + messIn.user[0] + messIn.repName);
 				currPath = rep.toPath();
+				
 			}
 			//criar rep caso nao exista
 			if (!rep.exists())
@@ -369,13 +374,18 @@ public class myGitServer{
 			
 			//caso o rep venha sem ficheiros (so para iniciar rep)
 			if (messIn.fileName.length > 0) {
+				
 				ya = new boolean[messIn.fileName.length];
 				versions = new int[messIn.fileName.length];
 				exists = new boolean[fileRep.length];
+				
 				//
 				for (int i = 0; i < messIn.fileName.length; i++) {
+					
 					currFile = new File(currPath + "/" + messIn.fileName[i]);
+					
 					if (currFile.exists()) {
+						
 						date = new Date(currFile.lastModified());
 						
 						//verificar quais os ficheiros que precisam de ser actualizados
@@ -389,14 +399,18 @@ public class myGitServer{
 						//if (fileRep.)
 						
 					} else {
+						
 						ya[i] = true;
 						versions[i] = 0;
+						
 					}
 					
 				}
+				
 			}
 			
 			return result;
+			
 		}
 
 
@@ -413,17 +427,20 @@ public class myGitServer{
 			String filename = null;
 			
 			//criar path para o rep
-			if (messIn.repName.contains("/")){
+			if (messIn.repName.contains("/")) {
+				
 				file = new File(path + "/users/" + messIn.fileName[0]);
 				otherUser = messIn.fileName[0].split("/")[0];
 				filename = messIn.fileName[0].split("/")[2];
 				repName = messIn.fileName[0].split("/")[1];
-			}
-			 else {
+			
+			} else {
+				 
 				file = new File(path + "/users/" + messIn.user[0] + messIn.fileName[0]);
 				myrep = true;
 				filename = messIn.fileName[0].split("/")[1];
 				repName = messIn.fileName[0].split("/")[0];
+				
 			 }
 						
 			Date date = null;
@@ -432,10 +449,12 @@ public class myGitServer{
 			boolean[] ya = new boolean[1];
 								
 			if (file.exists()) {
+				
 				//actualiza o ficheiro para uma versao mais recente
 				date = new Date(file.lastModified());
 				
 				if (date.compareTo(messIn.fileDate[0]) > 0) {
+					
 					ya[0] = true;
 					if(myrep)
 						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " foi copiado do servidor");
@@ -447,20 +466,26 @@ public class myGitServer{
 						result = 0;
 										
 				} else {
+					
 					//nao actualiza o ficheiro porque nao he mais recente
 					ya[0] = false;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro do seu repositório local é o mais recente");
 					outStream.writeObject(messOut);
 					result = 0;
+					
 				}	
 				
 			//cria o ficheiro porque ainda existe
 			} else {
+				
 				ya[0] = false;
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi copiado do servidor");
 				outStream.writeObject(messOut);
+				
 			}
+			
 			return result;
+			
 		}
 
 
@@ -478,12 +503,14 @@ public class myGitServer{
 			File file = null;
 			Path pathFolder = null;
 			
-			if(secondI == -1) {
+			if (secondI == -1) {
+				
 				pathFolder = new File(path + "/users/" + messIn.user + "/" + split[0]).toPath();
 				file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
 				filename = split[1];
 			
 			} else {
+				
 				pathFolder = new File(path + "/users/" + messIn.user + "/" + split[0] + "/" + split[1]).toPath();
 				file = new File(path + "/users/" + messIn.fileName[0]);
 				filename = split[2];
@@ -501,6 +528,7 @@ public class myGitServer{
 			int versao = 0;
 
 			if (exists) {
+				
 				//actualiza o ficheiro para uma versao mais recente
 				date = new Date(file.lastModified());
 				
@@ -513,6 +541,7 @@ public class myGitServer{
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi atualizado no servidor");
 					outStream.writeObject(messOut);
 					newFile.createNewFile();
+					
 					if (receiveFile(outStream, inStream, newFile) >= 0) {
 						
 						file.renameTo(new File(pathFolder.toString() + split[split.length-1] + "." + String.valueOf(versao)));
@@ -523,26 +552,29 @@ public class myGitServer{
 					}
 					
 				} else {
+					
 					//nao actualiza o ficheiro porque nao he mais recente
 					ya[0] = false;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- Nada a atualizar no servidor");
 					outStream.writeObject(messOut);
 					result = 0;
+					
 				}	
 				
 			//cria o ficheiro porque ainda existe
 			} else {
+				
 				ya[0] = true;
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi enviado para o servidor");
 				outStream.writeObject(messOut);
 				file.createNewFile();
-				if (receiveFile(outStream, inStream, file) >= 0) {
+				if (receiveFile(outStream, inStream, file) >= 0)
 					result = 0;
-					
-				}
 				
 			}
-			return result;			
+			
+			return result;		
+			
 		}
 
 

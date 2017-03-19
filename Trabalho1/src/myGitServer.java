@@ -207,6 +207,7 @@ public class myGitServer{
 					String userToAdd = messIn.user[1];
 					
 					File shareLog = new File(path + "/users/shareLog.txt");
+					
 					if (!shareLog.exists()) {
 						
 						shareLog.createNewFile();
@@ -217,45 +218,61 @@ public class myGitServer{
 						
 					} else {
 						
-						File tempFile = new File(path + "/users/shareLog_temp.txt");
-						tempFile.createNewFile();
 						BufferedReader reader = new BufferedReader(new FileReader(shareLog));
-						BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
 						
-						String currentLine = null;
-
-						while ((currentLine = reader.readLine()) != null) {
+						if (reader.readLine() == null) {
 							
-							String[] split = currentLine.split(",");
-						    String[] split2 = split[0].split(":");
-						    
-						    if (split2[0].equals(messIn.user[0])) {
-						    	
-						    	for (String s : split)
-						    		if (s.equals(userToAdd))
+							FileWriter fw = new FileWriter(shareLog);
+							fw.write(messIn.user[0] + ":" + userToAdd + System.lineSeparator());
+							res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
+							fw.close();
+
+						} else {
+							
+							File tempFile = new File(path + "/users/shareLog_temp.txt");
+							tempFile.createNewFile();
+							BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+							
+							String currentLine = null;
+							
+							while ((currentLine = reader.readLine()) != null) {
+								
+								String[] split = currentLine.split(",");
+							    String[] split2 = split[0].split(":");
+							    
+							    if (split2[0].equals(messIn.user[0])) {
+							    	
+							    	for (String s : split)
+							    		if (s.equals(userToAdd))
+								    		res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
+							    	
+							    	if (split2[1].equals(userToAdd))
 							    		res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
-						    	
-						    	if (split2[1].equals(userToAdd))
-						    		res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
-						    	else {
-						    		
-						    		writer.write(currentLine + "," + userToAdd + System.getProperty("line.separator"));
-						    		res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
-						    		
-						    	}
-						    	
-						    } else
-						    	writer.write(currentLine + System.getProperty("line.separator"));
+							    	else {
+							    		
+							    		writer.write(currentLine + "," + userToAdd + System.getProperty("line.separator"));
+							    		res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
+							    		
+							    	}
+							    	
+							    } else
+							    	writer.write(currentLine + System.getProperty("line.separator"));
+							
+							}
+							
 						
-						}
-				
+					
 						writer.close(); 
 						reader.close(); 
+						shareLog.delete();
 						tempFile.renameTo(shareLog);
+						
+						}
+					
+					}
 						
 						Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
 						outStream.writeObject(messOut);
-					}
 					
 				} else {	
 					
@@ -283,21 +300,24 @@ public class myGitServer{
 				if (foundUser) {
 					
 					File shareLog = new File(path + "/users/shareLog.txt");
-					if (!shareLog.exists()){
+					if (!shareLog.exists()) {
+						
 						res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName; 
 						Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
 						outStream.writeObject(messOut);
-					}
-					else {
+					
+					} else {
+						
 						if (checkUser(messIn.user[0], shareLog)) {
 							
 							File tempFile = new File(path + "/users/shareLog.temp");
+							tempFile.createNewFile();
 		
 							BufferedReader reader = new BufferedReader(new FileReader(shareLog));
 							BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
 		
 							String userToRemove = messIn.user[1];
-							String currentLine = reader.readLine();
+							String currentLine = null;
 		
 							while ((currentLine = reader.readLine()) != null) {
 								
@@ -308,11 +328,14 @@ public class myGitServer{
 							    	
 							    	if (split2[1].equals(userToRemove)) {
 							    		
-							    		writer.write(split2[0] + ":");
-							    		writer.write(split[0]);
-							    		
-							    		for(int i = 1; i < split.length; i++)
-							    			writer.write("," + split[i]);
+							    		if (!(split.length == 1)) {
+							    			
+							    			writer.write(split2[0] + ":");
+							    			writer.write(split[0]);
+								    		for(int i = 1; i < split.length; i++)
+								    			writer.write("," + split[i]);
+								    		
+							    		}
 							    		
 							    	} else {
 							    		
@@ -329,6 +352,7 @@ public class myGitServer{
 							
 							writer.close(); 
 							reader.close(); 
+							shareLog.delete();
 							tempFile.renameTo(shareLog);
 							res = "-- Foi retirado o acesso previamente dado ao utilizador " + messIn.user[1];
 							

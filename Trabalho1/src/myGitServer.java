@@ -193,7 +193,9 @@ public class myGitServer{
 		}
 				
 		private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
-			try{
+			
+			try {
+				
 				File users = new File(path + "/users/users.txt");
 				
 				boolean foundUser = checkUser(messIn.user[1], users);
@@ -202,7 +204,7 @@ public class myGitServer{
 				
 				String repName = messIn.repName;
 				
-				if(foundUser){
+				if (foundUser) {
 					
 					String userToAdd = messIn.user[1];
 					
@@ -260,8 +262,6 @@ public class myGitServer{
 							
 							}
 							
-						
-					
 						writer.close(); 
 						reader.close(); 
 						shareLog.delete();
@@ -281,14 +281,18 @@ public class myGitServer{
 					
 				}
 				
-			}catch(IOException e){
+			} catch(IOException e) {
+				
 				e.printStackTrace();
+				
 			}
+			
 		}
 
-
 		private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
-			try{
+			
+			try {
+				
 				File users = new File(path + "/users/users.txt");
 				
 				boolean foundUser = checkUser(messIn.user[1], users);
@@ -300,6 +304,7 @@ public class myGitServer{
 				if (foundUser) {
 					
 					File shareLog = new File(path + "/users/shareLog.txt");
+					
 					if (!shareLog.exists()) {
 						
 						res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName; 
@@ -367,15 +372,72 @@ public class myGitServer{
 							outStream.writeObject(messOut);
 					
 						}
+						
 					}
+					
 				}
+				
 			} catch(IOException e) {
+				
 				e.printStackTrace();
+				
 			}
+			
 		}
 
-
 		private int pullRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
+			
+			File shareLog = new File(path + "/users/shareLog.txt");
+			
+			BufferedReader br = new BufferedReader(new FileReader(shareLog));
+			
+			String currentLine = null;
+			
+			String[] split1 = messIn.repName.split("/");
+			
+			String otherUser = null;
+			String repName = null;
+			
+			if(split1.length > 1){
+				otherUser = split1[0];
+				repName = split1[1];
+			} else
+				repName = split1[0];
+			
+			if (otherUser != null) {
+				
+				while ((currentLine = br.readLine()) != null) {
+					
+					String[] split = currentLine.split(",");
+				    String[] split2 = split[0].split(":");
+				    
+				    if (split2[0].equals(otherUser)) {
+				    	
+				    	if (split2[1].equals(messIn.user[0])) {
+				    		
+				    		if (!(split.length == 1)) {
+				    			
+				    			writer.write(split2[0] + ":");
+				    			writer.write(split[0]);
+					    		for(int i = 1; i < split.length; i++)
+					    			writer.write("," + split[i]);
+					    		
+				    		}
+				    		
+				    	} else {
+				    		
+				    		writer.write(split2[0] + ":" + split2[1]);
+				    		
+				    		for(String s : split)
+				    			writer.write("," + s);
+				    		
+				    	}
+				    	
+				    }
+				    
+				}
+				
+			}
 			
 			int result = -1;
 			File rep  = null;
@@ -507,6 +569,7 @@ public class myGitServer{
 			return result;
 			
 		}
+			
 
 
 		private int pullFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {

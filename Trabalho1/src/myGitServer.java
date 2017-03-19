@@ -669,7 +669,7 @@ public class myGitServer{
 			if (!rep.exists()) {
 				
 				rep.mkdir();
-				res = "-- O repositório " + repName + " foi criado no servidor "; 
+				res = "-- O repositório " + repName + " foi criado no servidor"; 
 				
 			} else {
 				//final String nameOfFile = filename;
@@ -709,6 +709,8 @@ public class myGitServer{
 						}
 						
 					}
+				
+				res += System.lineSeparator() + "-- O ficheiro " + messIn.fileName[0] + " foi enviado para o servidor";
 
 			}
 			

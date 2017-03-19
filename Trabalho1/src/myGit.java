@@ -283,7 +283,7 @@ public class myGit{
 			names = new String[0];
 			dates = new Date[0];
 		}
-		Message messOut = new Message("pushRep", names, repName, dates, null, user, null);
+		Message messOut = new Message("pullRep", names, repName, dates, null, user, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -292,24 +292,26 @@ public class myGit{
 		
 		if (messIn == null)
 			result = -1;
-		else
+		else {
+			if (!rep.exists())
+				rep.mkdirs();
 			//a actualizar os ficheiros novos q o cliente nao tem
 			for (int i = 0; i < messIn.toBeUpdated.length; i++) {
 				//so a actualizar os ficheiros antigos
-				if (i < names.length) 
-					
+				if (i < names.length) {
 					if (messIn.toBeUpdated[i] == true) {
-						newFile.createNewFile();
 						newFile = new File(repFiles[i] + ".temp");
-						if (receiveFile(outStream, inStream, newFile) > 0) {
-							repFiles[i].delete();
-							newFile.renameTo(new File(path + "/" + repName + "/" + names[i]));
-						}
-					
-					
+						newFile.createNewFile();
+						receiveFile(outStream, inStream, newFile);
+						repFiles[i].delete();
+						newFile.renameTo(new File(path + "/" + repName + "/" + names[i]));
+						
+					}
+				
+				//receber ficheiros novos
 				} else {
+					newFile = new File(rep.toString() + "/" + messIn.fileName[i]);
 					newFile.createNewFile();
-					newFile = new File(path + "/" + repName + "/" + messIn.fileName[i]);
 					receiveFile(outStream, inStream, newFile);
 						
 					
@@ -317,6 +319,7 @@ public class myGit{
 				if (messIn.delete[i] == true)
 					System.out.println("-- O ficheiro" + messIn.fileName[i] + "existe localmente mas foi eliminado no servidor");
 			}
+	}
 		return result;
 	}
 

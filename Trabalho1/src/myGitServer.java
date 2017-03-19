@@ -24,6 +24,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 //Servidor myGitServer
 
@@ -205,6 +207,7 @@ public class myGitServer{
 			File rep  = null;
 			File currFile = null;
 			File[] fileRep = null;
+			
 			Date date = null;
 			boolean[] delete = null;
 			
@@ -231,7 +234,7 @@ public class myGitServer{
 	             fileRep = rep.listFiles(new FilenameFilter() {
 	                @Override
 	                public boolean accept(File dir, String nameA) {
-	                    return nameA.endsWith(".[1-9]+");
+	                    return !nameA.matches(".[1-9]+");
 	                }
 	             });
 			}
@@ -239,7 +242,10 @@ public class myGitServer{
 			if (fileRep.length > 0) {
 				ya = new boolean[fileRep.length];
 				names = new String[fileRep.length];
-				delete = new boolean[fileRep.length];
+				if (fileRep.length > messIn.fileName.length)
+					delete = new boolean[fileRep.length];
+				else
+					delete = new boolean[messIn.fileName.length];
 				//
 				for (int i = 0; i < fileRep.length; i++) {
 					if (i < messIn.fileName.length) {
@@ -251,7 +257,7 @@ public class myGitServer{
 							date = new Date(currFile.lastModified());
 							
 							//verificar se o ficheiro precisa de ser actualizado
-							if (date.compareTo(messIn.fileDate[i]) < 0) 
+							if (date.compareTo(messIn.fileDate[i]) > 0) 
 								ya[i] = true;
 														
 						//ficheiros que o servidor ja nao tem	
@@ -261,18 +267,23 @@ public class myGitServer{
 					//ficheiros novos que o cliente nao tem	
 					} else {
 						for (int j = 0;j < names.length; j++)
-							if (Arrays.binarySearch(names, fileRep[j].toString()) > 0)
-								names[i] = fileRep[j].toString();
+							if (!Arrays.asList(names).contains(fileRep[j].getName()))
+								names[i] = fileRep[j].getName();
 				
 						ya[i] = true;
 					}
 										
 				}
+				if (messIn.fileName.length > fileRep.length)
+					Arrays.fill(delete, fileRep.length, messIn.fileName.length-1, Boolean.TRUE);
+					
 				messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, delete);
 				outStream.writeObject(messOut);
 				
-				for (int i = 0; i < ya.length; i++) 
-					sendFile(outStream, inStream, fileRep[i]);
+				for (int i = 0; i < ya.length; i++) {
+					if (ya[i] == true)
+						sendFile(outStream, inStream, new File(rep.toString() + "/" + names[i]));
+				}
 				
 				result = 0;
 				
@@ -283,7 +294,7 @@ public class myGitServer{
 				names = new String[fileRep.length];
 				Arrays.fill(ya, 0, ya.length-1, Boolean.TRUE);
 				for(int i = 0; i < ya.length; i++)
-					names[i] = fileRep[i].toString();
+					names[i] = fileRep[i].getName();
 				messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, null);
 				outStream.writeObject(messOut);
 				
@@ -325,9 +336,8 @@ public class myGitServer{
 					ya[0] = true;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null);
 					outStream.writeObject(messOut);
-					
-					if (sendFile(outStream, inStream, file) >= 0) 
-						result = 0;
+					sendFile(outStream, inStream, file);
+					result = 0;
 										
 				} else {
 					//nao actualiza o ficheiro porque nao he mais recente
@@ -391,12 +401,11 @@ public class myGitServer{
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null);
 					outStream.writeObject(messOut);
 					newFile.createNewFile();
-					if (receiveFile(outStream, inStream, newFile) >= 0) {
-																	
-						file.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1] + "." + String.valueOf(versao)));
-						newFile.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1]));
-						result = 0;
-					}
+					receiveFile(outStream, inStream, newFile);
+					file.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1] + "." + String.valueOf(versao)));
+					newFile.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1]));
+					result = 0;
+					
 					
 				} else {
 					//nao actualiza o ficheiro porque nao he mais recente
@@ -412,11 +421,9 @@ public class myGitServer{
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null);
 				outStream.writeObject(messOut);
 				file.createNewFile();
-				if (receiveFile(outStream, inStream, file) >= 0) {
-					result = 0;
-					
-				}
-				
+				receiveFile(outStream, inStream, file);
+				result = 0;
+									
 			}
 			return result;			
 		}
@@ -426,6 +433,7 @@ public class myGitServer{
 			int result = -1;
 			File rep  = null;
 			File newFile = null;
+			File currFile = null;
 			File[] fileRep = null;
 			Date date = null;
 			String nameAux = null;
@@ -461,32 +469,34 @@ public class myGitServer{
 				versions = new int[messIn.fileName.length];
 
 				//
-				for (int i = 0; i < messIn.fileName.length; i++) {
-					//currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
-					if (fileRep[i].exists()) {
-						date = new Date(fileRep[i].lastModified());
-						
-						//verificar quais os ficheiros que precisam de ser actualizados
-						if (date.compareTo(messIn.fileDate[i]) < 0) {
-							versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i]);
-							ya[i] = true;	
+				
+					for (int i = 0; i < messIn.fileName.length; i++) {
+						//currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
+						if (fileRep != null && fileRep[i].exists()) {
+							date = new Date(fileRep[i].lastModified());
+							
+							//verificar quais os ficheiros que precisam de ser actualizados
+							if (date.compareTo(messIn.fileDate[i]) < 0) {
+								versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i]);
+								ya[i] = true;	
+							}
+							
+						} else {
+							ya[i] = true;
+							versions[i] = 0;
 						}
 						
-					} else {
-						ya[i] = true;
-						versions[i] = 0;
 					}
-					
-				}
 
 			}
 			
 			//saber quais os ficheiros a "eliminar"
-			for (int j = 0; j < messIn.fileName.length; j++)
-				if (Arrays.binarySearch(messIn.fileName, fileRep[j].toString()) > 0) {
-					nameAux = fileRep[j].toString();
-					fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].toString()))));
-				}
+			if (fileRep != null)
+				for (int j = 0; j < messIn.fileName.length; j++)
+					if (Arrays.binarySearch(messIn.fileName, fileRep[j].toString()) > 0) {
+						nameAux = fileRep[j].toString();
+						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].toString()))));
+					}
 						
 			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null);
 			outStream.writeObject(messOut);
@@ -496,9 +506,9 @@ public class myGitServer{
 				
 				//saber quais os ficheiros q vai client vai mandar
 				if (messOut.toBeUpdated[i] == true) {
-					//fileRep[i] = new File(rep + "/" + messIn.fileName[i]);
-					if(!fileRep[i].exists()){
-						newFile = fileRep[i];
+					currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
+					if(!currFile.exists()){
+						newFile = currFile;
 						newFile.createNewFile();
 					}else{
 						//currFile.createNewFile();
@@ -506,15 +516,15 @@ public class myGitServer{
 						newFile.createNewFile();
 					}
 					//receber os ficheiros
-					if (receiveFile(outStream, inStream, newFile) >= 0) {
-						//saber se o ficheiro e novo nao tem versao
-						if (!(versions[i] == 0)) {
-							fileRep[i].renameTo(new File(rep + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
-							newFile.renameTo(new File(rep + "/" + messIn.fileName[i]));
-						}
-						result = 0;
-						
+					receiveFile(outStream, inStream, newFile);
+					//saber se o ficheiro e novo nao tem versao
+					if (!(versions[i] == 0)) {
+						fileRep[i].renameTo(new File(rep.toString() + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
+						newFile.renameTo(new File(rep.toString() + "/" + messIn.fileName[i]));
 					}
+					result = 0;
+						
+					
 				}
 			}
 			return result;

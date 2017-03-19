@@ -142,11 +142,6 @@ public class myGit{
 		}
 				
 	}
-	
-	private void removeRep() {
-		// TODO Auto-generated method stub
-		
-	}
 
 	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
 		int result = -1; 
@@ -161,14 +156,11 @@ public class myGit{
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
-<<<<<<< HEAD
 		String[] users = new String[1];
 		users[0] = user;
 		
 		Message messOut = new Message("pushFile", name, null, dates, null, users, null, null);
-=======
-		Message messOut = new Message("pushFile", name, split[split.length-2], dates, null, user, null);
->>>>>>> refs/heads/Andrade
+
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -242,14 +234,11 @@ public class myGit{
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
-<<<<<<< HEAD
 		String[] users = new String[1];
 		users[0] = user;
 		
-		Message messOut = new Message("pullFile", name, null, dates, null, users, null, null);
-=======
-		Message messOut = new Message("pullFile", name, split[split.length-2], dates, null, user, null);
->>>>>>> refs/heads/Andrade
+		Message messOut = new Message("pullFile", name, split[split.length-2], dates, null, users, null, null);
+
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -281,42 +270,37 @@ public class myGit{
 		String[] names = null;
 		Date[] dates = null;
 		
-<<<<<<< HEAD
 		String[] users = new String[1];
 		users[0] = user;
-		
-		if (numFiles != 0) {
-			names = new String[numFiles];
-			dates = new Date[numFiles];
-		}	
-		
-		for(int i = 0; i < numFiles; i++) {
-			names[i] = repFiles[i].getName();
-			dates[i] = new Date(repFiles[i].lastModified());
-=======
+
 		if (rep.exists()) {
+			
 			repFiles = rep.listFiles();
 			int numFiles = repFiles.length;
 			
 			if (numFiles != 0) {
+				
 				names = new String[numFiles];
 				dates = new Date[numFiles];
+				
 			}	
 			
 			for(int i = 0; i < numFiles; i++) {
+				
 				names[i] = repFiles[i].getName();
 				dates[i] = new Date(repFiles[i].lastModified());
+				
 			}
+			
 		} else {
+			
 			names = new String[0];
 			dates = new Date[0];
->>>>>>> refs/heads/Andrade
+			
 		}
-<<<<<<< HEAD
+
 		Message messOut = new Message("pushRep", names, repName, dates, null, users, null, null);
-=======
-		Message messOut = new Message("pullRep", names, repName, dates, null, user, null);
->>>>>>> refs/heads/Andrade
+
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -369,6 +353,20 @@ public class myGit{
 		
 		System.out.println(messIn.result);
 	}
+	
+	private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, String repName, String userToRemove, String user, Path path) throws IOException, ClassNotFoundException {
+		String[] users = new String[2];
+		users[0] = user;
+		users[1] = userToRemove;
+		
+		Message messOut = new Message("remove", null, repName, null, null, users, null, null);
+		Message messIn = null;
+		
+		outStream.writeObject(messOut);
+		messIn = (Message) inStream.readObject();
+		
+		System.out.println(messIn.result);
+	}
 
 	public int sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException {
 		int result = 0;
@@ -386,8 +384,6 @@ public class myGit{
         }
         
         is.close();
-		//inStream.close();
-		//outStream.close();
 		return result;
 	}
 	
@@ -491,11 +487,11 @@ public class myGit{
 				break;
 				
 			case "-remove":
-				removeRep();
+				remove(outStream, inStream, param1, param2, user, path);
 				break;
 				
 			default:
-				System.out.println("Esse commando não existe!");
+				System.out.println("-- Esse commando não existe!");
 				break;
 			
 		}

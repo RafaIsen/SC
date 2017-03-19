@@ -481,12 +481,14 @@ public class myGitServer{
 			String[] split = messIn.fileName[0].split("/");
 			
 			boolean myrep = false;
-			
 			String repName = null;
-			
 			String otherUser = null;
-			
 			String filename = null;
+			
+			Date date = null;
+			Message messOut = null;
+			boolean[] ya = new boolean[1];
+			
 			
 			//criar path para o rep
 			if (messIn.repName.contains("/")) {
@@ -508,7 +510,7 @@ public class myGitServer{
 			if (file.exists()) {
 				
 				//actualiza o ficheiro para uma versao mais recente
-				Date date = new Date(file.lastModified());
+				date = new Date(file.lastModified());
 				
 				if (date.compareTo(messIn.fileDate[0]) > 0) {
 					

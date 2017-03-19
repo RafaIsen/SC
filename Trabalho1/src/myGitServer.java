@@ -234,7 +234,7 @@ public class myGitServer{
 	             fileRep = rep.listFiles(new FilenameFilter() {
 	                @Override
 	                public boolean accept(File dir, String nameA) {
-	                    return !nameA.matches(".[1-9]+");
+	                    return !nameA.matches("(\\w*.\\w+.\\d)|(\\w+.\\d)");
 	                }
 	             });
 			}
@@ -275,7 +275,7 @@ public class myGitServer{
 										
 				}
 				if (messIn.fileName.length > fileRep.length)
-					Arrays.fill(delete, fileRep.length, messIn.fileName.length-1, Boolean.TRUE);
+					Arrays.fill(delete, fileRep.length, delete.length-1, Boolean.TRUE);
 					
 				messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, delete);
 				outStream.writeObject(messOut);
@@ -458,22 +458,21 @@ public class myGitServer{
 	             fileRep = rep.listFiles(new FilenameFilter() {
 	                @Override
 	                public boolean accept(File dir, String nameA) {
-	                    return nameA.endsWith(".[1-9]+");
+	                    return !nameA.contains("(\\w*.\\w+.\\d)|(\\w+.\\d)");
 	                }
 	             });
 			}
 			
-			//caso o rep venha sem ficheiros (so para iniciar rep)
+			//caso o rep venha com ficheiros
 			if (messIn.fileName.length > 0) {
 				ya = new boolean[messIn.fileName.length];
 				versions = new int[messIn.fileName.length];
-
-				//
+				
 				
 					for (int i = 0; i < messIn.fileName.length; i++) {
-						//currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
-						if (fileRep != null && fileRep[i].exists()) {
-							date = new Date(fileRep[i].lastModified());
+						currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
+						if (fileRep != null && currFile.exists()) {
+							date = new Date(currFile.lastModified());
 							
 							//verificar quais os ficheiros que precisam de ser actualizados
 							if (date.compareTo(messIn.fileDate[i]) < 0) {
@@ -492,10 +491,10 @@ public class myGitServer{
 			
 			//saber quais os ficheiros a "eliminar"
 			if (fileRep != null)
-				for (int j = 0; j < messIn.fileName.length; j++)
-					if (Arrays.binarySearch(messIn.fileName, fileRep[j].toString()) > 0) {
-						nameAux = fileRep[j].toString();
-						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].toString()))));
+				for (int j = 0; j < fileRep.length; j++)
+					if (!Arrays.asList(messIn.fileName).contains(fileRep[j].getName())) {
+						nameAux = fileRep[j].getName();
+						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].getName()))));		
 					}
 						
 			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null);

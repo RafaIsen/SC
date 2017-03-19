@@ -317,7 +317,7 @@ public class myGit{
 					
 				}
 				if (messIn.delete[i] == true)
-					System.out.println("-- O ficheiro" + messIn.fileName[i] + "existe localmente mas foi eliminado no servidor");
+					System.out.println("-- O ficheiro " + messIn.fileName[i] + " existe localmente mas foi eliminado no servidor");
 			}
 	}
 		return result;

@@ -213,48 +213,49 @@ public class myGitServer{
 						FileWriter fw = new FileWriter(shareLog);
 						fw.write(messIn.user[0] + ":" + userToAdd + System.lineSeparator());
 						res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
+						fw.close();
 						
-					}
-					
-					File tempFile = new File(path + "/users/shareLog_temp.txt");
-					tempFile.createNewFile();
-					
-					BufferedReader reader = new BufferedReader(new FileReader(shareLog));
-					BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
-
-					String currentLine = null;
-
-					while ((currentLine = reader.readLine()) != null) {
+					} else {
 						
-						String[] split = currentLine.split(",");
-					    String[] split2 = split[0].split(":");
-					    
-					    if (split2[0].equals(messIn.user[0])) {
-					    	
-					    	for (String s : split)
-					    		if (s.equals(userToAdd))
+						File tempFile = new File(path + "/users/shareLog_temp.txt");
+						tempFile.createNewFile();
+						BufferedReader reader = new BufferedReader(new FileReader(shareLog));
+						BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+						
+						String currentLine = null;
+
+						while ((currentLine = reader.readLine()) != null) {
+							
+							String[] split = currentLine.split(",");
+						    String[] split2 = split[0].split(":");
+						    
+						    if (split2[0].equals(messIn.user[0])) {
+						    	
+						    	for (String s : split)
+						    		if (s.equals(userToAdd))
+							    		res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
+						    	
+						    	if (split2[1].equals(userToAdd))
 						    		res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
-					    	
-					    	if (split2[1].equals(userToAdd))
-					    		res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
-					    	else {
-					    		
-					    		writer.write(currentLine + "," + userToAdd + System.getProperty("line.separator"));
-					    		res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
-					    		
-					    	}
-					    	
-					    } else
-					    	writer.write(currentLine + System.getProperty("line.separator"));
-					
-					}
+						    	else {
+						    		
+						    		writer.write(currentLine + "," + userToAdd + System.getProperty("line.separator"));
+						    		res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
+						    		
+						    	}
+						    	
+						    } else
+						    	writer.write(currentLine + System.getProperty("line.separator"));
+						
+						}
 				
-					writer.close(); 
-					reader.close(); 
-					tempFile.renameTo(shareLog);
-					
-					Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
-					outStream.writeObject(messOut);
+						writer.close(); 
+						reader.close(); 
+						tempFile.renameTo(shareLog);
+						
+						Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
+						outStream.writeObject(messOut);
+					}
 					
 				} else {	
 					

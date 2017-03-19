@@ -167,7 +167,7 @@ public class myGitServer{
 							pullRep(outStream, inStream, messIn, path);
 							break;
 						
-						case "share":
+						case "shareRep":
 							shareRep(outStream, inStream, messIn, path);
 							break;
 							

@@ -498,6 +498,9 @@ public class myGit{
 				remove(outStream, inStream, param1, param2, user, path);
 				break;
 				
+			case "-p":
+				break;
+				
 			default:
 				System.out.println("-- Esse commando não existe!");
 				break;

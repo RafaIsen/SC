@@ -154,16 +154,21 @@ public class myGit{
 		File file = new File(path + "/" + fileName);
 		
 		String[] name = new String[1];
+		String[] split = fileName.split("/");
 		name[0] = fileName;
 		
 		Date[] dates = new Date[1];
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
+<<<<<<< HEAD
 		String[] users = new String[1];
 		users[0] = user;
 		
 		Message messOut = new Message("pushFile", name, null, dates, null, users, null, null);
+=======
+		Message messOut = new Message("pushFile", name, split[split.length-2], dates, null, user, null);
+>>>>>>> refs/heads/Andrade
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -229,7 +234,7 @@ public class myGit{
 		int result = 0;
 		File file = new File(path + "/" + fileName);
 		File newFile = null;
-		
+		String[] split = fileName.split("/");
 		String[] name = new String[1];
 		name[0] = fileName;
 		
@@ -237,10 +242,14 @@ public class myGit{
 		Date date = new Date(file.lastModified());
 		dates[0] = date;
 		
+<<<<<<< HEAD
 		String[] users = new String[1];
 		users[0] = user;
 		
 		Message messOut = new Message("pullFile", name, null, dates, null, users, null, null);
+=======
+		Message messOut = new Message("pullFile", name, split[split.length-2], dates, null, user, null);
+>>>>>>> refs/heads/Andrade
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -251,11 +260,12 @@ public class myGit{
 			result = -1;
 		
 		else if (messIn.toBeUpdated[0] == true) {
-			newFile = new File(path + "/" + fileName + "temp");
+			newFile = new File(path + "/" + fileName + ".temp");
+			newFile.createNewFile();
 			receiveFile(outStream, inStream, newFile);
 			file.delete();
 			newFile.renameTo(new File(path + "/" + fileName));
-			newFile.createNewFile();
+			
 			result = 0;
 		} 
 			
@@ -266,13 +276,12 @@ public class myGit{
 		int result = -1; 
 			
 		File rep = new File(path + "/" + repName);
-		File currFile = null;
-		File[] repFiles = rep.listFiles();
-		int numFiles = repFiles.length;
-		
+		File newFile = null;
+		File[] repFiles = null;
 		String[] names = null;
 		Date[] dates = null;
 		
+<<<<<<< HEAD
 		String[] users = new String[1];
 		users[0] = user;
 		
@@ -284,8 +293,30 @@ public class myGit{
 		for(int i = 0; i < numFiles; i++) {
 			names[i] = repFiles[i].getName();
 			dates[i] = new Date(repFiles[i].lastModified());
+=======
+		if (rep.exists()) {
+			repFiles = rep.listFiles();
+			int numFiles = repFiles.length;
+			
+			if (numFiles != 0) {
+				names = new String[numFiles];
+				dates = new Date[numFiles];
+			}	
+			
+			for(int i = 0; i < numFiles; i++) {
+				names[i] = repFiles[i].getName();
+				dates[i] = new Date(repFiles[i].lastModified());
+			}
+		} else {
+			names = new String[0];
+			dates = new Date[0];
+>>>>>>> refs/heads/Andrade
 		}
+<<<<<<< HEAD
 		Message messOut = new Message("pushRep", names, repName, dates, null, users, null, null);
+=======
+		Message messOut = new Message("pullRep", names, repName, dates, null, user, null);
+>>>>>>> refs/heads/Andrade
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -294,32 +325,34 @@ public class myGit{
 		
 		if (messIn == null)
 			result = -1;
-		else
+		else {
+			if (!rep.exists())
+				rep.mkdirs();
 			//a actualizar os ficheiros novos q o cliente nao tem
 			for (int i = 0; i < messIn.toBeUpdated.length; i++) {
 				//so a actualizar os ficheiros antigos
-				if (i < messOut.toBeUpdated.length) {
-					
+				if (i < names.length) {
 					if (messIn.toBeUpdated[i] == true) {
-						
-						currFile = new File(path + "/" + repName + "/" + messIn.fileName[i] + "temp");
-						if (receiveFile(outStream, inStream, currFile) > 0) {
-							repFiles[i].delete();
-							currFile.renameTo(new File(path + "/" + repName + "/" + names[i]));
-							currFile.createNewFile();
-						}
+						newFile = new File(repFiles[i] + ".temp");
+						newFile.createNewFile();
+						receiveFile(outStream, inStream, newFile);
+						repFiles[i].delete();
+						newFile.renameTo(new File(path + "/" + repName + "/" + names[i]));
 						
 					}
-					
+				
+				//receber ficheiros novos
 				} else {
-					currFile = new File(path + "/" + repName + "/" + messIn.fileName[i]);
-					if (receiveFile(outStream, inStream, currFile) > 0) 
-						currFile.createNewFile();
+					newFile = new File(rep.toString() + "/" + messIn.fileName[i]);
+					newFile.createNewFile();
+					receiveFile(outStream, inStream, newFile);
+						
 					
 				}
 				if (messIn.delete[i] == true)
-					System.out.println("-- O ficheiro" + messIn.fileName[i] + "existe localmente mas foi eliminado no servidor");
+					System.out.println("-- O ficheiro " + messIn.fileName[i] + " existe localmente mas foi eliminado no servidor");
 			}
+	}
 		return result;
 	}
 

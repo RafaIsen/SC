@@ -24,8 +24,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 //Servidor myGitServer
 
@@ -87,7 +90,6 @@ public class myGitServer{
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-				int continua = 1;
 				
 				int num_args = (int) inStream.readObject();
 				
@@ -340,74 +342,133 @@ public class myGitServer{
 
 
 		private int pullRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
+			
 			int result = -1;
 			File rep  = null;
-			Path currPath = null;
-			File newFile = null;
 			File currFile = null;
 			File[] fileRep = null;
+			
 			Date date = null;
-			boolean[] exists = null;
+			boolean[] delete = null;
 			
 			Message messOut = null;
 			boolean[] ya = null;
-			int[] versions = null;
+			String[] names = null;
+			
+			Path currPath = null;
+			
+			String res = null;
 			
 			//criar path para o rep
 			if (messIn.repName.contains("/")) {
 				
 				rep = new File(path + "/users/" + messIn.repName);
 				currPath = rep.toPath();
+				res = "-- O respositório " + messIn.repName.split("/")[1] + " do utilizador " + messIn.repName.split("/")[0] + " foi copiado do servidor";
 				
 			} else { 
 				
 				rep = new File(path + "/users/" + messIn.user[0] + messIn.repName);
 				currPath = rep.toPath();
+				res = "-- O respositório " + messIn.repName + " do utilizador " + messIn.user[0] + " foi copiado do servidor";
 				
 			}
+			
 			//criar rep caso nao exista
 			if (!rep.exists())
 				return 0;
 			//criar lista com todos os ficheiros
 			else 
-				fileRep = rep.listFiles();
+				rep = new File(path + "/users/" + messIn.user + messIn.repName);
+				
+			//erro caso o rep nao exista
+			if (!rep.exists())
+				return -1;
+			//criar lista com todos os ficheiros
+			else {
+				//final String nameOfFile = filename;
+	             fileRep = rep.listFiles(new FilenameFilter() {
+	                @Override
+	                public boolean accept(File dir, String nameA) {
+	                    return !nameA.matches("(\\w*.\\w+.\\d)|(\\w+.\\d)");
+	                }
+	             });
+			}
 			
-			//caso o rep venha sem ficheiros (so para iniciar rep)
-			if (messIn.fileName.length > 0) {
+			//so para actualizar os ficheiros
+			if (fileRep.length > 0) {
 				
-				ya = new boolean[messIn.fileName.length];
-				versions = new int[messIn.fileName.length];
-				exists = new boolean[fileRep.length];
+				ya = new boolean[fileRep.length];
+				names = new String[fileRep.length];
 				
-				//
-				for (int i = 0; i < messIn.fileName.length; i++) {
+				if (fileRep.length > messIn.fileName.length)
+					delete = new boolean[fileRep.length];
+				else
+					delete = new boolean[messIn.fileName.length];
+				
+				for (int i = 0; i < fileRep.length; i++) {
 					
-					currFile = new File(currPath + "/" + messIn.fileName[i]);
-					
-					if (currFile.exists()) {
+					if (i < messIn.fileName.length) {
 						
-						date = new Date(currFile.lastModified());
+						names[i] = messIn.fileName[i];
+						currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
 						
-						//verificar quais os ficheiros que precisam de ser actualizados
-						if (date.compareTo(messIn.fileDate[i]) < 0) {
-							versions[i] = countNumVersions(path, messIn.user[0]);
-							ya[i] = true;
+						//se o ficheiro ainda existe no servidor
+						if (currFile.exists()) {
 							
-						}
+							date = new Date(currFile.lastModified());
+							
+							//verificar se o ficheiro precisa de ser actualizado
+							if (date.compareTo(messIn.fileDate[i]) > 0) 
+								ya[i] = true;
+														
+						//ficheiros que o servidor ja nao tem	
+						} else 
+							delete[i] = true;	
 						
-						//verificar quais os ficheiros q foram "apagados"
-						//if (fileRep.)
-						
+					//ficheiros novos que o cliente nao tem	
 					} else {
 						
+						for (int j = 0;j < names.length; j++)
+							if (!Arrays.asList(names).contains(fileRep[j].getName()))
+								names[i] = fileRep[j].getName();
+				
 						ya[i] = true;
-						versions[i] = 0;
 						
 					}
-					
+										
 				}
 				
+				if (messIn.fileName.length > fileRep.length)
+					Arrays.fill(delete, fileRep.length, delete.length-1, Boolean.TRUE);
+					
+				messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, delete, res);
+				outStream.writeObject(messOut);
+				
+				for (int i = 0; i < ya.length; i++) {
+					if (ya[i] == true)
+						sendFile(outStream, inStream, new File(rep.toString() + "/" + names[i]));
+				}
+				
+				result = 0;
+				
+				
+			//para inicializar o rep
+			} else {
+				ya = new boolean[fileRep.length];
+				names = new String[fileRep.length];
+				Arrays.fill(ya, 0, ya.length-1, Boolean.TRUE);
+				for(int i = 0; i < ya.length; i++)
+					names[i] = fileRep[i].getName();
+				messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, null, res);
+				outStream.writeObject(messOut);
+				
+				for (int i = 0; i < fileRep.length; i++) 
+					sendFile(outStream, inStream, fileRep[i]);
+								
+				result = 0;
 			}
+				
 			
 			return result;
 			
@@ -417,6 +478,7 @@ public class myGitServer{
 		private int pullFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
 			File file = null;
+			String[] split = messIn.fileName[0].split("/");
 			
 			boolean myrep = false;
 			
@@ -442,16 +504,11 @@ public class myGitServer{
 				repName = messIn.fileName[0].split("/")[0];
 				
 			 }
-						
-			Date date = null;
-					
-			Message messOut = null;
-			boolean[] ya = new boolean[1];
 								
 			if (file.exists()) {
 				
 				//actualiza o ficheiro para uma versao mais recente
-				date = new Date(file.lastModified());
+				Date date = new Date(file.lastModified());
 				
 				if (date.compareTo(messIn.fileDate[0]) > 0) {
 					
@@ -461,9 +518,8 @@ public class myGitServer{
 					else
 						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " do utilizador " + otherUser + " foi copiado do servidor");
 					outStream.writeObject(messOut);
-					
-					if (sendFile(outStream, inStream, file) >= 0) 
-						result = 0;
+					sendFile(outStream, inStream, file);
+					result = 0;
 										
 				} else {
 					
@@ -475,7 +531,7 @@ public class myGitServer{
 					
 				}	
 				
-			//cria o ficheiro porque ainda existe
+			//erro o ficeiro nao existe
 			} else {
 				
 				ya[0] = false;
@@ -523,7 +579,6 @@ public class myGitServer{
 			
 			Message messOut = null;
 			boolean[] ya = new boolean[1];
-			String tempPath = null;
 			
 			int versao = 0;
 
@@ -540,16 +595,13 @@ public class myGitServer{
 					ya[0] = true;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi atualizado no servidor");
 					outStream.writeObject(messOut);
-					newFile.createNewFile();
 					
-					if (receiveFile(outStream, inStream, newFile) >= 0) {
-						
-						file.renameTo(new File(pathFolder.toString() + split[split.length-1] + "." + String.valueOf(versao)));
-						newFile.renameTo(new File(pathFolder.toString() + split[split.length-1]));
-
-						result = 0;
-						
-					}
+					newFile.createNewFile();
+					receiveFile(outStream, inStream, newFile);
+					
+					file.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1] + "." + String.valueOf(versao)));
+					newFile.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1]));
+					result = 0;
 					
 				} else {
 					
@@ -567,10 +619,11 @@ public class myGitServer{
 				ya[0] = true;
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi enviado para o servidor");
 				outStream.writeObject(messOut);
-				file.createNewFile();
-				if (receiveFile(outStream, inStream, file) >= 0)
-					result = 0;
 				
+				file.createNewFile();
+				receiveFile(outStream, inStream, file);
+				result = 0;
+
 			}
 			
 			return result;		
@@ -581,14 +634,16 @@ public class myGitServer{
 		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
 			File rep  = null;
-			Path currPath = null;
-			Path currPath2 = null;
 			File newFile = null;
 			File currFile = null;
 			File[] fileRep = null;
 			Date date = null;
+
 			boolean[] exists = null;
 			String repName = null;
+
+			String nameAux = null;
+
 			
 			Message messOut = null;
 			boolean[] ya = null;
@@ -597,60 +652,71 @@ public class myGitServer{
 			
 			//criar path para o rep
 			if (messIn.repName.contains("/")) {
+				
 				rep = new File(path + "/users/" + messIn.repName);
-				//currPath = new File(path + "/" + messIn.repName).toPath();
 				repName = messIn.repName.split("/")[1];
+				
 			} else { 
+				
 				rep = new File(path + "/users/" + messIn.user + "/" + messIn.repName);
-				//currPath = new File(path + "/" + messIn.repName).toPath();
 				repName = messIn.repName;
+				
 			}
+
 			//criar rep caso nao exista
-			if (!rep.exists()){
+			if (!rep.exists()) {
+				
 				rep.mkdir();
 				res = "-- O repositório " + repName + " foi criado no servidor "; 
+				
+			} else {
+				//final String nameOfFile = filename;
+
+	             fileRep = rep.listFiles(new FilenameFilter() {
+	                @Override
+	                public boolean accept(File dir, String nameA) {
+	                    return !nameA.contains("(\\w*.\\w+.\\d)|(\\w+.\\d)");
+	                }
+	             });
 			}
-			//criar lista com todos os ficheiros
-			else 
-				fileRep = rep.listFiles();
 			
-			//caso o rep venha sem ficheiros (so para iniciar rep)
+			//caso o rep venha com ficheiros
 			if (messIn.fileName.length > 0) {
 				ya = new boolean[messIn.fileName.length];
 				versions = new int[messIn.fileName.length];
-				//exists = new boolean[fileRep.length];
-
-				//
+				
 				for (int i = 0; i < messIn.fileName.length; i++) {
-
-					currFile = new File(rep + "/" + messIn.fileName[i]);
-
-					if (currFile.exists()) {
+					currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
+					if (fileRep != null && currFile.exists()) {
+						
 						date = new Date(currFile.lastModified());
-
 						
 						//verificar quais os ficheiros que precisam de ser actualizados
 						if (date.compareTo(messIn.fileDate[i]) < 0) {
-
+							
 							versions[i] = countNumVersions(rep.toPath(), messIn.fileName[i]);
-							//versions[i] = countNumVersions(path, messIn.fileName[i], messIn.user);
-
-							ya[i] = true;
+							ya[i] = true;	
 							
 						}
+							
+						} else {
+							
+							ya[i] = true;
+							versions[i] = 0;
 						
-						//verificar quais os ficheiros q foram "apagados"
-						//if (fileRep.)
+						}
 						
-					} else {
-						ya[i] = true;
-						versions[i] = 0;
 					}
-					
-				}
 
 			}
 			
+			//saber quais os ficheiros a "eliminar"
+			if (fileRep != null)
+				for (int j = 0; j < fileRep.length; j++)
+					if (!Arrays.asList(messIn.fileName).contains(fileRep[j].getName())) {
+						nameAux = fileRep[j].getName();
+						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions(rep.toPath(), fileRep[j].getName()))));		
+					}
 						
 			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null, res);
 			outStream.writeObject(messOut);
@@ -660,38 +726,40 @@ public class myGitServer{
 				
 				//saber quais os ficheiros q vai client vai mandar
 				if (messOut.toBeUpdated[i] == true) {
-
-					currFile = new File(rep + "/" + messIn.fileName[i]);
+					
+					currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
 
 					if(!currFile.exists()){
 
 						newFile = currFile;
-
 						newFile.createNewFile();
-					}else{
+						
+					} else {
 
-						//currFile.createNewFile();
-						newFile = new File(currFile + ".temp");
-
+						newFile = new File(fileRep[i] + ".temp");
 						newFile.createNewFile();
-					}
-					//receber os ficheiros
-					if (receiveFile(outStream, inStream, newFile) >= 0) {
-						//saber se o ficheiro e novo nao tem versao
-
-						if (!(versions[i] == 0)) {
-							currFile.renameTo(new File(rep + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
-							newFile.renameTo(new File(rep + "/" + messIn.fileName[i]));
-						}
-
-						result = 0;
 						
 					}
+					
+					//receber os ficheiros
+					receiveFile(outStream, inStream, newFile);
+					//saber se o ficheiro e novo nao tem versao
+					if (!(versions[i] == 0)) {
+						
+						fileRep[i].renameTo(new File(rep.toString() + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
+						newFile.renameTo(new File(rep.toString() + "/" + messIn.fileName[i]));
+
+					}
+					
+					result = 0;
+						
 				}
+			
 			}
+			
 			return result;
+			
 		}
-		
 		
 		public int countNumVersions(Path path, String filename) throws IOException{
             

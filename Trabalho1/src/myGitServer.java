@@ -660,7 +660,7 @@ public class myGitServer{
 				
 			} else { 
 				
-				rep = new File(path + "/users/" + messIn.user + "/" + messIn.repName);
+				rep = new File(path + "/users/" + messIn.user[0] + "/" + messIn.repName);
 				repName = messIn.repName;
 				
 			}
@@ -857,7 +857,7 @@ public class myGitServer{
 					result = true;
 				else{
 					//writes the name and pass in the file
-					fw.write(System.lineSeparator() + u.name + ":" + u.pass); 
+					fw.write(u.name + ":" + u.pass + System.lineSeparator()); 
 				    fw.flush();
 				    fw.close();
 					//creates a directory to the user

@@ -176,7 +176,9 @@ public class myGit{
 		} else
 			result = -1;
 		
+		System.out.println(messIn.result);
 		return result;		
+		
 	}
 
 	
@@ -219,7 +221,10 @@ public class myGit{
 				}
 			result = 0;
 		} 
-		return result;			
+		
+		System.out.println(messIn.result);
+		return result;	
+		
 	}
 
 	private int pullFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
@@ -258,7 +263,9 @@ public class myGit{
 			result = 0;
 		} 
 			
+		System.out.println(messIn.result);
 		return result;
+		
 	}
 
 	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
@@ -337,6 +344,7 @@ public class myGit{
 					System.out.println("-- O ficheiro " + messIn.fileName[i] + " existe localmente mas foi eliminado no servidor");
 			}
 	}
+		System.out.println(messIn.result);
 		return result;
 	}
 

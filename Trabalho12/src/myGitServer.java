@@ -261,7 +261,7 @@ public class myGitServer{
 
 							} while ((currLine = reader.readLine()) != null);
 							
-							writer.write(messIn.user[0] + ":" + userToAdd);
+							//writer.write(messIn.user[0] + ":" + userToAdd);
  
 							writer.close(); 
 							reader.close();
@@ -448,6 +448,8 @@ public class myGitServer{
 				
 				String res = null;
 				
+				boolean naoHaFile = false;
+				
 				//criar path para o rep
 				if (messIn.repName.contains("/")) {
 					rep = new File(path + "/users/" + messIn.repName);
@@ -474,44 +476,67 @@ public class myGitServer{
 		                }
 		             });
 				}
+				
 				//so para actualizar os ficheiros
 				if (fileRep.length > 0) {
 					ya = new boolean[fileRep.length];
 					names = new String[fileRep.length];
-					if (fileRep.length > messIn.fileName.length)
-						delete = new boolean[fileRep.length];
-					else
-						delete = new boolean[messIn.fileName.length];
+					if(messIn.fileName != null){
+						if (fileRep.length > messIn.fileName.length)
+							delete = new boolean[fileRep.length];
+						else
+							delete = new boolean[messIn.fileName.length];
+					}else{
+					ya = new boolean[fileRep.length];
+					names = new String[fileRep.length];
+					Arrays.fill(ya, 0, ya.length, Boolean.TRUE);
+					for(int i = 0; i < ya.length; i++)
+						names[i] = fileRep[i].getName();
+					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, null, res);
+					outStream.writeObject(messOut);
+					
+					for (int i = 0; i < fileRep.length; i++) 
+						sendFile(outStream, inStream, fileRep[i]);
+									
+					return 0;
+					}
 					//
 					for (int i = 0; i < fileRep.length; i++) {
-						if (i < messIn.fileName.length) {
-							names[i] = messIn.fileName[i];
-							currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
-							
-							//se o ficheiro ainda existe no servidor
-							if (currFile.exists()) {
-								date = new Date(currFile.lastModified());
+						if(messIn.fileName != null){
+							if (i < messIn.fileName.length)
+								names[i] = messIn.fileName[i];
+								currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
 								
-								//verificar se o ficheiro precisa de ser actualizado
-								if (date.compareTo(messIn.fileDate[i]) > 0) 
-									ya[i] = true;
-															
-							//ficheiros que o servidor ja nao tem	
-							} else 
-								delete[i] = true;	
-							
-						//ficheiros novos que o cliente nao tem	
-						} else {
-							for (int j = 0;j < names.length; j++)
-								if (!Arrays.asList(names).contains(fileRep[j].getName()))
-									names[i] = fileRep[j].getName();
-					
-							ya[i] = true;
-						}
+								//se o ficheiro ainda existe no servidor
+								if (currFile.exists()) {
+									date = new Date(currFile.lastModified());
+									
+									//verificar se o ficheiro precisa de ser actualizado
+									if (date.compareTo(messIn.fileDate[i]) > 0) {
+										ya[i] = true;
+										if (messIn.repName.contains("/"))
+											res = "-- O respositório " + messIn.repName.split("/")[1] + " do utilizador " + messIn.repName.split("/")[0] + " foi copiado do servidor";
+										else
+											res = "-- O respositório " + messIn.repName + " do utilizador " + messIn.user[0] + " foi copiado do servidor";
+									}
+																
+								//ficheiros que o servidor ja nao tem	
+								} else 
+									delete[i] = true;	
+								
+							//ficheiros novos que o cliente nao tem	
+							} else {
+								for (int j = 0;j < names.length; j++)
+									if (!Arrays.asList(names).contains(fileRep[j].getName()))
+										names[i] = fileRep[j].getName();
+						
+								ya[i] = true;
+							}
 											
 					}
-					if (messIn.fileName.length > fileRep.length)
-						Arrays.fill(delete, fileRep.length, delete.length-1, Boolean.TRUE);
+					if(messIn.fileName != null){
+						if (messIn.fileName.length > fileRep.length)
+							Arrays.fill(delete, fileRep.length, delete.length-1, Boolean.TRUE);
 						
 					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, delete, res);
 					outStream.writeObject(messOut);
@@ -521,40 +546,40 @@ public class myGitServer{
 							sendFile(outStream, inStream, new File(rep.toString() + "/" + names[i]));
 					}
 				
-				result = 0;
-				
-				} else if(rep.listFiles() != null){
-					delete = new boolean[1];
-					delete[0] = true;
-					res = "-- O ficheiro " + messIn.fileName[0] + " existe localmente mas foi eliminado no servidor ";
-				}
-				//para inicializar o rep
-				else {
-					ya = new boolean[fileRep.length];
-					names = new String[fileRep.length];
-					Arrays.fill(ya, 0, ya.length-1, Boolean.TRUE);
-					for(int i = 0; i < ya.length; i++)
-						names[i] = fileRep[i].getName();
-					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, null, res);
-					outStream.writeObject(messOut);
-					
-					for (int i = 0; i < fileRep.length; i++) 
-						sendFile(outStream, inStream, fileRep[i]);
-									
 					result = 0;
-				}
-			} else {
 				
-				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
-				outStream.writeObject(messOut);
-				return -1;
+					} else if(rep.listFiles() != null){
+						delete = new boolean[1];
+						delete[0] = true;
+						res = "-- O ficheiro " + messIn.fileName[0] + " existe localmente mas foi eliminado no servidor ";
+					}
+					//para inicializar o rep
+					else {
+						ya = new boolean[fileRep.length];
+						names = new String[fileRep.length];
+						Arrays.fill(ya, 0, ya.length-1, Boolean.TRUE);
+						for(int i = 0; i < ya.length; i++)
+							names[i] = fileRep[i].getName();
+						messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, null, res);
+						outStream.writeObject(messOut);
+						
+						for (int i = 0; i < fileRep.length; i++) 
+							sendFile(outStream, inStream, fileRep[i]);
+										
+						result = 0;
+					}
+				} else {
 				
-			} 
-			
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
+					outStream.writeObject(messOut);
+					return -1;
+				
+				} 
+
+			}
 			messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, delete, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
 			outStream.writeObject(messOut);
 			return result;
-
 		}
 
 

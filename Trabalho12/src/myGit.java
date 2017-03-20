@@ -377,17 +377,18 @@ public class myGit{
 				//a actualizar os ficheiros novos q o cliente nao tem
 				for (int i = 0; i < messIn.toBeUpdated.length; i++) {
 					//so a actualizar os ficheiros antigos
-					if (i < names.length) {
-						if (messIn.toBeUpdated[i] == true) {
-							newFile = new File(repFiles[i] + ".temp");
-							newFile.createNewFile();
-							receiveFile(outStream, inStream, newFile);
-							repFiles[i].delete();
-							newFile.renameTo(new File(path + "/" + repName + "/" + names[i]));
-							
-						}
-					
-					//receber ficheiros novos
+					if(names != null){
+						if (i < names.length)
+							if (messIn.toBeUpdated[i] == true) {
+								newFile = new File(repFiles[i] + ".temp");
+								newFile.createNewFile();
+								receiveFile(outStream, inStream, newFile);
+								repFiles[i].delete();
+								newFile.renameTo(new File(path + "/" + repName + "/" + names[i]));
+								
+							}
+						
+						//receber ficheiros novos
 					} else {
 						newFile = new File(rep.toString() + "/" + messIn.fileName[i]);
 						newFile.createNewFile();

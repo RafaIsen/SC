@@ -1,4 +1,5 @@
 grant codeBase "file:bin/*" {
+	permission java.lang.RuntimePermission "getProtectionDomain";
 	permission java.net.SocketPermission "*:1024-", "connect";
 	permission java.io.FilePermission "${user.home}/-", "write";
 	permission java.io.FilePermission "${user.home}/-", "read";

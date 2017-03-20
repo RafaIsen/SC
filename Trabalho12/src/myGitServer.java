@@ -189,6 +189,7 @@ public class myGitServer{
 				e.printStackTrace();
 			}
 		}
+		
 			
 		private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) {
 					
@@ -682,7 +683,7 @@ public class myGitServer{
 				file = new File(path + "/users/" + messIn.user[0] + "/" + messIn.fileName[0]);
 				filename = split[1];
 			} else {
-				pathFolder = new File(path + "/users/" + messIn.user[0] + "/" + split[0] + "/" + split[1]).toPath();
+				pathFolder = new File(path + "/users/" + split[0] + "/" + split[1]).toPath();
 				file = new File(path + "/users/" + messIn.fileName[0]);
 				filename = split[2];
 			}
@@ -748,8 +749,7 @@ public class myGitServer{
 			String nameAux = null;
 			
 			Message messOut = null;
-			boolean[] ya = new boolean[1];
-			ya[0] = false;
+			boolean[] ya = null;
 			int[] versions = null;
 			
 			String repName = null;
@@ -781,7 +781,7 @@ public class myGitServer{
 			}
 			
 			//caso o rep venha com ficheiros
-			if (messIn.fileName != null) {
+			if (messIn.fileName.length > 0) {
 				ya = new boolean[messIn.fileName.length];
 				versions = new int[messIn.fileName.length];
 				
@@ -809,42 +809,39 @@ public class myGitServer{
 			}
 			
 			//saber quais os ficheiros a "eliminar"
-			if (fileRep != null) {
+			if (fileRep != null)
 				for (int j = 0; j < fileRep.length; j++)
-					if (!Arrays.asList(fileRep).contains(fileRep[j].getName())) {
+					if (!Arrays.asList(messIn.fileName).contains(fileRep[j].getName())) {
 						nameAux = fileRep[j].getName();
 						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].getName()))));		
-						res = "-- O ficheiro " + fileRep[j].getName() + " vai ser eliminado no servidor ";
 					}
-			}
 						
 			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null, res);
 			outStream.writeObject(messOut);
 					
 			//receber os ficheiros para actualizar	
-			if(ya[0] != false)
-				for (int i = 0; i < messIn.fileName.length; i++) {
-					
-					//saber quais os ficheiros q vai client vai mandar
-					if (messOut.toBeUpdated[i] == true) {
-						currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
-						if(!currFile.exists()){
-							newFile = currFile;
-							newFile.createNewFile();
-							receiveFile(outStream, inStream, newFile);
-							
-						}else{
-							
-							newFile = new File(messIn.fileName[i] + ".temp");
-							newFile.createNewFile();
-							receiveFile(outStream, inStream, newFile);
-							fileRep[i].renameTo(new File(rep.toString() + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
-							newFile.renameTo(new File(rep.toString() + "/" + messIn.fileName[i]));
-						}
-							
+			for (int i = 0; i < messIn.fileName.length; i++) {
+				
+				//saber quais os ficheiros q vai client vai mandar
+				if (messOut.toBeUpdated[i] == true) {
+					currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
+					if(!currFile.exists()){
+						newFile = currFile;
+						newFile.createNewFile();
+						receiveFile(outStream, inStream, newFile);
 						
+					}else{
+						
+						newFile = new File(messIn.fileName[i] + ".temp");
+						newFile.createNewFile();
+						receiveFile(outStream, inStream, newFile);
+						fileRep[i].renameTo(new File(rep.toString() + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
+						newFile.renameTo(new File(rep.toString() + "/" + messIn.fileName[i]));
 					}
+						
+					
 				}
+			}
 			return result;
 		}
 			

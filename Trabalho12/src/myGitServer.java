@@ -357,9 +357,10 @@ public class myGitServer{
 							writer.close(); 
 							reader.close();
 			    			shareLog.delete();
-			    			shareLog = new File(path + "/users/shareLog.txt");
-			    			shareLog.createNewFile();
+			    			Path tempPath = tempFile.toPath();
 							tempFile.renameTo(shareLog);
+							File tp = new File(tempPath.toString());
+							tp.delete();
 							res = "-- Foi retirado o acesso previamente dado ao utilizador " + messIn.user[1];
 							
 							Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);

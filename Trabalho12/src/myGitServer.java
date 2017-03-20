@@ -221,7 +221,9 @@ public class myGitServer{
 
 						BufferedReader reader = new BufferedReader(new FileReader(shareLog));
 
-						if (reader.readLine() == null) {
+						String currLine = reader.readLine();
+						
+						if (currLine == null) {
 
 							FileWriter fw = new FileWriter(shareLog);
 							fw.write(messIn.user[0] + ":" + userToAdd + System.lineSeparator());
@@ -230,15 +232,13 @@ public class myGitServer{
 
 						} else {
 
-							File tempFile = new File(path + "/users/shareLog_temp.txt");
+							File tempFile = new File(path + "/users/shareLog.temp");
 							tempFile.createNewFile();
 							BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
 
-							String currentLine = null;
+							do {
 
-							while ((currentLine = reader.readLine()) != null) {
-
-								String[] split = currentLine.split(",");
+								String[] split = currLine.split(",");
 								String[] split2 = split[0].split(":");
 
 								if (split2[0].equals(messIn.user[0])) {
@@ -251,19 +251,21 @@ public class myGitServer{
 										res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
 									else {
 
-										writer.write(currentLine + "," + userToAdd + System.getProperty("line.separator"));
+										writer.write(currLine + "," + userToAdd + System.getProperty("line.separator"));
 										res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
 
 									}
 
 								} else
-									writer.write(currentLine + System.getProperty("line.separator"));
+									writer.write(currLine + System.getProperty("line.separator"));
 
-							}
-
+							} while ((currLine = reader.readLine()) != null);
+							
+							writer.write(messIn.user[0] + ":" + userToAdd);
+ 
 							writer.close(); 
-							reader.close(); 
-							shareLog.delete();
+							reader.close();
+			    			shareLog.delete();
 							tempFile.renameTo(shareLog);
 
 						}

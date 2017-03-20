@@ -2,8 +2,6 @@ grant codeBase "file:bin/*" {
 	permission java.lang.RuntimePermission "getProtectionDomain";
 	permission java.net.SocketPermission "*:23456", "listen";
 	permission java.net.SocketPermission "*:1024-", "accept";
-	permission java.io.FilePermission "${user.home}/-", "write";
-	permission java.io.FilePermission "${user.home}/-", "read";
+	permission java.io.FilePermission "${user.home}/git/SC/Trabalho12/bin/-", "write";
+	permission java.io.FilePermission "${user.home}/git/SC/Trabalho12/bin/-", "read";
 };
-	
-	

@@ -343,6 +343,9 @@ public class myGit{
 		String[] users = new String[1];
 		users[0] = user;
 		
+		Message messIn = null;
+		int index = -1;
+		
 		if (rep.exists()) {
 			repFiles = rep.listFiles();
 			int numFiles = repFiles.length;
@@ -361,7 +364,6 @@ public class myGit{
 			dates = new Date[0];
 		}
 		Message messOut = new Message("pullRep", names, repName, dates, null, users, null, null);
-		Message messIn = null;
 		
 		outStream.writeObject(messOut);
 		
@@ -393,12 +395,15 @@ public class myGit{
 						
 					
 				}
-				if (messIn.delete[i] == true)
+				if (messIn.delete[i] == true) {
 					System.out.println("-- O ficheiro " + messIn.fileName[i] + " existe localmente mas foi eliminado no servidor");
-				
+					index = i;
+				}
 			}
 		}
-		System.out.println(messIn.result);
+		if(index != -1)
+			if (messIn.delete[index] != true)
+				System.out.println(messIn.result);
 		return result;
 	}
 

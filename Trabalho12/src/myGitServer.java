@@ -467,7 +467,8 @@ public class myGitServer{
 		             fileRep = rep.listFiles(new FilenameFilter() {
 		                @Override
 		                public boolean accept(File dir, String nameA) {
-		                    return nameA.matches("([.[^.\\//]]+.\\D+)|([.[^.\\//]]+.[.[^.\\//]]+.\\D+)");
+		                    //return nameA.matches("([.[^.\\//]]+.\\D+)|([.[^.\\//]]+.[.[^.\\//]]+.\\D+)");
+		                	return nameA.matches("(\\w*.\\w+.\\d)|(\\w+.\\d)");
 		                }
 		             });
 				}
@@ -809,13 +810,16 @@ public class myGitServer{
 			}
 			
 			//saber quais os ficheiros a "eliminar"
-			if (fileRep != null)
+			if (fileRep != null) {
 				for (int j = 0; j < fileRep.length; j++)
 					if (!Arrays.asList(fileRep).contains(fileRep[j].getName())) {
 						nameAux = fileRep[j].getName();
 						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].getName()))));		
-						res = "-- O ficheiro myGit.java vai ser eliminado no servidor ";
+						res = "-- O ficheiro " + fileRep[j].getName() + " vai ser eliminado no servidor ";
 					}
+				if(fileRep.length == 0)
+					res = "-- O ficheiro existe localmente mas foi eliminado no servidor";
+			}
 						
 			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null, res);
 			outStream.writeObject(messOut);

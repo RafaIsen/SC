@@ -202,6 +202,7 @@ public class myGit{
 
 	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
 		int result = -1; 
+		Message messIn = null;
 		
 		File file = new File(path + "/" + fileName);
 		
@@ -218,7 +219,6 @@ public class myGit{
 			users[0] = user;
 			
 			Message messOut = new Message("pushFile", name, split[split.length-2], dates, null, users, null, null);
-			Message messIn = null;
 			
 			outStream.writeObject(messOut);
 			
@@ -239,6 +239,7 @@ public class myGit{
 			Message messOut = new Message("", null, null, null, null, null, null, null);
 			outStream.writeObject(messOut);
 		}
+		System.out.println(messIn.result);
 		return result;
 	}
 
@@ -246,6 +247,7 @@ public class myGit{
 	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
 		int result = -1; 
 		File rep = null;
+		Message messIn = null;
 		
 		rep = new File(path + "/" + repName);
 		
@@ -269,7 +271,6 @@ public class myGit{
 				dates[i] = new Date(repFiles[i].lastModified());
 			}
 			Message messOut = new Message("pushRep", name, repName, dates, null, users, null, null);
-			Message messIn = null;
 			
 			outStream.writeObject(messOut);
 			
@@ -289,6 +290,7 @@ public class myGit{
 			Message messOut = new Message("", null, null, null, null, null, null, null);
 			outStream.writeObject(messOut);
 		}
+		System.out.println(messIn.result);
 		return result;			
 	}
 
@@ -326,10 +328,8 @@ public class myGit{
 			
 			result = 0;
 		} 
-			
+		System.out.println(messIn.result);
 		return result;
-		
-		
 	}
 
 	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
@@ -397,8 +397,8 @@ public class myGit{
 					System.out.println("-- O ficheiro " + messIn.fileName[i] + " existe localmente mas foi eliminado no servidor");
 				
 			}
-	}
-		
+		}
+		System.out.println(messIn.result);
 		return result;
 	}
 
@@ -524,6 +524,9 @@ public class myGit{
 				
 			case "-remove":
 				remove(outStream, inStream, param1, param2, user, path);
+				break;
+			
+			case "-p":
 				break;
 				
 			default:

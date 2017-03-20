@@ -162,7 +162,7 @@ public class myGitServer{
 							pullRep(outStream, inStream, messIn, path);
 							break;
 						
-						case "share":
+						case "shareRep":
 							shareRep(outStream, inStream, messIn, path);
 							break;
 							
@@ -355,8 +355,10 @@ public class myGitServer{
 							}
 							
 							writer.close(); 
-							reader.close(); 
-							shareLog.delete();
+							reader.close();
+			    			shareLog.delete();
+			    			shareLog = new File(path + "/users/shareLog.txt");
+			    			shareLog.createNewFile();
 							tempFile.renameTo(shareLog);
 							res = "-- Foi retirado o acesso previamente dado ao utilizador " + messIn.user[1];
 							
@@ -443,14 +445,18 @@ public class myGitServer{
 				boolean[] ya = null;
 				String[] names = null;
 				
+				String res = null;
+				
 				//criar path para o rep
-				if (messIn.repName.contains("/")) 
+				if (messIn.repName.contains("/")) {
 					rep = new File(path + "/users/" + messIn.repName);
-					
+					res = "-- O respositório " + messIn.repName.split("/")[1] + " do utilizador " + messIn.repName.split("/")[0] + " foi copiado do servidor";
+				}
 				//rep do user
-				else 
+				else {
 					rep = new File(path + "/users/" + messIn.user[0] + "/" + messIn.repName);
-					
+					res = "-- O respositório " + messIn.repName + " do utilizador " + messIn.user[0] + " foi copiado do servidor";
+				}
 				//erro caso o rep nao exista
 				if (!rep.exists())
 					return -1;
@@ -505,7 +511,7 @@ public class myGitServer{
 					if (messIn.fileName.length > fileRep.length)
 						Arrays.fill(delete, fileRep.length, delete.length-1, Boolean.TRUE);
 						
-					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, delete, null);
+					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, delete, res);
 					outStream.writeObject(messOut);
 					
 					for (int i = 0; i < ya.length; i++) {
@@ -523,7 +529,7 @@ public class myGitServer{
 					Arrays.fill(ya, 0, ya.length-1, Boolean.TRUE);
 					for(int i = 0; i < ya.length; i++)
 						names[i] = fileRep[i].getName();
-					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, null, null);
+					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, null, res);
 					outStream.writeObject(messOut);
 					
 					for (int i = 0; i < fileRep.length; i++) 
@@ -539,6 +545,8 @@ public class myGitServer{
 				
 			}
 			
+			messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
+			outStream.writeObject(messOut);
 			return result;
 		}
 
@@ -601,13 +609,17 @@ public class myGitServer{
 				Date date = null;
 				boolean[] ya = new boolean[1];
 				
+				boolean myrep = false;
+				
 				//criar path para o ficheiro
 				
 				if (split.length == 3) 
 					file = new File(path + "/users/" + messIn.fileName[0]);
 					
-				 else  
+				 else {
 					file = new File(path + "/users/" + messIn.user[0] + "/" + messIn.fileName[0]);
+					myrep = true;
+				 }
 							
 				
 									
@@ -617,15 +629,17 @@ public class myGitServer{
 					
 					if (date.compareTo(messIn.fileDate[0]) > 0) {
 						ya[0] = true;
-						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, null);
-						outStream.writeObject(messOut);
+						if(myrep)
+							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " foi copiado do servidor");
+						else
+							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " do utilizador " + otherUser + " foi copiado do servidor");
 						sendFile(outStream, inStream, file);
 						result = 0;
 											
 					} else {
 						//nao actualiza o ficheiro porque nao he mais recente
 						ya[0] = false;
-						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, null);
+						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro do seu repositório local é o mais recente");
 						outStream.writeObject(messOut);
 						result = 0;
 					}	
@@ -633,7 +647,7 @@ public class myGitServer{
 				//erro o ficeiro nao existe
 				} else {
 					ya[0] = false;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, null);
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi copiado do servidor");
 					outStream.writeObject(messOut);
 				}
 				
@@ -647,7 +661,6 @@ public class myGitServer{
 			return result;
 		}
 
-
 		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
 			int result = -1;
 
@@ -659,14 +672,16 @@ public class myGitServer{
 			
 			File file = null;
 			Path pathFolder = null;
+			String filename = null;
 			
 			if(secondI == -1) {
 				pathFolder = new File(path + "/users/" + messIn.user[0] + "/" + split[0]).toPath();
-				file = new File(path + "/users/" + messIn.user + "/" + messIn.fileName[0]);
-			
+				file = new File(path + "/users/" + messIn.user[0] + "/" + messIn.fileName[0]);
+				filename = split[1];
 			} else {
 				pathFolder = new File(path + "/users/" + messIn.user[0] + "/" + split[0] + "/" + split[1]).toPath();
 				file = new File(path + "/users/" + messIn.fileName[0]);
+				filename = split[2];
 			}
 			
 			File newFile = null;
@@ -689,7 +704,7 @@ public class myGitServer{
 					newFile = new File(file + ".temp");
 					
 					ya[0] = true;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, null);
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi atualizado no servidor");
 					outStream.writeObject(messOut);
 					newFile.createNewFile();
 					receiveFile(outStream, inStream, newFile);
@@ -701,7 +716,7 @@ public class myGitServer{
 				} else {
 					//nao actualiza o ficheiro porque nao he mais recente
 					ya[0] = false;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, null);
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- Nada a atualizar no servidor");
 					outStream.writeObject(messOut);
 					result = 0;
 				}	
@@ -709,7 +724,7 @@ public class myGitServer{
 			//cria o ficheiro porque ainda existe
 			} else {
 				ya[0] = true;
-				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, null);
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi enviado para o servidor");
 				outStream.writeObject(messOut);
 				file.createNewFile();
 				receiveFile(outStream, inStream, file);
@@ -733,16 +748,23 @@ public class myGitServer{
 			boolean[] ya = null;
 			int[] versions = null;
 			
-			//criar path para o rep
-			if (messIn.repName.contains("/")) 
-				rep = new File(path + "/users/" + messIn.repName);
-				
-			else  
-				rep = new File(path + "/users/" + messIn.user[0] + "/" + messIn.repName);
+			String repName = null;
+			String res = null;
 			
+			//criar path para o rep
+			if (messIn.repName.contains("/")) {
+				rep = new File(path + "/users/" + messIn.repName);
+				repName = messIn.repName.split("/")[1];
+			}	
+			else {
+				rep = new File(path + "/users/" + messIn.user[0] + "/" + messIn.repName);
+				repName = messIn.repName;
+			}
 			//criar rep caso nao exista
-			if (!rep.exists())
+			if (!rep.exists()){
 				rep.mkdir();
+				res = "-- O repositório " + repName + " foi criado no servidor";
+			}
 			else {
 				//final String nameOfFile = filename;
 
@@ -777,6 +799,8 @@ public class myGitServer{
 						}
 						
 					}
+					
+				res += System.lineSeparator() + "-- O ficheiro " + messIn.fileName[0] + " foi enviado para o servidor";
 
 			}
 			
@@ -788,7 +812,7 @@ public class myGitServer{
 						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].getName()))));		
 					}
 						
-			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null, null);
+			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null, res);
 			outStream.writeObject(messOut);
 					
 			//receber os ficheiros para actualizar	
@@ -816,8 +840,7 @@ public class myGitServer{
 			}
 			return result;
 		}
-		
-		
+			
 		public int countNumVersions1(Path path, String filename) throws IOException{
 
             
@@ -913,7 +936,7 @@ public class myGitServer{
 					result = true;
 				else{
 					//writes the name and pass in the file
-					fw.write(System.lineSeparator() + u.name + ":" + u.pass); 
+					fw.write(u.name + ":" + u.pass + System.lineSeparator()); 
 				    fw.flush();
 				    fw.close();
 					//creates a directory to the user

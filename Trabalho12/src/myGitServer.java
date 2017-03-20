@@ -406,6 +406,8 @@ public class myGitServer{
 			
 			boolean hasAccess = false;
 			
+			boolean[] delete = null;
+			
 			if(split1.length > 1){
 				otherUser = split1[0];
 				repName = split1[1];
@@ -440,7 +442,6 @@ public class myGitServer{
 				File[] fileRep = null;
 				
 				Date date = null;
-				boolean[] delete = null;
 
 				boolean[] ya = null;
 				String[] names = null;
@@ -469,6 +470,7 @@ public class myGitServer{
 		                @Override
 		                public boolean accept(File dir, String nameA) {
 		                    return nameA.matches("([.[^.\\//]]+.\\D+)|([.[^.\\//]]+.[.[^.\\//]]+.\\D+)");
+		                	//return !nameA.matches("(\\w*.\\w+.\\d)|(\\w+.\\d)");
 		                }
 		             });
 				}
@@ -521,9 +523,13 @@ public class myGitServer{
 				
 				result = 0;
 				
-				
+				} else if(rep.listFiles() != null){
+					delete = new boolean[1];
+					delete[0] = true;
+					res = "-- O ficheiro " + messIn.fileName[0] + " existe localmente mas foi eliminado no servidor ";
+				}
 				//para inicializar o rep
-				} else {
+				else {
 					ya = new boolean[fileRep.length];
 					names = new String[fileRep.length];
 					Arrays.fill(ya, 0, ya.length-1, Boolean.TRUE);
@@ -543,11 +549,12 @@ public class myGitServer{
 				outStream.writeObject(messOut);
 				result = -1;
 				
-			}
+			} 
 			
-			messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
+			messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, delete, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
 			outStream.writeObject(messOut);
 			return result;
+
 		}
 
 

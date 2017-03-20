@@ -817,8 +817,6 @@ public class myGitServer{
 						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].getName()))));		
 						res = "-- O ficheiro " + fileRep[j].getName() + " vai ser eliminado no servidor ";
 					}
-				if(fileRep.length == 0)
-					res = "-- O ficheiro existe localmente mas foi eliminado no servidor";
 			}
 						
 			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null, res);

@@ -401,7 +401,7 @@ public class myGit{
 				}
 			}
 		}
-		if(index != -1)
+		if(index == -1)
 			if (messIn.delete[index] != true)
 				System.out.println(messIn.result);
 		return result;

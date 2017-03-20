@@ -278,7 +278,7 @@ public class myGit{
 			
 			if (messIn == null)
 				result = -1;
-			else if (messIn.toBeUpdated.length > 0) {
+			else if (messIn.toBeUpdated != null) {
 				for(int i = 0; i < messIn.toBeUpdated.length; i++) {
 					if (messIn.toBeUpdated[i] == true) 
 						sendFile(outStream, inStream, repFiles[i]);

@@ -569,7 +569,11 @@ public class myGitServer{
 			
 			Message messOut = null;
 			
-			boolean hasAccess = false;
+			boolean hasAccess = true;
+			
+			boolean[] ya = new boolean[1];
+			
+			ya[0] = false;
 			
 			if(split1.length > 2){
 				otherUser = split1[0];
@@ -607,7 +611,6 @@ public class myGitServer{
 				String[] split = messIn.fileName[0].split("/");
 				
 				Date date = null;
-				boolean[] ya = new boolean[1];
 				
 				boolean myrep = false;
 				
@@ -633,6 +636,7 @@ public class myGitServer{
 							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " foi copiado do servidor");
 						else
 							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " do utilizador " + otherUser + " foi copiado do servidor");
+						outStream.writeObject(messOut);
 						sendFile(outStream, inStream, file);
 						result = 0;
 											
@@ -653,7 +657,7 @@ public class myGitServer{
 				
 			} else {
 				
-				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao ficheiro " + filename + " do utilizador " + otherUser);
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao ficheiro " + filename + " do utilizador " + otherUser);
 				outStream.writeObject(messOut);
 				result = -1;
 				

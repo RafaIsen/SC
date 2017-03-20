@@ -467,8 +467,7 @@ public class myGitServer{
 		             fileRep = rep.listFiles(new FilenameFilter() {
 		                @Override
 		                public boolean accept(File dir, String nameA) {
-		                    //return nameA.matches("([.[^.\\//]]+.\\D+)|([.[^.\\//]]+.[.[^.\\//]]+.\\D+)");
-		                	return nameA.matches("(\\w*.\\w+.\\d)|(\\w+.\\d)");
+		                    return nameA.matches("([.[^.\\//]]+.\\D+)|([.[^.\\//]]+.[.[^.\\//]]+.\\D+)");
 		                }
 		             });
 				}

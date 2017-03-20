@@ -658,7 +658,7 @@ public class myGitServer{
 				//erro o ficeiro nao existe
 				} else {
 					ya[0] = false;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi copiado do servidor");
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " não existe");
 					outStream.writeObject(messOut);
 				}
 				
@@ -762,6 +762,8 @@ public class myGitServer{
 			String repName = null;
 			String res = null;
 			
+			boolean eliminou = false;
+			
 			//criar path para o rep
 			if (messIn.repName.contains("/")) {
 				rep = new File(path + "/users/" + messIn.repName);
@@ -792,7 +794,6 @@ public class myGitServer{
 				ya = new boolean[messIn.fileName.length];
 				versions = new int[messIn.fileName.length];
 				
-				
 					for (int i = 0; i < messIn.fileName.length; i++) {
 						currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
 						if (fileRep != null && currFile.exists()) {
@@ -821,14 +822,15 @@ public class myGitServer{
 					if (!Arrays.asList(messIn.repName).contains(fileRep[j].getName())) {
 						nameAux = fileRep[j].getName();
 						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].getName()))));		
-						res = "-- O ficheiro myGit.java vai ser eliminado no servidor";
+						res = "-- O ficheiro " + fileRep[j].getName() + " vai ser eliminado no servidor";
+						eliminou = true;
 					}
 						
 			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null, res);
 			outStream.writeObject(messOut);
 					
 			//receber os ficheiros para actualizar
-			if(messIn.fileName != null)
+			if(messIn.fileName != null && !eliminou)
 				for (int i = 0; i < messIn.fileName.length; i++) {
 					
 					//saber quais os ficheiros q vai client vai mandar

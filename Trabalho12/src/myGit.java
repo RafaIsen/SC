@@ -235,11 +235,12 @@ public class myGit{
 			
 			
 		} else {
-			System.out.println("O ficheiro nao existe no repositorio");
+			System.out.println("-- O ficheiro não existe no repositório");
 			Message messOut = new Message("", null, null, null, null, null, null, null);
 			outStream.writeObject(messOut);
 		}
-		System.out.println(messIn.result);
+		if(messIn != null)
+			System.out.println(messIn.result);
 		return result;
 	}
 

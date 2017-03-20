@@ -559,7 +559,7 @@ public class myGitServer{
 			
 			String currentLine = null;
 			
-			String[] split1 = messIn.repName.split("/");
+			String[] split1 = messIn.fileName[0].split("/");
 			
 			String otherUser = null;
 			String repName = null;

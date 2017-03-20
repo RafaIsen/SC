@@ -359,10 +359,7 @@ public class myGitServer{
 							writer.close(); 
 							reader.close();
 			    			shareLog.delete();
-			    			Path tempPath = tempFile.toPath();
 							tempFile.renameTo(shareLog);
-							File tp = new File(tempPath.toString());
-							tp.delete();
 							res = "-- Foi retirado o acesso previamente dado ao utilizador " + messIn.user[1];
 							
 							Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
@@ -550,7 +547,7 @@ public class myGitServer{
 				
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
 				outStream.writeObject(messOut);
-				result = -1;
+				return -1;
 				
 			} 
 			

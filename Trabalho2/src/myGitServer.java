@@ -52,7 +52,7 @@ public class myGitServer{
 		
 		try {
 			
-		    System.setProperty("javax.net.ssl.keyStore", "keystore.dd");
+		    System.setProperty("javax.net.ssl.keyStore", "myServer.keyStore");
 			System.setProperty("javax.net.ssl.keyStorePassword", "12345678");
 		    ServerSocketFactory ssf = SSLServerSocketFactory.getDefault( );
 		    sSoc = ssf.createServerSocket(23456);

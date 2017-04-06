@@ -83,10 +83,8 @@ public class myGit{
 				ip = args[1].split(":");
 				port = Integer.parseInt(ip[1]);
 				System.setProperty("javax.net.ssl.trustStore", "myClient.keystore");
-				SocketFactory sf = SSLSocketFactory.getDefault( );
-				Socket cSoc = sf.createSocket("127.0.0.1", port);
-				
-
+				SocketFactory sf = SSLSocketFactory.getDefault();
+				Socket cSoc = sf.createSocket(ip[0], port);
 				
 				ObjectOutputStream outStream = new ObjectOutputStream(cSoc.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(cSoc.getInputStream());

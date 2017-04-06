@@ -52,13 +52,6 @@ public class myGitServer{
 		
 		try {
 			
-			 //gerar uma chave aleatória para utilizar com o AES
-		    KeyGenerator kg = KeyGenerator.getInstance("AES");
-		    kg.init(128);
-		    SecretKey key = kg.generateKey();
-
-		    Cipher c = Cipher.getInstance("AES");
-		    c.init(Cipher.ENCRYPT_MODE, key);
 		    System.setProperty("javax.net.ssl.keyStore", "keystore.dd");
 			System.setProperty("javax.net.ssl.keyStorePassword", "12345678");
 		    ServerSocketFactory ssf = SSLServerSocketFactory.getDefault( );

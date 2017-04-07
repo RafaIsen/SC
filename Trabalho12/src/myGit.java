@@ -56,7 +56,7 @@ public class myGit{
 				}
 			} else {
 				rep = new File(localreps.toString() + "/" + args[1]);
-				
+
 				if (rep.exists())
 					System.out.println("-- O repositório " + args[1] + " ja existe. Escolha outro nome por favor");
 				else {

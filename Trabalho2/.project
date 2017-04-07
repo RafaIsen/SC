@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-<<<<<<< HEAD
 	<name>Trabalho2</name>
-	<comment></comment>
-	<projects>
-	</projects>
-	<buildSpec>
-	</buildSpec>
-	<natures>
-=======
-	<name>Trabalho12</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -22,6 +13,5 @@
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
->>>>>>> refs/heads/master
 	</natures>
 </projectDescription>

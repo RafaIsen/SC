@@ -1,7 +1,11 @@
 grant codeBase "file:bin/*" {
 	permission java.net.SocketPermission "*:23456", "listen";
 	permission java.net.SocketPermission "*:1024-", "accept";
-	permission java.io.FilePermission "${user.home}/git/SC/Trabalho12/bin/-", "write";
-	permission java.io.FilePermission "${user.home}/git/SC/Trabalho12/bin/-", "read";
+	permission java.io.FilePermission "${user.home}/git/SC/Trabalho2/bin/-", "read, write";
 	permission java.lang.RuntimePermission "getProtectionDomain";
+};
+
+grant codeBase "file:Trabalho2/*" {
+	permission java.util.PropertyPermission "javax.net.ssl.trustStore", "read, write";
+	permission java.util.PropertyPermission "javax.net.ssl.trustStorePassword", "read, write";
 };

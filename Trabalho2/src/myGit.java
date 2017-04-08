@@ -40,7 +40,7 @@ public class myGit{
 		File rep = null;
 		Path repPath = null;
 		
-		/*Trying to get the path of the client*/
+		//trying to get the path of the client
 		URI myGitPath = myGit.class.getProtectionDomain().getCodeSource().getLocation().toURI();
 		Path path = Paths.get(myGitPath);
 		
@@ -77,12 +77,25 @@ public class myGit{
 				
 				boolean param_p = false;
 				
+				//verifies if the password is written in the initial args
 				if(args.length > 2)
 					param_p = args[2].equals("-p");
 				
+				//splits ip address
 				ip = args[1].split(":");
 				port = Integer.parseInt(ip[1]);
-				System.setProperty("javax.net.ssl.trustStore", "myClient.keystore");
+				
+				//getting project's path
+				String[] projPathSplit = myGitPath.getRawPath().split("/");
+				projPathSplit[projPathSplit.length-1] = "";
+				String projPath = "";
+				for (String s : projPathSplit)
+					if(!s.equals(""))
+						projPath += s + File.separator;
+				
+				//verifies the certificate sent by the server
+				System.setProperty("javax.net.ssl.trustStore", projPath + "myClient.keyStore");
+				//creates the socket
 				SocketFactory sf = SSLSocketFactory.getDefault();
 				Socket cSoc = sf.createSocket(ip[0], port);
 				

@@ -134,17 +134,7 @@ public class myGitServer{
 					User newUser = new User(username, pass);
 					outStream.writeObject(createUser(newUser, users, path));
 					
-				} else if(param_p){ //confirm password
-					
-					boolean autentic = false;
-					while(!autentic){
-						String pass = (String) inStream.readObject();
-						User user = new User(username, pass);
-						autentic = autenticate(user, users);
-						outStream.writeObject(autentic);
-					}
-					
-				} else { //Receive pass
+				} else { //receive/confirm password
 					
 					boolean autentic = false;
 					while(!autentic){
@@ -155,7 +145,6 @@ public class myGitServer{
 					}
 					
 				}
-				
 
 				//verifies if it has any methods in args
 				if ((param_p && num_args > 4) || (!param_p && num_args > 2)) {

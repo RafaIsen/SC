@@ -29,8 +29,10 @@ import java.util.Scanner;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLServerSocketFactory;
 
@@ -127,10 +129,12 @@ public class myGitServer{
 				boolean foundU = checkUser(username, users);
 				
 				outStream.writeObject(foundU);
+				
+				String pass = null;
 								
 				if (!foundU) { //create user
 				
-					String pass = (String) inStream.readObject();
+					pass = (String) inStream.readObject();
 					User newUser = new User(username, pass);
 					outStream.writeObject(createUser(newUser, users, path));
 					
@@ -138,13 +142,25 @@ public class myGitServer{
 					
 					boolean autentic = false;
 					while(!autentic){
-						String pass = (String) inStream.readObject();
+						pass = (String) inStream.readObject();
 						User user = new User(username, pass);
 						autentic = autenticate(user, users);
 						outStream.writeObject(autentic);
 					}
 					
 				}
+				
+				//obtaining secret key through the user's pass
+				byte[] bytePass = pass.getBytes();
+				SecretKey key = new SecretKeySpec(bytePass, "HmacSHA256");
+				
+				//obtaining the MAC through the secret key above
+				Mac m;
+				byte[] mac = null;
+				m = Mac.getInstance("HmacSHA256");
+				m.init(key);
+				m.update(users);
+				mac = m.doFinal();
 
 				//verifies if it has any methods in args
 				if ((param_p && num_args > 4) || (!param_p && num_args > 2)) {
@@ -193,6 +209,10 @@ public class myGitServer{
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			} catch (InvalidKeyException e) {
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			}
 		}

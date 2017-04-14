@@ -41,15 +41,41 @@ import javax.net.ssl.SSLServerSocketFactory;
 public class myGitServer{
 
 	public final String SERVER_DIR = "/users"; 
+	public final String SERVER_PASS = "sc1617";
 	
-	public static void main(String[] args) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
+	public static void main(String[] args) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, URISyntaxException, IOException {
 		System.out.println("servidor: main");
 		myGitServer server = new myGitServer();
 		server.startServer();
 	}
 
-	public void startServer () throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException{
+	public void startServer () throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, URISyntaxException, IOException{
         
+		//autenticate user
+		System.out.println("Digite a password do servidor:");
+		Scanner scan = new Scanner(System.in);
+		if(!scan.nextLine().equals(SERVER_PASS)){
+			do System.out.println("Errado! Digite novamente a password do servidor:");
+			while(!scan.nextLine().equals(SERVER_PASS));
+		}
+		
+		/*Trying to get the path of the server*/
+		URI myGitPath = myGit.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+		Path path = java.nio.file.Paths.get(myGitPath);
+		
+		//creates the directory users if it does not exist
+		File usersDir = new File(path + SERVER_DIR);
+		if(!usersDir.exists())
+			usersDir.mkdir();
+		//creates the text file users if it does not exist
+		File users = new File(path + SERVER_DIR + "/users.txt");
+		if(!users.exists()){
+			users.createNewFile();
+		}
+		File mac = new File(path + SERVER_DIR + "/mac.txt");
+		
+		verifyFileIntegrity(users, mac);
+		
 		ServerSocket sSoc = null;
 		
 		try {
@@ -78,7 +104,33 @@ public class myGitServer{
 		//sSoc.close();
 		
 	}
-
+	
+	public void verifyFileIntegrity(File file, File macs) throws FileNotFoundException, NoSuchAlgorithmException, InvalidKeyException{
+		
+		if(!macs.exists())
+			System.out.println("AVISO!!! Não existe nenhum MAC a proteger o sistema! Será criado e adicionado um ao sistema.");
+		else {
+			//verifies file integrity
+			
+		}
+		
+		//obtaining secret key through the user's pass
+		byte[] bytePass = SERVER_PASS.getBytes();
+		SecretKey key = new SecretKeySpec(bytePass, "HmacSHA256");
+		
+		Scanner readFile = new Scanner(file);
+		
+		//obtaining the MAC through the secret key above
+		Mac m;
+		byte[] mac = null;
+		m = Mac.getInstance("HmacSHA256");
+		m.init(key);
+		m.update("trabalho de segurança".getBytes());
+		mac = m.doFinal();
+		
+		readFile.close();
+		
+	}
 
 	//Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
@@ -116,15 +168,7 @@ public class myGitServer{
 				URI myGitPath = myGit.class.getProtectionDomain().getCodeSource().getLocation().toURI();
 				Path path = java.nio.file.Paths.get(myGitPath);
 				
-				//creates the directory users if it does not exist
-				File usersDir = new File(path + SERVER_DIR);
-				if(!usersDir.exists())
-					usersDir.mkdir();
-				//creates the text file users if it does not exist
 				File users = new File(path + SERVER_DIR + "/users.txt");
-				if(!users.exists()){
-					users.createNewFile();
-				}
 
 				boolean foundU = checkUser(username, users);
 				
@@ -139,7 +183,6 @@ public class myGitServer{
 					outStream.writeObject(createUser(newUser, users, path));
 					
 				} else { //receive/confirm password
-					
 					boolean autentic = false;
 					while(!autentic){
 						pass = (String) inStream.readObject();
@@ -147,20 +190,7 @@ public class myGitServer{
 						autentic = autenticate(user, users);
 						outStream.writeObject(autentic);
 					}
-					
 				}
-				
-				//obtaining secret key through the user's pass
-				byte[] bytePass = pass.getBytes();
-				SecretKey key = new SecretKeySpec(bytePass, "HmacSHA256");
-				
-				//obtaining the MAC through the secret key above
-				Mac m;
-				byte[] mac = null;
-				m = Mac.getInstance("HmacSHA256");
-				m.init(key);
-				m.update(users);
-				mac = m.doFinal();
 
 				//verifies if it has any methods in args
 				if ((param_p && num_args > 4) || (!param_p && num_args > 2)) {
@@ -209,10 +239,6 @@ public class myGitServer{
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			} catch (InvalidKeyException e) {
-				e.printStackTrace();
-			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			}
 		}

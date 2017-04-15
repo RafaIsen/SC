@@ -42,7 +42,7 @@ public class myGitServer{
 	public final String USERS_FILE = "users.txt"; 
 	public final String USERS_MAC_FILE = "users_mac.txt";
 	public final String SHARE_FILE = "shareLog.txt";
-	public final String SHARE_MAC_FILE = "share_mac.txt";
+	public final String SHARE_MAC_FILE = "shareLog_mac.txt";
 	
 	public static void main(String[] args) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, URISyntaxException, IOException, ClassNotFoundException {
 		System.out.println("servidor: main");
@@ -75,11 +75,17 @@ public class myGitServer{
 		if(!users.exists()){
 			users.createNewFile();
 		}
+		//creates the text file shareLog if it does not exist
+		File shareLog = new File(path + SERVER_DIR + "/" + SHARE_FILE);
+		if(!shareLog.exists()){
+			shareLog.createNewFile();
+		}
+		
 		File users_mac = new File(path + SERVER_DIR + "/" + USERS_MAC_FILE);
 		File share_mac = new File(path + SERVER_DIR + "/" + SHARE_MAC_FILE);
 		
 		verifyFileIntegrity(users, users_mac, USERS_FILE);
-		verifyFileIntegrity(users, share_mac, SHARE_FILE);
+		verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
 		
 		ServerSocket sSoc = null;
 		
@@ -127,53 +133,37 @@ public class myGitServer{
 			readFile.close();
 		}
 		else if (readMacs.hasNextLine()){
+				
+			//obtaining secret key through the user's pass
+			byte[] bytePass = SERVER_PASS.getBytes();
+			SecretKey key = new SecretKeySpec(bytePass, "HmacSHA256");
 			
-			boolean existsMac = false;
-			String[] lineSplit;
-			String protectedFile;
-			byte[] macOrig;
+			//obtaining the MAC through the secret key above
+			Mac m;
+			byte[] mac = null;
 			
-			do{	
-				lineSplit = readMacs.nextLine().split(":");
-				protectedFile = lineSplit[0];
-				macOrig = lineSplit[1].getBytes();
-				existsMac = protectedFile.equals(filename);
-				
-			} while (!existsMac || readMacs.hasNextLine());
+			m = Mac.getInstance("HmacSHA256");
+			m.init(key);
 			
-			if (!existsMac) {
-				System.out.println("AVISO!!! Não existe nenhum MAC a proteger o ficheiro! Será criado e adicionado um MAC ao sistema.");
-				createMac(file, macs);
-			} else {
-				
-				//obtaining secret key through the user's pass
-				byte[] bytePass = SERVER_PASS.getBytes();
-				SecretKey key = new SecretKeySpec(bytePass, "HmacSHA256");
-				
-				//obtaining the MAC through the secret key above
-				Mac m;
-				byte[] mac = null;
-				
-				m = Mac.getInstance("HmacSHA256");
-				m.init(key);
-				
-				while(readFile.hasNextLine())
-					m.update(readFile.nextLine().getBytes());
-				
-				mac = m.doFinal();
-				
-				if (!Arrays.equals(mac, macOrig)) {
-					readMacs.close();
-					readFile.close();
-					System.out.println("AVISO!!! Um ficheiro foi corrompido! A desligar servidor...");
-					System.exit(-1);
-				}
-				
+			while(readFile.hasNextLine())
+				m.update(readFile.nextLine().getBytes());
+			
+			mac = m.doFinal();
+			
+			byte[] macOrig = readMacs.nextLine().getBytes();
+			
+			if (!Arrays.equals(mac, macOrig)) {
 				readMacs.close();
 				readFile.close();
+				System.out.println("AVISO!!! O ficheiro " + filename + " foi corrompido! A desligar servidor...");
+				System.exit(-1);
 			}
-		} else {
-			System.out.println("AVISO!!! Não existe nenhum MAC a proteger o ficheiro! Será criado e adicionado um MAC ao sistema.");
+			
+			readMacs.close();
+			readFile.close();
+		}
+		else {
+			System.out.println("AVISO!!! Não existe nenhum MAC a proteger o ficheiro " + filename + "! Será criado e adicionado um MAC ao sistema.");
 			createMac(file, macs);
 		}
 	}
@@ -213,13 +203,16 @@ public class myGitServer{
 		
 		File macsTemp;
 		
-		if (filename.equals(USERS_FILE))
-			macsTemp = new File("bin/users_mac.temp");
-		else
-			macsTemp = new File("bin/share_mac.temp");	
+		if (filename.equals(USERS_FILE)) 
+			macsTemp = new File("bin" + SERVER_DIR + "/users_mac.temp");
+		else 
+			macsTemp = new File("bin" + SERVER_DIR + "/share_mac.temp");	
 		
 		//opening macs file
 		FileOutputStream macsOut = new FileOutputStream(macsTemp);
+		
+		//remove antique macs file
+		macs.delete();
 		
 		//obtaining secret key through the user's pass
 		byte[] bytePass = SERVER_PASS.getBytes();
@@ -293,17 +286,15 @@ public class myGitServer{
 				String pass = null;
 								
 				if (!foundU) { //create user
-				
 					pass = (String) inStream.readObject();
 					User newUser = new User(username, pass);
 					outStream.writeObject(createUser(newUser, users, path, users_mac));
-					
 				} else { //receive/confirm password
 					boolean autentic = false;
 					while(!autentic){
 						pass = (String) inStream.readObject();
 						User user = new User(username, pass);
-						autentic = autenticate(user, users);
+						autentic = autenticate(user, users, users_mac);
 						outStream.writeObject(autentic);
 					}
 				}
@@ -414,7 +405,6 @@ public class myGitServer{
 					newFile.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1]));
 					result = 0;
 					
-					
 				} else {
 					//nao actualiza o ficheiro porque nao he mais recente
 					ya[0] = false;
@@ -488,22 +478,18 @@ public class myGitServer{
 						currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
 						if (fileRep != null && currFile.exists()) {
 							date = new Date(currFile.lastModified());
-							
 							//verificar quais os ficheiros que precisam de ser actualizados
 							if (date.compareTo(messIn.fileDate[i]) < 0) {
 								versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i]);
 								ya[i] = true;	
 							}
-							
 						} else {
 							ya[i] = true;
 							versions[i] = 0;
 						}
-						
 					}
 					
 				res += System.lineSeparator() + "-- O ficheiro " + messIn.fileName[0] + " foi enviado para o servidor";
-		
 			}
 			
 			//saber quais os ficheiros a "eliminar"
@@ -539,10 +525,9 @@ public class myGitServer{
 							fileRep[i].renameTo(new File(rep.toString() + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
 							newFile.renameTo(new File(rep.toString() + "/" + messIn.fileName[i]));
 						}
-							
-						
 					}
 				}
+			
 			return result;
 		}
 
@@ -597,11 +582,8 @@ public class myGitServer{
 				    			if(split[i].equals(messIn.user[0]))
 				    				hasAccess = true;
 				    }
-				    	
 				}
-				    
 			}
-			
 			if (hasAccess) {
 			
 				File file = null;
@@ -620,9 +602,7 @@ public class myGitServer{
 					file = new File(path + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
 					myrep = true;
 				 }
-							
-				
-									
+											
 				if (file.exists()) {
 					//actualiza o ficheiro para uma versao mais recente
 					date = new Date(file.lastModified());
@@ -635,8 +615,7 @@ public class myGitServer{
 							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " do utilizador " + otherUser + " foi copiado do servidor");
 						outStream.writeObject(messOut);
 						sendFile(outStream, inStream, file);
-						result = 0;
-											
+						result = 0;				
 					} else {
 						//nao actualiza o ficheiro porque nao he mais recente
 						ya[0] = false;
@@ -644,7 +623,6 @@ public class myGitServer{
 						outStream.writeObject(messOut);
 						result = 0;
 					}	
-					
 				//erro o ficeiro nao existe
 				} else {
 					ya[0] = false;
@@ -653,11 +631,9 @@ public class myGitServer{
 				}
 				
 			} else {
-				
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao ficheiro " + filename + " do utilizador " + otherUser);
 				outStream.writeObject(messOut);
 				result = -1;
-				
 			}
 			br.close();
 			return result;
@@ -707,10 +683,8 @@ public class myGitServer{
 				    		for(int i = 1; i < split.length && !hasAccess; i++)
 				    			if(split[i].equals(messIn.user[0]))
 				    				hasAccess = true;
-				    }
-				    	
-				}
-				    
+				    }	
+				}   
 			}
 			
 			if (hasAccess) {
@@ -826,19 +800,15 @@ public class myGitServer{
 					result = 0;
 				}
 			} else {
-				
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
 				outStream.writeObject(messOut);
 				br.close();
 				return -1;
-				
 			} 
-			
 			messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, delete, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
 			outStream.writeObject(messOut);
 			br.close();
 			return result;
-		
 		}
 
 		private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path, File users, File users_mac, File share_mac) throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
@@ -856,90 +826,63 @@ public class myGitServer{
 					String userToAdd = messIn.user[1];
 
 					File shareLog = new File(path + SERVER_DIR + "/shareLog.txt");
+					
+					verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
 
-					if (!shareLog.exists()) {
+					BufferedReader reader = new BufferedReader(new FileReader(shareLog));
 
-						shareLog.createNewFile();
+					String currLine = reader.readLine();
+					
+					if (currLine == null) {
 						FileWriter fw = new FileWriter(shareLog);
 						fw.write(messIn.user[0] + ":" + userToAdd + System.lineSeparator());
 						res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
 						fw.close();
-
 					} else {
-						
-						verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
+						File tempFile = new File(path + SERVER_DIR + "/shareLog.temp");
+						tempFile.createNewFile();
+						BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+						do {
+							String[] split = currLine.split(",");
+							String[] split2 = split[0].split(":");
 
-						BufferedReader reader = new BufferedReader(new FileReader(shareLog));
+							if (split2[0].equals(messIn.user[0])) {
 
-						String currLine = reader.readLine();
-						
-						if (currLine == null) {
-
-							FileWriter fw = new FileWriter(shareLog);
-							fw.write(messIn.user[0] + ":" + userToAdd + System.lineSeparator());
-							res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
-							fw.close();
-
-						} else {
-
-							File tempFile = new File(path + SERVER_DIR + "/shareLog.temp");
-							tempFile.createNewFile();
-							BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
-
-							do {
-
-								String[] split = currLine.split(",");
-								String[] split2 = split[0].split(":");
-
-								if (split2[0].equals(messIn.user[0])) {
-
-									for (String s : split)
-										if (s.equals(userToAdd))
-											res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
-
-									if (split2[1].equals(userToAdd))
+								for (String s : split)
+									if (s.equals(userToAdd))
 										res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
-									else {
 
-										writer.write(currLine + "," + userToAdd + System.getProperty("line.separator"));
-										res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
+								if (split2[1].equals(userToAdd))
+									res = "-- O utilizador " + userToAdd + " já tem acesso ao repositório " + repName;
+								else {
 
-									}
+									writer.write(currLine + "," + userToAdd + System.getProperty("line.separator"));
+									res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
 
-								} else
-									writer.write(currLine + System.getProperty("line.separator"));
+								}
 
-							} while ((currLine = reader.readLine()) != null);
-							
-							//writer.write(messIn.user[0] + ":" + userToAdd);
+							} else
+								writer.write(currLine + System.getProperty("line.separator"));
+
+						} while ((currLine = reader.readLine()) != null);
+						
+						//writer.write(messIn.user[0] + ":" + userToAdd);
  
-							writer.close(); 
-							reader.close();
-			    			shareLog.delete();
-							tempFile.renameTo(shareLog);
-							
-							updateMac(shareLog, share_mac, SHARE_FILE);
-
-						}
-
+						writer.close(); 
+						reader.close();
+		    			shareLog.delete();
+						tempFile.renameTo(shareLog);
 					}
-
+					updateMac(shareLog, share_mac, SHARE_FILE);
 					Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
 					outStream.writeObject(messOut);
-
 				} else {	
-
 					Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, "Erro: O utilizador " + messIn.user[1] + " não existe");
 					outStream.writeObject(messOut);
-
 				}
-
 			} catch(IOException e) {
-
 				e.printStackTrace();
-
-			}
-					
+			}		
 		}
 
 		private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path, File users, File users_mac, File share_mac) throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
@@ -955,94 +898,69 @@ public class myGitServer{
 				if (foundUser) {
 					
 					File shareLog = new File(path + SERVER_DIR + "/shareLog.txt");
-					
-					if (!shareLog.exists()) {
 						
-						res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName; 
+					if (checkUser(messIn.user[0], shareLog, share_mac, SHARE_FILE)) {
+						
+						File tempFile = new File(path + SERVER_DIR + "/shareLog.temp");
+						tempFile.createNewFile();
+	
+						BufferedReader reader = new BufferedReader(new FileReader(shareLog));
+						BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+	
+						String userToRemove = messIn.user[1];
+						String currentLine = null;
+	
+						while ((currentLine = reader.readLine()) != null) {
+							
+							String[] split = currentLine.split(",");
+						    String[] split2 = split[0].split(":");
+						    
+						    if (split2[0].equals(messIn.user[0])) {
+						    	
+						    	if (split2[1].equals(userToRemove)) {
+			
+						    		if (!(split.length == 1)) {
+						    			
+						    			writer.write(split2[0] + ":");
+						    			writer.write(split[0]);
+							    		for(int i = 1; i < split.length; i++)
+							    			writer.write("," + split[i]);
+						    		}
+						    		
+						    	} else {
+						    		writer.write(split2[0] + ":" + split2[1]);
+						    		for(String s : split)
+						    			writer.write("," + s);
+						    	}
+						    	
+						    } else
+						    	writer.write(currentLine + System.getProperty("line.separator"));
+						}
+						writer.close(); 
+						reader.close();
+		    			shareLog.delete();
+						tempFile.renameTo(shareLog);
+						
+						updateMac(shareLog, share_mac, SHARE_FILE);
+						
+						res = "-- Foi retirado o acesso previamente dado ao utilizador " + messIn.user[1];
+						
 						Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
 						outStream.writeObject(messOut);
-					
 					} else {
-						
-						if (checkUser(messIn.user[0], shareLog, share_mac, SHARE_FILE)) {
-							
-							File tempFile = new File(path + SERVER_DIR + "/shareLog.temp");
-							tempFile.createNewFile();
-		
-							BufferedReader reader = new BufferedReader(new FileReader(shareLog));
-							BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
-		
-							String userToRemove = messIn.user[1];
-							String currentLine = null;
-		
-							while ((currentLine = reader.readLine()) != null) {
-								
-								String[] split = currentLine.split(",");
-							    String[] split2 = split[0].split(":");
-							    
-							    if (split2[0].equals(messIn.user[0])) {
-							    	
-							    	if (split2[1].equals(userToRemove)) {
-							    		
-							    		if (!(split.length == 1)) {
-							    			
-							    			writer.write(split2[0] + ":");
-							    			writer.write(split[0]);
-								    		for(int i = 1; i < split.length; i++)
-								    			writer.write("," + split[i]);
-								    		
-							    		}
-							    		
-							    	} else {
-							    		
-							    		writer.write(split2[0] + ":" + split2[1]);
-							    		
-							    		for(String s : split)
-							    			writer.write("," + s);
-							    		
-							    	}
-							    	
-							    } else
-							    	writer.write(currentLine + System.getProperty("line.separator"));
-							}
-							
-							writer.close(); 
-							reader.close();
-			    			shareLog.delete();
-							tempFile.renameTo(shareLog);
-							
-							updateMac(shareLog, share_mac, SHARE_FILE);
-							
-							res = "-- Foi retirado o acesso previamente dado ao utilizador " + messIn.user[1];
-							
-							Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
-							outStream.writeObject(messOut);
-							
-						} else {
-							
-							res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName;	
-						
-							Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
-							outStream.writeObject(messOut);
+						res = "-- O utilizador a quem quer retirar o acesso não tem acesso ao repositório " + repName;	
 					
-						}
-						
+						Message messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, messIn.delete, res);
+						outStream.writeObject(messOut);
 					}
-					
 				}
-				
 			} catch(IOException e) {
-				
 				e.printStackTrace();
-				
 			}
-			
 		}
-
 
 		public int countNumVersions1(Path path, String filename) throws IOException{
 
-            
             File folder = new File(path.toString());
 
             int numVersions = 0;
@@ -1059,7 +977,6 @@ public class myGitServer{
             numVersions = list.length;
 
             return numVersions;
-
         }
 
 		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException{
@@ -1107,18 +1024,18 @@ public class myGitServer{
 			return result;
 		}
 		
-		public boolean autenticate(User u, File f) throws IOException{
+		public boolean autenticate(User u, File f, File m) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException{
 			
 			boolean autenticado = false;
+			
+			verifyFileIntegrity(f, m, USERS_FILE);
 	
 			Scanner scan = new Scanner(f);
 			
 			while (scan.hasNextLine()) {
-				
 				String[] split = scan.nextLine().split(":");
 				if(split[0].equals(u.name) && split[1].equals(u.pass))
 					autenticado = true; 
-			
 			}
 			
 			scan.close();
@@ -1127,8 +1044,14 @@ public class myGitServer{
 		}
 		
 		public boolean createUser(User u, File f, Path path, File m) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException{
+			
 			boolean result = false;
 			FileWriter fw = new FileWriter(f, true);
+			Scanner scan = new Scanner(f);
+			boolean empty = false;
+			
+			if(!scan.hasNext())
+				empty = true;
 			
 			try {
 				if(checkUser(u.name, f, m, USERS_FILE))
@@ -1145,7 +1068,12 @@ public class myGitServer{
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			createMac(f, m);
+			
+			if(empty)
+				createMac(f, m);
+			else
+				updateMac(f, m, USERS_FILE);
+			
 			return result;
 		}
 		
@@ -1158,16 +1086,13 @@ public class myGitServer{
 			Scanner scan = new Scanner(f);
 			
 			while (scan.hasNextLine()) {
-				
 				String[] split = scan.nextLine().split(":");
 				if(split[0].equals(username))
 					result = true; 
-			
 			}
 			
 			scan.close();
 			return result;
-			
 		}
 	}
 }

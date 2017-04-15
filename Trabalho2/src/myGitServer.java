@@ -72,9 +72,9 @@ public class myGitServer{
 		if(!users.exists()){
 			users.createNewFile();
 		}
-		File mac = new File(path + SERVER_DIR + "/mac.txt");
+		File macs = new File(path + SERVER_DIR + "/macs.txt");
 		
-		verifyFileIntegrity(users, mac);
+		verifyFileIntegrity(users, macs);
 		
 		ServerSocket sSoc = null;
 		
@@ -105,30 +105,69 @@ public class myGitServer{
 		
 	}
 	
-	public void verifyFileIntegrity(File file, File macs) throws FileNotFoundException, NoSuchAlgorithmException, InvalidKeyException{
+	public boolean verifyFileIntegrity(File file, File macs) throws NoSuchAlgorithmException, InvalidKeyException, IOException{
 		
-		if(!macs.exists())
+		if (!macs.exists()) {
 			System.out.println("AVISO!!! Não existe nenhum MAC a proteger o sistema! Será criado e adicionado um ao sistema.");
-		else {
-			//verifies file integrity
-			
+			macs.createNewFile();
 		}
+		
+		Scanner readFile = new Scanner(file);
+		Scanner readMacs = new Scanner(macs);
+			
+		if (!readFile.hasNextLine()){
+			readMacs.close();
+			readFile.close();
+			return true;
+		}
+		else if (readMacs.hasNextLine()){
+			//obtaining secret key through the user's pass
+			byte[] bytePass = SERVER_PASS.getBytes();
+			SecretKey key = new SecretKeySpec(bytePass, "HmacSHA256");
+			
+			//obtaining the MAC through the secret key above
+			Mac m;
+			byte[] mac = null;
+			
+			m = Mac.getInstance("HmacSHA256");
+			m.init(key);
+			
+			while(readFile.hasNextLine())
+				m.update(readFile.nextLine().getBytes());
+			
+			mac = m.doFinal();
+			
+			if (!mac.equals(readMacs.nextLine().getBytes())) {
+				System.out.println("AVISO!!! Um ficheiro foi currompido!");
+				System.exit(-1);
+			}
+		}
+		
+		//opening macs file
+		FileOutputStream macsOut = new FileOutputStream(macs);
 		
 		//obtaining secret key through the user's pass
 		byte[] bytePass = SERVER_PASS.getBytes();
 		SecretKey key = new SecretKeySpec(bytePass, "HmacSHA256");
 		
-		Scanner readFile = new Scanner(file);
-		
 		//obtaining the MAC through the secret key above
 		Mac m;
 		byte[] mac = null;
+		
 		m = Mac.getInstance("HmacSHA256");
 		m.init(key);
-		m.update("trabalho de segurança".getBytes());
-		mac = m.doFinal();
 		
+		while(readFile.hasNextLine())
+			m.update(readFile.nextLine().getBytes());
+		
+		mac = m.doFinal();
+		macsOut.write(mac);
+		
+		macsOut.close();
+		readMacs.close();
 		readFile.close();
+		
+		return true;
 		
 	}
 

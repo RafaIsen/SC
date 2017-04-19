@@ -1,14 +1,13 @@
-/***************************************************************************
+/*****************************************
 *   Seguranca e Confiabilidade 2016/17
-*dd
 *
-***************************************************************************/
+*				Grupo 34
+*****************************************/
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -18,7 +17,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
@@ -69,29 +67,25 @@ public class myGitServer{
 			while(!scan.nextLine().equals(SERVER_PASS));
 		}
 		scan.close();
-		System.out.println("Entrou!");
-		
-		/*Trying to get the path of the server*/
-		URI myGitPath = myGit.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-		Path path = java.nio.file.Paths.get(myGitPath);
+		System.out.println("Entrou no servidor...");
 		
 		//creates the directory users if it does not exist
-		File usersDir = new File(path + SERVER_DIR);
+		File usersDir = new File("bin/" + SERVER_DIR);
 		if(!usersDir.exists())
 			usersDir.mkdir();
 		//creates the text file users if it does not exist
-		File users = new File(path + SERVER_DIR + "/" + USERS_FILE);
+		File users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE);
 		if(!users.exists()){
 			users.createNewFile();
 		}
 		//creates the text file shareLog if it does not exist
-		File shareLog = new File(path + SERVER_DIR + "/" + SHARE_FILE);
+		File shareLog = new File("bin/" + SERVER_DIR + "/" + SHARE_FILE);
 		if(!shareLog.exists()){
 			shareLog.createNewFile();
 		}
 		
-		File users_mac = new File(path + SERVER_DIR + "/" + USERS_MAC_FILE);
-		File share_mac = new File(path + SERVER_DIR + "/" + SHARE_MAC_FILE);
+		File users_mac = new File("bin/" + SERVER_DIR + "/" + USERS_MAC_FILE);
+		File share_mac = new File("bin/" + SERVER_DIR + "/" + SHARE_MAC_FILE);
 		
 		verifyFileIntegrity(users, users_mac, USERS_FILE);
 		verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
@@ -282,6 +276,8 @@ public class myGitServer{
 	        i = fis.read(b);
 	    }
 	    cos.close();
+	    fos.close();
+	    fis.close();
 	    
 	    file.delete();
 		
@@ -319,14 +315,10 @@ public class myGitServer{
 				
 				String username = (String) inStream.readObject();
 				
-				/*Trying to get the path of the server*/
-				URI myGitPath = myGit.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-				Path path = java.nio.file.Paths.get(myGitPath);
+				File users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE);
 				
-				File users = new File(path + SERVER_DIR + "/" + USERS_FILE);
-				
-				File users_mac = new File(path + SERVER_DIR + "/" + USERS_MAC_FILE);
-				File share_mac = new File(path + SERVER_DIR + "/" + SHARE_MAC_FILE);
+				File users_mac = new File("bin/" + SERVER_DIR + "/" + USERS_MAC_FILE);
+				File share_mac = new File("bin/" + SERVER_DIR + "/" + SHARE_MAC_FILE);
 
 				boolean foundU = checkUser(username, users, users_mac, USERS_FILE);
 				
@@ -337,7 +329,7 @@ public class myGitServer{
 				if (!foundU) { //create user
 					pass = (String) inStream.readObject();
 					User newUser = new User(username, pass);
-					outStream.writeObject(createUser(newUser, users, path, users_mac));
+					outStream.writeObject(createUser(newUser, users, users_mac));
 				} else { //receive/confirm password
 					boolean autentic = false;
 					while(!autentic){
@@ -356,27 +348,27 @@ public class myGitServer{
 					switch (messIn.method) {
 					
 						case "pushFile":
-							pushFile(outStream, inStream, messIn, path);
+							pushFile(outStream, inStream, messIn);
 							break;
 							
 						case "pushRep":
-							pushRep(outStream, inStream, messIn, path);
+							pushRep(outStream, inStream, messIn);
 							break;
 							
 						case "pullFile":
-							pullFile(outStream, inStream, messIn, path, share_mac);
+							pullFile(outStream, inStream, messIn, share_mac);
 							break;
 							
 						case "pullRep":
-							pullRep(outStream, inStream, messIn, path, share_mac);
+							pullRep(outStream, inStream, messIn, share_mac);
 							break;
 						
 						case "shareRep":
-							shareRep(outStream, inStream, messIn, path, users, users_mac, share_mac);
+							shareRep(outStream, inStream, messIn, users, users_mac, share_mac);
 							break;
 							
 						case "remove":
-							remove(outStream, inStream, messIn, path, users, users_mac, share_mac);
+							remove(outStream, inStream, messIn, users, users_mac, share_mac);
 							break;
 							
 						default:
@@ -394,8 +386,6 @@ public class myGitServer{
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
 			} catch (InvalidKeyException e) {
 				e.printStackTrace();
 			} catch (NoSuchAlgorithmException e) {
@@ -403,7 +393,7 @@ public class myGitServer{
 			}
 		}
 			
-		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
+		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) throws IOException {
 			int result = -1;
 		
 			StringBuilder sb = new StringBuilder();
@@ -417,12 +407,12 @@ public class myGitServer{
 			String filename = null;
 			
 			if(secondI == -1) {
-				pathFolder = new File(path + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0]).toPath();
-				file = new File(path + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
+				pathFolder = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0]).toPath();
+				file = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
 				filename = split[1];
 			} else {
-				pathFolder = new File(path + SERVER_DIR + "/" + split[0] + "/" + split[1]).toPath();
-				file = new File(path + SERVER_DIR + "/" + messIn.fileName[0]);
+				pathFolder = new File("bin/" + SERVER_DIR + "/" + split[0] + "/" + split[1]).toPath();
+				file = new File("bin/" + SERVER_DIR + "/" + messIn.fileName[0]);
 				filename = split[2];
 			}
 			
@@ -475,7 +465,7 @@ public class myGitServer{
 			return result;			
 		}
 
-		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path) throws IOException {
+		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) throws IOException {
 			int result = -1;
 			File rep  = null;
 			File newFile = null;
@@ -495,11 +485,11 @@ public class myGitServer{
 			
 			//criar path para o rep
 			if (messIn.repName.contains("/")) {
-				rep = new File(path + SERVER_DIR + "/" + messIn.repName);
+				rep = new File("bin/" + SERVER_DIR + "/" + messIn.repName);
 				repName = messIn.repName.split("/")[1];
 			}	
 			else {
-				rep = new File(path + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
+				rep = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
 				repName = messIn.repName;
 			}
 			//criar rep caso nao exista
@@ -580,9 +570,9 @@ public class myGitServer{
 			return result;
 		}
 
-		private int pullFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path, File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
+		private int pullFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
 			
-			File shareLog = new File(path + SERVER_DIR + "/shareLog.txt");
+			File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
 			
 			BufferedReader br = new BufferedReader(new FileReader(shareLog));
 			
@@ -645,10 +635,10 @@ public class myGitServer{
 				//criar path para o ficheiro
 				
 				if (split.length == 3) 
-					file = new File(path + SERVER_DIR + "/" + messIn.fileName[0]);
+					file = new File("bin/" + SERVER_DIR + "/" + messIn.fileName[0]);
 					
 				 else {
-					file = new File(path + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
+					file = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
 					myrep = true;
 				 }
 											
@@ -688,9 +678,9 @@ public class myGitServer{
 			return result;
 		}
 
-		private int pullRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path, File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
+		private int pullRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
 			
-			File shareLog = new File(path + SERVER_DIR + "/shareLog.txt");
+			File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
 			
 			BufferedReader br = new BufferedReader(new FileReader(shareLog));
 			
@@ -751,12 +741,12 @@ public class myGitServer{
 				
 				//criar path para o rep
 				if (messIn.repName.contains("/")) {
-					rep = new File(path + SERVER_DIR + "/" + messIn.repName);
+					rep = new File("bin/" + SERVER_DIR + "/" + messIn.repName);
 					res = "-- O respositório " + messIn.repName.split("/")[1] + " do utilizador " + messIn.repName.split("/")[0] + " foi copiado do servidor";
 				}
 				//rep do user
 				else {
-					rep = new File(path + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
+					rep = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
 					res = "-- O respositório " + messIn.repName + " do utilizador " + messIn.user[0] + " foi copiado do servidor";
 				}
 				//erro caso o rep nao exista
@@ -860,7 +850,7 @@ public class myGitServer{
 			return result;
 		}
 
-		private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path, File users, File users_mac, File share_mac) throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
+		private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, File users, File users_mac, File share_mac) throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
 					
 			try {
 
@@ -874,7 +864,7 @@ public class myGitServer{
 
 					String userToAdd = messIn.user[1];
 
-					File shareLog = new File(path + SERVER_DIR + "/shareLog.txt");
+					File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
 					
 					verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
 
@@ -888,7 +878,7 @@ public class myGitServer{
 						res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
 						fw.close();
 					} else {
-						File tempFile = new File(path + SERVER_DIR + "/shareLog.temp");
+						File tempFile = new File("bin/" + SERVER_DIR + "/shareLog.temp");
 						tempFile.createNewFile();
 						BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
 						do {
@@ -934,7 +924,7 @@ public class myGitServer{
 			}		
 		}
 
-		private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, Path path, File users, File users_mac, File share_mac) throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
+		private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, File users, File users_mac, File share_mac) throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
 			
 			try {
 				
@@ -946,11 +936,11 @@ public class myGitServer{
 				
 				if (foundUser) {
 					
-					File shareLog = new File(path + SERVER_DIR + "/shareLog.txt");
+					File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
 						
 					if (checkUser(messIn.user[0], shareLog, share_mac, SHARE_FILE)) {
 						
-						File tempFile = new File(path + SERVER_DIR + "/shareLog.temp");
+						File tempFile = new File("bin/" + SERVER_DIR + "/shareLog.temp");
 						tempFile.createNewFile();
 	
 						BufferedReader reader = new BufferedReader(new FileReader(shareLog));
@@ -1092,7 +1082,7 @@ public class myGitServer{
 			return autenticado;
 		}
 		
-		public boolean createUser(User u, File f, Path path, File m) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException{
+		public boolean createUser(User u, File f, File m) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException{
 			
 			boolean result = false;
 			FileWriter fw = new FileWriter(f, true);
@@ -1111,7 +1101,7 @@ public class myGitServer{
 				    fw.flush();
 				    fw.close();
 					//creates a directory to the user
-					new File(path + SERVER_DIR + "/" + u.name).mkdir();
+					new File("bin/" + SERVER_DIR + "/" + u.name).mkdir();
 					result = true;				
 				}
 			} catch (IOException e) {
@@ -1123,9 +1113,9 @@ public class myGitServer{
 			else
 				updateMac(f, m, USERS_FILE);
 			
+			scan.close();
 			return result;
 		}
-		
 		
 		public boolean checkUser(String username, File f, File m, String filename) throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException, IOException {
 			

@@ -282,6 +282,45 @@ public class myGitServer{
 		
 	}
 	
+	public void deciphers(File file, String filename) throws NoSuchAlgorithmException, InvalidKeySpecException, 
+	NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IOException{
+		
+		PBEKeySpec keySpec = new PBEKeySpec(SERVER_PASS.toCharArray());
+		SecretKeyFactory kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
+		SecretKey key = kf.generateSecret(keySpec);
+
+		// obs: o salt, count e iv não têm de ser definidos explicitamenta na cifra 
+		// mas os mesmos valores têm de ser usados para cifrar e decifrar 
+		// os seus valores podem ser obtidos pelo método getParameters da classe Cipher
+
+		byte[] ivBytes = {0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,
+		0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,0x20};
+		IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+		byte[] salt = { (byte) 0xc9, (byte) 0x36, (byte) 0x78, (byte) 0x99,
+				(byte) 0x52, (byte) 0x3e, (byte) 0xea, (byte) 0xf2 };
+		PBEParameterSpec spec = new PBEParameterSpec(salt, 20, ivSpec);
+
+		Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+		c.init(Cipher.DECRYPT_MODE, key, spec);
+		
+		FileInputStream fis = new FileInputStream(file);
+	    FileOutputStream fos = new FileOutputStream("bin/" + SERVER_DIR + "/" + filename + ".txt");
+	    CipherOutputStream cos = new CipherOutputStream(fos, c);
+	    
+	    byte[] b = new byte[16];  
+	    int i = fis.read(b);
+	    while (i != -1) {
+	        cos.write(b, 0, i);
+	        i = fis.read(b);
+	    }
+	    cos.close();
+	    fos.close();
+	    fis.close();
+	    
+	    file.delete();
+		
+	}
+	
 	//Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
 

@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -20,15 +21,23 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
 
+import javax.crypto.Cipher;
+import javax.crypto.CipherOutputStream;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -116,7 +125,8 @@ public class myGitServer{
 		
 	}
 	
-	public void verifyFileIntegrity(File file, File macs, String filename) throws NoSuchAlgorithmException, InvalidKeyException, IOException, ClassNotFoundException{
+	public void verifyFileIntegrity(File file, File macs, String filename) throws NoSuchAlgorithmException, 
+													InvalidKeyException, IOException, ClassNotFoundException{
 		
 		Scanner readFile = new Scanner(file);
 		
@@ -168,7 +178,8 @@ public class myGitServer{
 		}
 	}
 	
-	public void createMac(File file, File macs) throws NoSuchAlgorithmException, InvalidKeyException, IOException{
+	public void createMac(File file, File macs) throws NoSuchAlgorithmException, InvalidKeyException, 
+														IOException{
 		
 		Scanner readFile = new Scanner(file);
 		
@@ -197,7 +208,8 @@ public class myGitServer{
 		macsOut.close();
 	}
 	
-	public void updateMac(File file, File macs, String filename) throws NoSuchAlgorithmException, InvalidKeyException, IOException{
+	public void updateMac(File file, File macs, String filename) throws NoSuchAlgorithmException, 
+																		InvalidKeyException, IOException{
 		
 		Scanner readFile = new Scanner(file);
 		
@@ -236,6 +248,43 @@ public class myGitServer{
 		macsOut.close();
 		
 		macsTemp.renameTo(macs);
+	}
+	
+	public void ciphers(File file, String filename) throws NoSuchAlgorithmException, InvalidKeySpecException, 
+	NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IOException{
+		
+		PBEKeySpec keySpec = new PBEKeySpec(SERVER_PASS.toCharArray());
+		SecretKeyFactory kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
+		SecretKey key = kf.generateSecret(keySpec);
+
+		// obs: o salt, count e iv não têm de ser definidos explicitamenta na cifra 
+		// mas os mesmos valores têm de ser usados para cifrar e decifrar 
+		// os seus valores podem ser obtidos pelo método getParameters da classe Cipher
+
+		byte[] ivBytes = {0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,
+		0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,0x20};
+		IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+		byte[] salt = { (byte) 0xc9, (byte) 0x36, (byte) 0x78, (byte) 0x99,
+				(byte) 0x52, (byte) 0x3e, (byte) 0xea, (byte) 0xf2 };
+		PBEParameterSpec spec = new PBEParameterSpec(salt, 20, ivSpec);
+
+		Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+		c.init(Cipher.ENCRYPT_MODE, key, spec);
+		
+		FileInputStream fis = new FileInputStream(file);
+	    FileOutputStream fos = new FileOutputStream("bin/" + SERVER_DIR + "/" + filename + ".cif");
+	    CipherOutputStream cos = new CipherOutputStream(fos, c);
+	    
+	    byte[] b = new byte[16];  
+	    int i = fis.read(b);
+	    while (i != -1) {
+	        cos.write(b, 0, i);
+	        i = fis.read(b);
+	    }
+	    cos.close();
+	    
+	    file.delete();
+		
 	}
 	
 	//Threads utilizadas para comunicacao com os clientes

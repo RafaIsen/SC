@@ -1,14 +1,13 @@
-/***************************************************************************
+/*****************************************
 *   Seguranca e Confiabilidade 2016/17
 *
-*
-***************************************************************************/
+*				Grupo 34
+*****************************************/
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Scanner;
@@ -20,10 +19,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 //Cliente myGit
-
 public class myGit{
 	
 	public static void main(String[] args) throws IOException, ClassNotFoundException, URISyntaxException{
@@ -40,13 +37,9 @@ public class myGit{
 		File rep = null;
 		Path repPath = null;
 		
-		//trying to get the path of the client
-		URI myGitPath = myGit.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-		Path path = Paths.get(myGitPath);
-		
 		//creates a local repository
 		if (args[0].equals("-init")){
-			localreps = new File(path + "/localreps");
+			localreps = new File("bin/localreps");
 			if (!localreps.exists()) {
 				new File(localreps.toString()).mkdir();
 				rep = new File(localreps.toString() + "/" + args[1]);
@@ -85,16 +78,8 @@ public class myGit{
 				ip = args[1].split(":");
 				port = Integer.parseInt(ip[1]);
 				
-				//getting project's path
-				String[] projPathSplit = myGitPath.getRawPath().split("/");
-				projPathSplit[projPathSplit.length-1] = "";
-				String projPath = "";
-				for (String s : projPathSplit)
-					if(!s.equals(""))
-						projPath += s + File.separator;
-				
 				//verifies the certificate sent by the server
-				System.setProperty("javax.net.ssl.trustStore", projPath + "myClient.keyStore");
+				System.setProperty("javax.net.ssl.trustStore", "myClient.keyStore");
 				//creates the socket
 				SocketFactory sf = SSLSocketFactory.getDefault();
 				Socket cSoc = sf.createSocket(ip[0], port);
@@ -165,21 +150,19 @@ public class myGit{
 				}
 				
 				if (repPath == null)
-					repPath = new File(path + "/localreps").toPath();
-				//if (new File(path + "/localreps").exists())
-					
+					repPath = new File("bin/localreps").toPath();
 
 				//executes the command
 				if(param_p)
 					if(args.length == 7)
-						executeCommand(args[4], args[5], args[6], args[0], outStream, inStream, repPath);
+						executeCommand(args[4], args[5], args[6], args[0], outStream, inStream);
 					else if(args.length > 4)
-						executeCommand(args[4], args[5], "N", args[0], outStream, inStream, repPath);
+						executeCommand(args[4], args[5], "N", args[0], outStream, inStream);
 				else
 					if(args.length == 5)
-						executeCommand(args[2], args[3], args[4], args[0], outStream, inStream, repPath);
+						executeCommand(args[2], args[3], args[4], args[0], outStream, inStream);
 					else if(args.length > 2)
-						executeCommand(args[2], args[3], "N", args[0], outStream, inStream, repPath);
+						executeCommand(args[2], args[3], "N", args[0], outStream, inStream);
 				
 				cSoc.close();
 				scan.close();
@@ -191,7 +174,7 @@ public class myGit{
 				
 	}
 	
-	private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, String repName, String userSharedWith, String user, Path path) throws IOException, ClassNotFoundException {
+	private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, String repName, String userSharedWith, String user) throws IOException, ClassNotFoundException {
 		String[] users = new String[2];
 		users[0] = user;
 		users[1] = userSharedWith;
@@ -205,7 +188,7 @@ public class myGit{
 		System.out.println(messIn.result);
 	}
 	
-	private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, String repName, String userToRemove, String user, Path path) throws IOException, ClassNotFoundException {
+	private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, String repName, String userToRemove, String user) throws IOException, ClassNotFoundException {
 		String[] users = new String[2];
 		users[0] = user;
 		users[1] = userToRemove;
@@ -219,11 +202,11 @@ public class myGit{
 		System.out.println(messIn.result);
 	}
 
-	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
+	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user) throws IOException, ClassNotFoundException {
 		int result = -1; 
 		Message messIn = null;
 		
-		File file = new File(path + "/" + fileName);
+		File file = new File("bin/" + fileName);
 		
 		if (file.exists()) {
 			String[] name = new String[1];
@@ -264,12 +247,12 @@ public class myGit{
 	}
 
 	
-	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
+	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user) throws IOException, ClassNotFoundException {
 		int result = -1; 
 		File rep = null;
 		Message messIn = null;
 		
-		rep = new File(path + "/" + repName);
+		rep = new File("bin/" + repName);
 		
 		if (rep.exists()) {
 			File[] repFiles = rep.listFiles();
@@ -314,9 +297,9 @@ public class myGit{
 		return result;			
 	}
 
-	private int pullFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user, Path path) throws IOException, ClassNotFoundException {
+	private int pullFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user) throws IOException, ClassNotFoundException {
 		int result = 0;
-		File file = new File(path + "/" + fileName);
+		File file = new File("bin/" + fileName);
 		File newFile = null;
 		String[] split = fileName.split("/");
 		String[] name = new String[1];
@@ -340,11 +323,11 @@ public class myGit{
 			result = -1;
 		
 		else if (messIn.toBeUpdated[0] == true) {
-			newFile = new File(path + "/" + fileName + ".temp");
+			newFile = new File("bin/" + fileName + ".temp");
 			newFile.createNewFile();
 			receiveFile(outStream, inStream, newFile);
 			file.delete();
-			newFile.renameTo(new File(path + "/" + fileName));
+			newFile.renameTo(new File("bin/" + fileName));
 			
 			result = 0;
 		} 
@@ -352,10 +335,10 @@ public class myGit{
 		return result;
 	}
 
-	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user, Path path) throws IOException, ClassNotFoundException {
+	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user) throws IOException, ClassNotFoundException {
 		int result = -1; 
 			
-		File rep = new File(path + "/" + repName);
+		File rep = new File("bin/" + repName);
 		File newFile = null;
 		File[] repFiles = null;
 		String[] names = null;
@@ -403,7 +386,7 @@ public class myGit{
 								newFile.createNewFile();
 								receiveFile(outStream, inStream, newFile);
 								repFiles[i].delete();
-								newFile.renameTo(new File(path + "/" + repName + "/" + names[i]));
+								newFile.renameTo(new File("bin/" + repName + "/" + names[i]));
 							//receber ficheiros novos
 							} else {
 								newFile = new File(rep.toString() + "/" + messIn.fileName[i]);
@@ -519,33 +502,33 @@ public class myGit{
 		
 	}
 	
-	public void executeCommand(String command, String param1, String param2, String user, ObjectOutputStream  outStream, ObjectInputStream inStream, Path path) throws IOException, ClassNotFoundException{
+	public void executeCommand(String command, String param1, String param2, String user, ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException, ClassNotFoundException{
 		
 		switch (command) {
 		
 			case "-push":
 				if (param1.contains(".")) {
-					pushFile(outStream, inStream, param1, user, path);
+					pushFile(outStream, inStream, param1, user);
 				}
 				else
-					pushRep(outStream, inStream, param1, user, path);
+					pushRep(outStream, inStream, param1, user);
 				
 				break;
 			
 			case "-pull":
 				if (param1.contains("."))
-					pullFile(outStream, inStream, param1, user, path);
+					pullFile(outStream, inStream, param1, user);
 				else
-					pullRep(outStream, inStream, param1, user, path);
+					pullRep(outStream, inStream, param1, user);
 				
 				break;
 				
 			case "-share":
-				shareRep(outStream, inStream, param1, param2, user, path);
+				shareRep(outStream, inStream, param1, param2, user);
 				break;
 				
 			case "-remove":
-				remove(outStream, inStream, param1, param2, user, path);
+				remove(outStream, inStream, param1, param2, user);
 				break;
 			
 			case "-p":

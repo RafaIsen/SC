@@ -41,7 +41,6 @@ import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLServerSocketFactory;
 
 //Servidor myGitServer
-
 public class myGitServer{
 
 	public final String SERVER_DIR = "/users"; 

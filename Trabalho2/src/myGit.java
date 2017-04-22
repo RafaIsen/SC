@@ -19,17 +19,21 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 //Cliente myGit
 public class myGit{
 	
-	public static void main(String[] args) throws IOException, ClassNotFoundException, URISyntaxException{
+	public static void main(String[] args) throws IOException, ClassNotFoundException, 
+	URISyntaxException, NoSuchAlgorithmException{
 		System.out.println("cliente: main");
 		myGit client = new myGit();
 		client.startClient(args);
 	}
 
-	public void startClient(String[] args) throws ClassNotFoundException, IOException, URISyntaxException{
+	public void startClient(String[] args) throws ClassNotFoundException, IOException, 
+	URISyntaxException, NoSuchAlgorithmException{
 			
 		String[] ip = null;
 		int port = 0;
@@ -45,7 +49,8 @@ public class myGit{
 				rep = new File(localreps.toString() + "/" + args[1]);
 				
 				if (rep.exists())
-					System.out.println("-- O repositório " + args[1] + " ja existe. Escolha outro nome por favor");
+					System.out.println("-- O repositório " + args[1] + 
+							" ja existe. Escolha outro nome por favor");
 				else {
 					rep.mkdir();
 					repPath = rep.toPath();
@@ -55,7 +60,8 @@ public class myGit{
 				rep = new File(localreps.toString() + "/" + args[1]);
 				
 				if (rep.exists())
-					System.out.println("-- O repositório " + args[1] + " ja existe. Escolha outro nome por favor");
+					System.out.println("-- O repositório " + args[1] + 
+							" ja existe. Escolha outro nome por favor");
 				else {
 					rep.mkdir();
 					repPath = rep.toPath();
@@ -93,61 +99,14 @@ public class myGit{
 				//warn the server that -p is a parameter
 				outStream.writeObject(param_p);
 				
-				/*autenticate user*/
+				/*authenticate user*/
 				//sends user name to the server
 				outStream.writeObject(args[0]);
 				
 				//obtains response of the server
 				boolean exists = (boolean) inStream.readObject();
 				
-				boolean autentic = false;
-				
-				if (!exists) {
-					
-					System.out.println("-- O utilizador " + args[0] + " vai ser criado ");
-					String pass = null;
-					if(param_p)
-						pass = confirmPwd(args[0], args[2], args[3]);
-					else 
-						pass = confirmPwd(args[0], " ", " ");
-					outStream.writeObject(pass);
-					if((boolean) inStream.readObject())
-						System.out.println("-- O utilizador " + args[0] + " foi criado");
-				
-				} else if (param_p) {
-					
-					while(!autentic){
-						
-						outStream.writeObject(args[3]);
-						autentic = (boolean) inStream.readObject();
-						if(!autentic){
-							System.out.println("Password errada!");
-							System.out.println("Tenta novamente:");
-							outStream.writeObject(scan.nextLine());
-							autentic = (boolean) inStream.readObject();
-						}
-						
-					}
-						
-				} else {
-						
-						System.out.println("Password: ");
-						outStream.writeObject(scan.nextLine());
-						autentic = (boolean) inStream.readObject();
-						
-						while(!autentic){	
-							
-							if(!autentic){
-								System.out.println("Password errada!");
-								System.out.println("Tenta novamente:");
-								outStream.writeObject(scan.nextLine());
-								autentic = (boolean) inStream.readObject();
-								
-						}	
-						
-					}
-					
-				}
+				authenticateUser(exists, param_p, args[0], args[2], args[3], outStream , inStream, scan);
 				
 				if (repPath == null)
 					repPath = new File("bin/localreps").toPath();
@@ -174,7 +133,90 @@ public class myGit{
 				
 	}
 	
-	private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, String repName, String userSharedWith, String user) throws IOException, ClassNotFoundException {
+	public void authenticateUser(boolean exists, boolean param_p, String username, String command, 
+			String pwd, ObjectOutputStream outStream, ObjectInputStream inStream, Scanner scan) 
+					throws IOException, ClassNotFoundException, NoSuchAlgorithmException{
+		
+		boolean authentic = false;
+		
+		if (!exists) {
+			
+			System.out.println("-- O utilizador " + username + " vai ser criado ");
+			if(param_p)
+				pwd = confirmPwd(username, command, pwd);
+			else 
+				pwd = confirmPwd(username, " ", " ");
+			outStream.writeObject(pwd);
+			if((boolean) inStream.readObject())
+				System.out.println("-- O utilizador " + username + " foi criado");
+		
+		} else if (param_p) {
+			
+			//receiving the nonce from the server
+			int nonce = (int) inStream.readObject();
+			
+			//getting hash
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			
+			String text = null;
+			byte[] buf = null; 
+			byte[] hash = null; 
+			
+			while(!authentic){
+				
+				//user's password concatenated with nonce sent by the server 
+				text = pwd + nonce;
+				buf = text.getBytes( );
+				hash = md.digest(buf);
+				
+				outStream.writeObject(hash);
+				authentic = (boolean) inStream.readObject();
+				if(!authentic){
+					System.out.println("Password errada!");
+					System.out.println("Tenta novamente:");
+					pwd = scan.nextLine();
+					text = pwd + nonce;
+					buf = text.getBytes( );
+					hash = md.digest(buf);
+					outStream.writeObject(hash);
+					authentic = (boolean) inStream.readObject();
+				}
+			}
+		} else {
+			
+			//receiving the nonce from the server
+			int nonce = (int) inStream.readObject();
+			
+			//getting hash
+			MessageDigest md = MessageDigest.getInstance("SHA");
+				
+			System.out.println("Password: ");
+			pwd = scan.nextLine();
+			//user's password concatenated with nonce sent by the server 
+			String text = pwd + nonce;
+			byte[] buf = text.getBytes( );
+			byte[] hash = md.digest(buf);
+			
+			outStream.writeObject(hash);
+			authentic = (boolean) inStream.readObject();
+			
+			while(!authentic){	
+				if(!authentic){
+					System.out.println("Password errada!");
+					System.out.println("Tenta novamente:");
+					pwd = scan.nextLine();
+					text = pwd + nonce;
+					buf = text.getBytes( );
+					hash = md.digest(buf);
+					outStream.writeObject(hash);
+					authentic = (boolean) inStream.readObject();
+				}	
+			}
+		}
+	}
+	
+	private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, String repName, 
+			String userSharedWith, String user) throws IOException, ClassNotFoundException {
 		String[] users = new String[2];
 		users[0] = user;
 		users[1] = userSharedWith;
@@ -188,7 +230,8 @@ public class myGit{
 		System.out.println(messIn.result);
 	}
 	
-	private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, String repName, String userToRemove, String user) throws IOException, ClassNotFoundException {
+	private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, String repName, 
+			String userToRemove, String user) throws IOException, ClassNotFoundException {
 		String[] users = new String[2];
 		users[0] = user;
 		users[1] = userToRemove;
@@ -202,7 +245,8 @@ public class myGit{
 		System.out.println(messIn.result);
 	}
 
-	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user) throws IOException, ClassNotFoundException {
+	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, 
+			String user) throws IOException, ClassNotFoundException {
 		int result = -1; 
 		Message messIn = null;
 		
@@ -220,7 +264,8 @@ public class myGit{
 			String[] users = new String[1];
 			users[0] = user;
 			
-			Message messOut = new Message("pushFile", name, split[split.length-2], dates, null, users, null, null);
+			Message messOut = new Message("pushFile", name, split[split.length-2], dates, null,
+					users, null, null);
 			
 			outStream.writeObject(messOut);
 			
@@ -247,7 +292,8 @@ public class myGit{
 	}
 
 	
-	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user) throws IOException, ClassNotFoundException {
+	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, 
+			String user) throws IOException, ClassNotFoundException {
 		int result = -1; 
 		File rep = null;
 		Message messIn = null;
@@ -297,7 +343,8 @@ public class myGit{
 		return result;			
 	}
 
-	private int pullFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, String user) throws IOException, ClassNotFoundException {
+	private int pullFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, 
+			String user) throws IOException, ClassNotFoundException {
 		int result = 0;
 		File file = new File("bin/" + fileName);
 		File newFile = null;
@@ -312,7 +359,8 @@ public class myGit{
 		String[] users = new String[1];
 		users[0] = user;
 		
-		Message messOut = new Message("pullFile", name, split[split.length-2], dates, null, users, null, null);
+		Message messOut = new Message("pullFile", name, split[split.length-2], dates, null, 
+				users, null, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -335,7 +383,8 @@ public class myGit{
 		return result;
 	}
 
-	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, String user) throws IOException, ClassNotFoundException {
+	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, 
+			String user) throws IOException, ClassNotFoundException {
 		int result = -1; 
 			
 		File rep = new File("bin/" + repName);
@@ -398,7 +447,8 @@ public class myGit{
 		}
 		if(messIn.delete != null){
 			if (messIn.delete[0] == true)
-				System.out.println("-- O ficheiro " + messIn.fileName[0] + " existe localmente mas foi eliminado no servidor");
+				System.out.println("-- O ficheiro " + messIn.fileName[0] + 
+						" existe localmente mas foi eliminado no servidor");
 			else
 				System.out.println(messIn.result);
 		}
@@ -407,7 +457,8 @@ public class myGit{
 		return result;
 	}
 
-	public int sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException {
+	public int sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) 
+			throws IOException {
 		int result = 0;
 		int lengthPdf = (int) file.length();
 		byte[] buf = new byte[1024];
@@ -428,7 +479,8 @@ public class myGit{
 		return result;
 	}
 	
-	public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException{
+	public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) 
+			throws IOException{
 		int result = -1;
 			
 		FileOutputStream pdfOut = new FileOutputStream(file);
@@ -502,7 +554,9 @@ public class myGit{
 		
 	}
 	
-	public void executeCommand(String command, String param1, String param2, String user, ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException, ClassNotFoundException{
+	public void executeCommand(String command, String param1, String param2, String user, 
+			ObjectOutputStream  outStream, ObjectInputStream inStream) throws IOException, 
+	ClassNotFoundException{
 		
 		switch (command) {
 		

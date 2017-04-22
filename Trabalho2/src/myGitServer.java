@@ -15,6 +15,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -22,6 +23,7 @@ import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Date;
@@ -117,6 +119,14 @@ public class myGitServer{
 		//sSoc.close();
 		
 	}
+	
+	public final class SessionIdentifierGenerator {
+		  private SecureRandom random = new SecureRandom();
+
+		  public int nextSessionId() {
+		    return new BigInteger(130, random).intValue();
+		  }
+		}
 	
 	public void verifyFileIntegrity(File file, File macs, String filename) throws NoSuchAlgorithmException, 
 													InvalidKeyException, IOException, ClassNotFoundException{
@@ -364,11 +374,23 @@ public class myGitServer{
 				
 				String pass = null;
 								
-				if (!foundU) { //create user
+				if (!foundU) { 
+					
+					//create user
 					pass = (String) inStream.readObject();
 					User newUser = new User(username, pass);
 					outStream.writeObject(createUser(newUser, users, users_mac));
-				} else { //receive/confirm password
+					
+				} else {
+					
+					//generating nonce
+					SessionIdentifierGenerator sig = new SessionIdentifierGenerator();
+					int nonce = sig.nextSessionId();
+					
+					//sending nonce to client
+					outStream.writeObject(nonce);
+					
+					//receive/confirm password
 					boolean autentic = false;
 					while(!autentic){
 						pass = (String) inStream.readObject();

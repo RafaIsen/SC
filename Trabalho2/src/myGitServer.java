@@ -18,7 +18,6 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -48,19 +47,24 @@ public class myGitServer{
 	public final String SERVER_DIR = "/users"; 
 	public final String SERVER_PASS = "sc1617";
 	public final String USERS_FILE = "users.txt"; 
+	public final String USERS_FILE_NAME = "users"; 
 	public final String USERS_MAC_FILE = "users_mac.txt";
 	public final String SHARE_FILE = "shareLog.txt";
 	public final String SHARE_MAC_FILE = "shareLog_mac.txt";
 	
-	public static void main(String[] args) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, URISyntaxException, IOException, ClassNotFoundException {
+	public static void main(String[] args) throws InvalidKeyException, NoSuchAlgorithmException, 
+	NoSuchPaddingException, IOException, ClassNotFoundException, 
+	InvalidKeySpecException, InvalidAlgorithmParameterException {
 		System.out.println("servidor: main");
 		myGitServer server = new myGitServer();
 		server.startServer();
 	}
 
-	public void startServer () throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, URISyntaxException, IOException, ClassNotFoundException{
+	public void startServer () throws InvalidKeyException, NoSuchAlgorithmException, 
+	NoSuchPaddingException, IOException, ClassNotFoundException, 
+	InvalidKeySpecException, InvalidAlgorithmParameterException{
         
-		//autenticate user
+		//authenticate user
 		System.out.println("Digite a password do servidor:");
 		Scanner scan = new Scanner(System.in);
 		if(!scan.nextLine().equals(SERVER_PASS)){
@@ -76,20 +80,20 @@ public class myGitServer{
 			usersDir.mkdir();
 		//creates the text file users if it does not exist
 		File users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE);
-		if(!users.exists()){
+		if(!users.exists())
 			users.createNewFile();
-		}
 		//creates the text file shareLog if it does not exist
 		File shareLog = new File("bin/" + SERVER_DIR + "/" + SHARE_FILE);
-		if(!shareLog.exists()){
+		if(!shareLog.exists())
 			shareLog.createNewFile();
-		}
 		
 		File users_mac = new File("bin/" + SERVER_DIR + "/" + USERS_MAC_FILE);
 		File share_mac = new File("bin/" + SERVER_DIR + "/" + SHARE_MAC_FILE);
 		
 		verifyFileIntegrity(users, users_mac, USERS_FILE);
 		verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
+		
+		ciphers(users, USERS_FILE_NAME);
 		
 		ServerSocket sSoc = null;
 		
@@ -128,8 +132,8 @@ public class myGitServer{
 		  }
 		}
 	
-	public void verifyFileIntegrity(File file, File macs, String filename) throws NoSuchAlgorithmException, 
-													InvalidKeyException, IOException, ClassNotFoundException{
+	public void verifyFileIntegrity(File file, File macs, String filename) throws IOException, 
+	NoSuchAlgorithmException, InvalidKeyException {
 		
 		Scanner readFile = new Scanner(file);
 		
@@ -181,8 +185,8 @@ public class myGitServer{
 		}
 	}
 	
-	public void createMac(File file, File macs) throws NoSuchAlgorithmException, InvalidKeyException, 
-														IOException{
+	public void createMac(File file, File macs) throws NoSuchAlgorithmException, 
+	InvalidKeyException, IOException{
 		
 		Scanner readFile = new Scanner(file);
 		
@@ -212,7 +216,7 @@ public class myGitServer{
 	}
 	
 	public void updateMac(File file, File macs, String filename) throws NoSuchAlgorithmException, 
-																		InvalidKeyException, IOException{
+	InvalidKeyException, IOException{
 		
 		Scanner readFile = new Scanner(file);
 		
@@ -253,8 +257,9 @@ public class myGitServer{
 		macsTemp.renameTo(macs);
 	}
 	
-	public void ciphers(File file, String filename) throws NoSuchAlgorithmException, InvalidKeySpecException, 
-	NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IOException{
+	public void ciphers(File file, String filename) throws NoSuchAlgorithmException, 
+	InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, 
+	InvalidAlgorithmParameterException, IOException{
 		
 		PBEKeySpec keySpec = new PBEKeySpec(SERVER_PASS.toCharArray());
 		SecretKeyFactory kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
@@ -292,8 +297,9 @@ public class myGitServer{
 		
 	}
 	
-	public void deciphers(File file, String filename) throws NoSuchAlgorithmException, InvalidKeySpecException, 
-	NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IOException{
+	public void deciphers(File file, String filename) throws NoSuchAlgorithmException, 
+	InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, 
+	InvalidAlgorithmParameterException, IOException{
 		
 		PBEKeySpec keySpec = new PBEKeySpec(SERVER_PASS.toCharArray());
 		SecretKeyFactory kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
@@ -391,12 +397,12 @@ public class myGitServer{
 					outStream.writeObject(nonce);
 					
 					//receive/confirm password
-					boolean autentic = false;
-					while(!autentic){
+					boolean authentic = false;
+					while(!authentic){
 						pass = (String) inStream.readObject();
 						User user = new User(username, pass);
-						autentic = autenticate(user, users, users_mac);
-						outStream.writeObject(autentic);
+						authentic = authenticate(user, users, users_mac);
+						outStream.writeObject(authentic);
 					}
 				}
 
@@ -450,10 +456,17 @@ public class myGitServer{
 				e.printStackTrace();
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
+			} catch (InvalidKeySpecException e) {
+				e.printStackTrace();
+			} catch (NoSuchPaddingException e) {
+				e.printStackTrace();
+			} catch (InvalidAlgorithmParameterException e) {
+				e.printStackTrace();
 			}
 		}
 			
-		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) throws IOException {
+		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) 
+				throws IOException {
 			int result = -1;
 		
 			StringBuilder sb = new StringBuilder();
@@ -525,7 +538,8 @@ public class myGitServer{
 			return result;			
 		}
 
-		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) throws IOException {
+		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) 
+				throws IOException {
 			int result = -1;
 			File rep  = null;
 			File newFile = null;
@@ -630,7 +644,9 @@ public class myGitServer{
 			return result;
 		}
 
-		private int pullFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
+		private int pullFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, 
+				File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, 
+		ClassNotFoundException {
 			
 			File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
 			
@@ -738,7 +754,9 @@ public class myGitServer{
 			return result;
 		}
 
-		private int pullRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
+		private int pullRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, 
+				File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, 
+		ClassNotFoundException {
 			
 			File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
 			
@@ -910,7 +928,10 @@ public class myGitServer{
 			return result;
 		}
 
-		private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, File users, File users_mac, File share_mac) throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
+		private void shareRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, 
+				File users, File users_mac, File share_mac) throws InvalidKeyException, 
+		NoSuchAlgorithmException, ClassNotFoundException, InvalidKeySpecException, 
+		NoSuchPaddingException, InvalidAlgorithmParameterException {
 					
 			try {
 
@@ -984,7 +1005,10 @@ public class myGitServer{
 			}		
 		}
 
-		private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, File users, File users_mac, File share_mac) throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException {
+		private void remove(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, 
+				File users, File users_mac, File share_mac) throws InvalidKeyException, 
+		NoSuchAlgorithmException, ClassNotFoundException, InvalidKeySpecException, 
+		NoSuchPaddingException, InvalidAlgorithmParameterException {
 			
 			try {
 				
@@ -1078,7 +1102,8 @@ public class myGitServer{
             return numVersions;
         }
 
-		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException{
+		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) 
+				throws IOException{
 			int result = -1;
 				
 			FileOutputStream pdfOut = new FileOutputStream(file);
@@ -1101,9 +1126,9 @@ public class myGitServer{
 				return result;
 		}
 		
-		public int sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) throws IOException {
+		public int sendFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) 
+				throws IOException {
 			int result = 0;
-			//File pdf = new File(file);
 			int lengthPdf = (int) file.length();
 			byte[] buf = new byte[1024];
 	        FileInputStream is = new FileInputStream(file);
@@ -1118,16 +1143,18 @@ public class myGitServer{
 	        }
 	        
 	        is.close();
-			//inStream.close();
-			//outStream.close();
 			return result;
 		}
 		
-		public boolean autenticate(User u, File f, File m) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException{
+		public boolean authenticate(User u, File f, File m) throws IOException, InvalidKeyException, 
+		NoSuchAlgorithmException, ClassNotFoundException, InvalidKeySpecException, 
+		NoSuchPaddingException, InvalidAlgorithmParameterException{
 			
 			boolean autenticado = false;
 			
 			verifyFileIntegrity(f, m, USERS_FILE);
+			
+			deciphers(f, USERS_FILE_NAME);
 	
 			Scanner scan = new Scanner(f);
 			
@@ -1137,12 +1164,16 @@ public class myGitServer{
 					autenticado = true; 
 			}
 			
+			ciphers(f, USERS_FILE_NAME);
+			
 			scan.close();
 			
 			return autenticado;
 		}
 		
-		public boolean createUser(User u, File f, File m) throws IOException, InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException{
+		public boolean createUser(User u, File f, File m) throws IOException, InvalidKeyException, 
+		NoSuchAlgorithmException, ClassNotFoundException, InvalidKeySpecException, 
+		NoSuchPaddingException, InvalidAlgorithmParameterException{
 			
 			boolean result = false;
 			FileWriter fw = new FileWriter(f, true);
@@ -1156,13 +1187,17 @@ public class myGitServer{
 				if(checkUser(u.name, f, m, USERS_FILE))
 					result = true;
 				else{
+					deciphers(f, USERS_FILE_NAME);
+					
 					//writes the name and pass in the file
 					fw.write(u.name + ":" + u.pass + System.lineSeparator()); 
 				    fw.flush();
 				    fw.close();
 					//creates a directory to the user
 					new File("bin/" + SERVER_DIR + "/" + u.name).mkdir();
-					result = true;				
+					result = true;	
+					
+					ciphers(f, USERS_FILE_NAME);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -1177,9 +1212,15 @@ public class myGitServer{
 			return result;
 		}
 		
-		public boolean checkUser(String username, File f, File m, String filename) throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException, IOException {
+		public boolean checkUser(String username, File f, File m, String filename) 
+				throws InvalidKeyException, NoSuchAlgorithmException, ClassNotFoundException, 
+				IOException, InvalidKeySpecException, NoSuchPaddingException, 
+				InvalidAlgorithmParameterException {
 			
 			verifyFileIntegrity(f, m, filename);
+			
+			if(filename.equals(USERS_FILE))
+				deciphers(f, USERS_FILE_NAME);
 			
 			boolean result = false;
 			Scanner scan = new Scanner(f);
@@ -1189,6 +1230,9 @@ public class myGitServer{
 				if(split[0].equals(username))
 					result = true; 
 			}
+			
+			if(filename.equals(USERS_FILE))
+				ciphers(f, USERS_FILE_NAME);
 			
 			scan.close();
 			return result;

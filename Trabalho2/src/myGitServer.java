@@ -93,7 +93,7 @@ public class myGitServer{
 		verifyFileIntegrity(users, users_mac, USERS_FILE);
 		verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
 		
-		ciphers(users, USERS_FILE_NAME);
+		cipher(users, USERS_FILE_NAME);
 		
 		ServerSocket sSoc = null;
 		
@@ -257,7 +257,7 @@ public class myGitServer{
 		macsTemp.renameTo(macs);
 	}
 	
-	public void ciphers(File file, String filename) throws NoSuchAlgorithmException, 
+	public void cipher(File file, String filename) throws NoSuchAlgorithmException, 
 	InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, 
 	InvalidAlgorithmParameterException, IOException{
 		
@@ -297,7 +297,7 @@ public class myGitServer{
 		
 	}
 	
-	public void deciphers(File file, String filename) throws NoSuchAlgorithmException, 
+	public void decipher(File file, String filename) throws NoSuchAlgorithmException, 
 	InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, 
 	InvalidAlgorithmParameterException, IOException{
 		
@@ -1154,7 +1154,7 @@ public class myGitServer{
 			
 			verifyFileIntegrity(f, m, USERS_FILE);
 			
-			deciphers(f, USERS_FILE_NAME);
+			decipher(f, USERS_FILE_NAME);
 	
 			Scanner scan = new Scanner(f);
 			
@@ -1164,7 +1164,7 @@ public class myGitServer{
 					autenticado = true; 
 			}
 			
-			ciphers(f, USERS_FILE_NAME);
+			cipher(f, USERS_FILE_NAME);
 			
 			scan.close();
 			
@@ -1187,7 +1187,7 @@ public class myGitServer{
 				if(checkUser(u.name, f, m, USERS_FILE))
 					result = true;
 				else{
-					deciphers(f, USERS_FILE_NAME);
+					decipher(f, USERS_FILE_NAME);
 					
 					//writes the name and pass in the file
 					fw.write(u.name + ":" + u.pass + System.lineSeparator()); 
@@ -1197,7 +1197,7 @@ public class myGitServer{
 					new File("bin/" + SERVER_DIR + "/" + u.name).mkdir();
 					result = true;	
 					
-					ciphers(f, USERS_FILE_NAME);
+					cipher(f, USERS_FILE_NAME);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -1220,7 +1220,7 @@ public class myGitServer{
 			verifyFileIntegrity(f, m, filename);
 			
 			if(filename.equals(USERS_FILE))
-				deciphers(f, USERS_FILE_NAME);
+				decipher(f, USERS_FILE_NAME);
 			
 			boolean result = false;
 			Scanner scan = new Scanner(f);
@@ -1232,7 +1232,7 @@ public class myGitServer{
 			}
 			
 			if(filename.equals(USERS_FILE))
-				ciphers(f, USERS_FILE_NAME);
+				cipher(f, USERS_FILE_NAME);
 			
 			scan.close();
 			return result;

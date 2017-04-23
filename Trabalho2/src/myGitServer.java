@@ -21,6 +21,7 @@ import java.net.Socket;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
@@ -401,7 +402,7 @@ public class myGitServer{
 					while(!authentic){
 						pass = (String) inStream.readObject();
 						User user = new User(username, pass);
-						authentic = authenticate(user, users, users_mac);
+						authentic = authenticate(user, users, users_mac, nonce);
 						outStream.writeObject(authentic);
 					}
 				}
@@ -1146,7 +1147,7 @@ public class myGitServer{
 			return result;
 		}
 		
-		public boolean authenticate(User u, File f, File m) throws IOException, InvalidKeyException, 
+		public boolean authenticate(User u, File f, File m, int nonce) throws IOException, InvalidKeyException, 
 		NoSuchAlgorithmException, ClassNotFoundException, InvalidKeySpecException, 
 		NoSuchPaddingException, InvalidAlgorithmParameterException{
 			
@@ -1158,10 +1159,22 @@ public class myGitServer{
 	
 			Scanner scan = new Scanner(f);
 			
+			//getting hash
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			
+			String text = null;
+			byte[] buf = null; 
+			byte[] hash = null; 
+			
 			while (scan.hasNextLine()) {
 				String[] split = scan.nextLine().split(":");
-				if(split[0].equals(u.name) && split[1].equals(u.pass))
-					autenticado = true; 
+				if (split[0].equals(u.name)) {
+					text = split[1] + nonce;
+					buf = text.getBytes();
+					hash = md.digest(buf);
+					if(hash.equals(u.pass))
+						autenticado = true; 
+				}
 			}
 			
 			cipher(f, USERS_FILE_NAME);

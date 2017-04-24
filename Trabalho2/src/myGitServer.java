@@ -18,6 +18,7 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -48,6 +49,7 @@ public class myGitServer{
 	public final String SERVER_DIR = "/users"; 
 	public final String SERVER_PASS = "sc1617";
 	public final String USERS_FILE = "users.txt"; 
+	public final String USERS_FILE_CIF = "users.cif"; 
 	public final String USERS_FILE_NAME = "users"; 
 	public final String USERS_MAC_FILE = "users_mac.txt";
 	public final String SHARE_FILE = "shareLog.txt";
@@ -80,9 +82,13 @@ public class myGitServer{
 		if(!usersDir.exists())
 			usersDir.mkdir();
 		//creates the text file users if it does not exist
-		File users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE);
-		if(!users.exists())
+		File users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE_CIF);
+		if (!users.exists()) {
+			users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE);
 			users.createNewFile();
+		}
+		else
+			users = decipher(users, USERS_FILE_NAME);
 		//creates the text file shareLog if it does not exist
 		File shareLog = new File("bin/" + SERVER_DIR + "/" + SHARE_FILE);
 		if(!shareLog.exists())
@@ -92,9 +98,10 @@ public class myGitServer{
 		File share_mac = new File("bin/" + SERVER_DIR + "/" + SHARE_MAC_FILE);
 		
 		verifyFileIntegrity(users, users_mac, USERS_FILE);
-		verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
 		
 		cipher(users, USERS_FILE_NAME);
+		
+		verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
 		
 		ServerSocket sSoc = null;
 		
@@ -144,13 +151,13 @@ public class myGitServer{
 		} else if (!macs.exists())
 			macs.createNewFile();
 
-		Scanner readMacs = new Scanner(macs);
-			
+		BufferedReader readMacs = new BufferedReader(new FileReader(macs));
+
 		if (!readFile.hasNextLine()){
 			readMacs.close();
 			readFile.close();
 		}
-		else if (readMacs.hasNextLine()){
+		else if (readMacs.ready()){
 				
 			//obtaining secret key through the user's pass
 			byte[] bytePass = SERVER_PASS.getBytes();
@@ -168,7 +175,7 @@ public class myGitServer{
 			
 			mac = m.doFinal();
 			
-			byte[] macOrig = readMacs.nextLine().getBytes();
+			byte[] macOrig = Files.readAllBytes(macs.toPath());
 			
 			if (!Arrays.equals(mac, macOrig)) {
 				readMacs.close();
@@ -258,47 +265,59 @@ public class myGitServer{
 		macsTemp.renameTo(macs);
 	}
 	
-	public void cipher(File file, String filename) throws NoSuchAlgorithmException, 
+	public File cipher(File file, String filename) throws NoSuchAlgorithmException, 
 	InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, 
 	InvalidAlgorithmParameterException, IOException{
 		
-		PBEKeySpec keySpec = new PBEKeySpec(SERVER_PASS.toCharArray());
-		SecretKeyFactory kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
-		SecretKey key = kf.generateSecret(keySpec);
-
-		// obs: o salt, count e iv não têm de ser definidos explicitamenta na cifra 
-		// mas os mesmos valores têm de ser usados para cifrar e decifrar 
-		// os seus valores podem ser obtidos pelo método getParameters da classe Cipher
-
-		byte[] ivBytes = {0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,
-		0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,0x20};
-		IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-		byte[] salt = { (byte) 0xc9, (byte) 0x36, (byte) 0x78, (byte) 0x99,
-				(byte) 0x52, (byte) 0x3e, (byte) 0xea, (byte) 0xf2 };
-		PBEParameterSpec spec = new PBEParameterSpec(salt, 20, ivSpec);
-
-		Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
-		c.init(Cipher.ENCRYPT_MODE, key, spec);
-		
 		FileInputStream fis = new FileInputStream(file);
-	    FileOutputStream fos = new FileOutputStream("bin/" + SERVER_DIR + "/" + filename + ".cif");
-	    CipherOutputStream cos = new CipherOutputStream(fos, c);
-	    
-	    byte[] b = new byte[16];  
-	    int i = fis.read(b);
-	    while (i != -1) {
-	        cos.write(b, 0, i);
-	        i = fis.read(b);
-	    }
-	    cos.close();
-	    fos.close();
-	    fis.close();
-	    
-	    file.delete();
+		byte[] b = new byte[16]; 
+		int i = fis.read(b);
 		
+		if (i != -1) {
+		
+			PBEKeySpec keySpec = new PBEKeySpec(SERVER_PASS.toCharArray());
+			SecretKeyFactory kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
+			SecretKey key = kf.generateSecret(keySpec);
+	
+			// obs: o salt, count e iv não têm de ser definidos explicitamenta na cifra 
+			// mas os mesmos valores têm de ser usados para cifrar e decifrar 
+			// os seus valores podem ser obtidos pelo método getParameters da classe Cipher
+	
+			byte[] ivBytes = {0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,
+			0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,0x20};
+			IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+			byte[] salt = { (byte) 0xc9, (byte) 0x36, (byte) 0x78, (byte) 0x99,
+					(byte) 0x52, (byte) 0x3e, (byte) 0xea, (byte) 0xf2 };
+			PBEParameterSpec spec = new PBEParameterSpec(salt, 20, ivSpec);
+	
+			Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+			c.init(Cipher.ENCRYPT_MODE, key, spec);
+			
+		    FileOutputStream fos = new FileOutputStream("bin/" + SERVER_DIR + "/" + filename + ".cif");
+		    CipherOutputStream cos = new CipherOutputStream(fos, c);
+		     
+		    while (i != -1) {
+		        cos.write(b, 0, i);
+		        i = fis.read(b);
+		    }
+		    cos.close();
+		    fos.close();
+		    fis.close();
+		    
+		    file.delete();
+		    
+		    return new File("bin/" + SERVER_DIR + "/" + filename + ".cif");
+		    
+		} else {
+			File f = new File("bin/" + SERVER_DIR + "/" + filename + ".cif");
+			f.createNewFile();
+			fis.close();
+			file.delete();
+			return f;
+		}
 	}
 	
-	public void decipher(File file, String filename) throws NoSuchAlgorithmException, 
+	public File decipher(File file, String filename) throws NoSuchAlgorithmException, 
 	InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, 
 	InvalidAlgorithmParameterException, IOException{
 		
@@ -335,6 +354,8 @@ public class myGitServer{
 	    fis.close();
 	    
 	    file.delete();
+	    
+	    return new File("bin/" + SERVER_DIR + "/" + filename + ".txt");
 		
 	}
 	
@@ -351,9 +372,9 @@ public class myGitServer{
 		class User {
 			
 			private String name;
-			private String pass;
+			private Object pass;
 			
-			public User(String name, String pass){
+			public User(String name, Object pass){
 				this.name = name;
 				this.pass = pass;
 			}
@@ -370,7 +391,7 @@ public class myGitServer{
 				
 				String username = (String) inStream.readObject();
 				
-				File users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE);
+				File users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE_CIF);
 				
 				File users_mac = new File("bin/" + SERVER_DIR + "/" + USERS_MAC_FILE);
 				File share_mac = new File("bin/" + SERVER_DIR + "/" + SHARE_MAC_FILE);
@@ -379,12 +400,12 @@ public class myGitServer{
 				
 				outStream.writeObject(foundU);
 				
-				String pass = null;
+				Object pass = null;
 								
 				if (!foundU) { 
 					
 					//create user
-					pass = (String) inStream.readObject();
+					pass = inStream.readObject();
 					User newUser = new User(username, pass);
 					outStream.writeObject(createUser(newUser, users, users_mac));
 					
@@ -400,7 +421,7 @@ public class myGitServer{
 					//receive/confirm password
 					boolean authentic = false;
 					while(!authentic){
-						pass = (String) inStream.readObject();
+						pass = inStream.readObject();
 						User user = new User(username, pass);
 						authentic = authenticate(user, users, users_mac, nonce);
 						outStream.writeObject(authentic);
@@ -554,7 +575,7 @@ public class myGitServer{
 			int[] versions = null;
 			
 			String repName = null;
-			String res = null;
+			String res = "";
 			
 			boolean eliminou = false;
 			
@@ -573,8 +594,6 @@ public class myGitServer{
 				res = "-- O repositório " + repName + " foi criado no servidor";
 			}
 			else {
-				//final String nameOfFile = filename;
-		
 		         fileRep = rep.listFiles(new FilenameFilter() {
 		            @Override
 		            public boolean accept(File dir, String nameA) {
@@ -588,31 +607,32 @@ public class myGitServer{
 				ya = new boolean[messIn.fileName.length];
 				versions = new int[messIn.fileName.length];
 				
-					for (int i = 0; i < messIn.fileName.length; i++) {
-						currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
-						if (fileRep != null && currFile.exists()) {
-							date = new Date(currFile.lastModified());
-							//verificar quais os ficheiros que precisam de ser actualizados
-							if (date.compareTo(messIn.fileDate[i]) < 0) {
-								versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i]);
-								ya[i] = true;	
-							}
-						} else {
+				for (int i = 0; i < messIn.fileName.length; i++) {
+					currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
+					if (fileRep != null && currFile.exists()) {
+						date = new Date(currFile.lastModified());
+						//verificar quais os ficheiros que precisam de ser actualizados
+						if (date.before(messIn.fileDate[0])) {
+							versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i]);
 							ya[i] = true;
-							versions[i] = 0;
-						}
+							res += System.lineSeparator() + "-- O ficheiro " + messIn.fileName[0] + " foi enviado para o servidor";
+						} else
+							res += System.lineSeparator() + "-- Não há nada a atualizar no servidor.";
+					} else {
+						ya[i] = true;
+						versions[i] = 0;
+						res += System.lineSeparator() + "-- O ficheiro " + messIn.fileName[0] + " foi enviado para o servidor";
 					}
-					
-				res += System.lineSeparator() + "-- O ficheiro " + messIn.fileName[0] + " foi enviado para o servidor";
+				}
 			}
 			
 			//saber quais os ficheiros a "eliminar"
-			if (fileRep != null)
+			if (fileRep != null && ya == null)
 				for (int j = 0; j < fileRep.length; j++)
 					if (!Arrays.asList(messIn.repName).contains(fileRep[j].getName())) {
 						nameAux = fileRep[j].getName();
 						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].getName()))));		
-						res = "-- O ficheiro " + fileRep[j].getName() + " vai ser eliminado no servidor";
+						res = "-- O ficheiro " + fileRep[j].getName() + " vai ser eliminado no servidor.";
 						eliminou = true;
 					}
 						
@@ -1153,9 +1173,9 @@ public class myGitServer{
 			
 			boolean autenticado = false;
 			
-			verifyFileIntegrity(f, m, USERS_FILE);
+			f = decipher(f, USERS_FILE_NAME);
 			
-			decipher(f, USERS_FILE_NAME);
+			verifyFileIntegrity(f, m, USERS_FILE);
 	
 			Scanner scan = new Scanner(f);
 			
@@ -1172,14 +1192,15 @@ public class myGitServer{
 					text = split[1] + nonce;
 					buf = text.getBytes();
 					hash = md.digest(buf);
-					if(hash.equals(u.pass))
+					byte[] pass = (byte[]) u.pass;
+					if(Arrays.equals(hash, pass))
 						autenticado = true; 
 				}
 			}
 			
-			cipher(f, USERS_FILE_NAME);
-			
 			scan.close();
+			
+			cipher(f, USERS_FILE_NAME);
 			
 			return autenticado;
 		}
@@ -1189,7 +1210,7 @@ public class myGitServer{
 		NoSuchPaddingException, InvalidAlgorithmParameterException{
 			
 			boolean result = false;
-			FileWriter fw = new FileWriter(f, true);
+			FileWriter fw = null;
 			Scanner scan = new Scanner(f);
 			boolean empty = false;
 			
@@ -1200,8 +1221,8 @@ public class myGitServer{
 				if(checkUser(u.name, f, m, USERS_FILE))
 					result = true;
 				else{
-					decipher(f, USERS_FILE_NAME);
-					
+					f = decipher(f, USERS_FILE_NAME);
+					fw = new FileWriter(f, true);
 					//writes the name and pass in the file
 					fw.write(u.name + ":" + u.pass + System.lineSeparator()); 
 				    fw.flush();
@@ -1209,8 +1230,6 @@ public class myGitServer{
 					//creates a directory to the user
 					new File("bin/" + SERVER_DIR + "/" + u.name).mkdir();
 					result = true;	
-					
-					cipher(f, USERS_FILE_NAME);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -1222,6 +1241,7 @@ public class myGitServer{
 				updateMac(f, m, USERS_FILE);
 			
 			scan.close();
+			cipher(f, USERS_FILE_NAME);
 			return result;
 		}
 		
@@ -1230,10 +1250,10 @@ public class myGitServer{
 				IOException, InvalidKeySpecException, NoSuchPaddingException, 
 				InvalidAlgorithmParameterException {
 			
-			verifyFileIntegrity(f, m, filename);
-			
 			if(filename.equals(USERS_FILE))
-				decipher(f, USERS_FILE_NAME);
+				f = decipher(f, USERS_FILE_NAME);
+			
+			verifyFileIntegrity(f, m, filename);
 			
 			boolean result = false;
 			Scanner scan = new Scanner(f);
@@ -1243,11 +1263,11 @@ public class myGitServer{
 				if(split[0].equals(username))
 					result = true; 
 			}
-			
-			if(filename.equals(USERS_FILE))
-				cipher(f, USERS_FILE_NAME);
-			
 			scan.close();
+		
+			if (filename.equals(USERS_FILE))
+				cipher(f, USERS_FILE_NAME);
+
 			return result;
 		}
 	}

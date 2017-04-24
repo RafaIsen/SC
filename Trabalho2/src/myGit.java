@@ -25,6 +25,8 @@ import java.security.NoSuchAlgorithmException;
 //Cliente myGit
 public class myGit{
 	
+	public final String LOCAL_REPS = "localreps";
+	
 	public static void main(String[] args) throws IOException, ClassNotFoundException, 
 	URISyntaxException, NoSuchAlgorithmException{
 		System.out.println("cliente: main");
@@ -43,7 +45,7 @@ public class myGit{
 		
 		//creates a local repository
 		if (args[0].equals("-init")){
-			localreps = new File("bin/localreps");
+			localreps = new File("bin/" + LOCAL_REPS);
 			if (!localreps.exists()) {
 				new File(localreps.toString()).mkdir();
 				rep = new File(localreps.toString() + "/" + args[1]);
@@ -109,7 +111,7 @@ public class myGit{
 				authenticateUser(exists, param_p, args[0], args[2], args[3], outStream , inStream, scan);
 				
 				if (repPath == null)
-					repPath = new File("bin/localreps").toPath();
+					repPath = new File("bin/" + LOCAL_REPS).toPath();
 
 				//executes the command
 				if(param_p)
@@ -127,7 +129,7 @@ public class myGit{
 				scan.close();
 			
 			} catch (IOException e) {
-				e.printStackTrace();
+				System.out.println("O servidor está em baixo.");
 			}
 		}
 				
@@ -164,6 +166,8 @@ public class myGit{
 			
 			while(!authentic){
 				
+				System.out.println("Confirma password:");
+				pwd = scan.nextLine();
 				//user's password concatenated with nonce sent by the server 
 				text = pwd + nonce;
 				buf = text.getBytes( );
@@ -250,7 +254,7 @@ public class myGit{
 		int result = -1; 
 		Message messIn = null;
 		
-		File file = new File("bin/" + fileName);
+		File file = new File("bin/" + LOCAL_REPS + "/" + fileName);
 		
 		if (file.exists()) {
 			String[] name = new String[1];
@@ -298,7 +302,7 @@ public class myGit{
 		File rep = null;
 		Message messIn = null;
 		
-		rep = new File("bin/" + repName);
+		rep = new File("bin/" + LOCAL_REPS + "/" + repName);
 		
 		if (rep.exists()) {
 			File[] repFiles = rep.listFiles();
@@ -346,7 +350,7 @@ public class myGit{
 	private int pullFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, 
 			String user) throws IOException, ClassNotFoundException {
 		int result = 0;
-		File file = new File("bin/" + fileName);
+		File file = new File("bin/" + LOCAL_REPS + "/" + fileName);
 		File newFile = null;
 		String[] split = fileName.split("/");
 		String[] name = new String[1];
@@ -371,11 +375,11 @@ public class myGit{
 			result = -1;
 		
 		else if (messIn.toBeUpdated[0] == true) {
-			newFile = new File("bin/" + fileName + ".temp");
+			newFile = new File("bin/" + LOCAL_REPS + "/" + fileName + ".temp");
 			newFile.createNewFile();
 			receiveFile(outStream, inStream, newFile);
 			file.delete();
-			newFile.renameTo(new File("bin/" + fileName));
+			newFile.renameTo(new File("bin/" + LOCAL_REPS + "/" + fileName));
 			
 			result = 0;
 		} 
@@ -387,7 +391,7 @@ public class myGit{
 			String user) throws IOException, ClassNotFoundException {
 		int result = -1; 
 			
-		File rep = new File("bin/" + repName);
+		File rep = new File("bin/" + LOCAL_REPS + "/" + repName);
 		File newFile = null;
 		File[] repFiles = null;
 		String[] names = null;
@@ -435,7 +439,7 @@ public class myGit{
 								newFile.createNewFile();
 								receiveFile(outStream, inStream, newFile);
 								repFiles[i].delete();
-								newFile.renameTo(new File("bin/" + repName + "/" + names[i]));
+								newFile.renameTo(new File("bin/" + LOCAL_REPS + "/" + repName + "/" + names[i]));
 							//receber ficheiros novos
 							} else {
 								newFile = new File(rep.toString() + "/" + messIn.fileName[i]);

@@ -9,9 +9,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -19,8 +22,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.file.Path;
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
+import java.security.Signature;
 
 //Cliente myGit
 public class myGit{
@@ -241,7 +248,7 @@ public class myGit{
 	}
 
 	private int pushFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String fileName, 
-			String user) throws IOException, ClassNotFoundException {
+			String user) throws IOException, ClassNotFoundException, NoSuchAlgorithmException {
 		int result = -1; 
 		Message messIn = null;
 		
@@ -270,6 +277,9 @@ public class myGit{
 				result = -1;
 			
 			else if (messIn.toBeUpdated[0] == true) {
+				
+				//writeSignedFile
+				
 				sendFile(outStream, inStream, file);
 				result = 0;
 			} else
@@ -589,6 +599,62 @@ public class myGit{
 			
 		}
 		
+	}
+	
+	public PrivateKey getPrivKey() {
+		
+		FileInputStream is = new FileInputStream("myClient.keystore");
+
+	    KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+	    keystore.load(is, "my-keystore-password".toCharArray());
+
+	    String alias = "myalias";
+
+	    Key key = keystore.getKey(alias, "password".toCharArray());
+	    if (key instanceof PrivateKey) {
+	      // Get certificate of public key
+	      Certificate cert = keystore.getCertificate(alias);
+
+	      // Get public key
+	      PublicKey publicKey = cert.getPublicKey();
+
+	      // Return a key pair
+	      new KeyPair(publicKey, (PrivateKey) key);
+
+		
+	}
+	
+	public void writeSignedFile(File f, String filename) { 
+		
+		Scanner scan = new Scanner(f);
+		
+		//getting hash
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		
+		String text = null;
+		byte[] buf = null; 
+		byte[] hash = null; 
+		
+		while (scan.hasNextLine()) {
+			text = scan.nextLine();
+			buf = text.getBytes();
+			hash = md.digest(buf);
+		}
+		
+		FileOutputStream fos = new FileOutputStream("bin/" + LOCAL_REPS + "/" + filename + ".sig"); 
+		ObjectOutputStream oos = new ObjectOutputStream(fos); 
+		
+		//KeyGenerator kg = KeyGenerator.getInstance("RSA"); 
+		//kg.init(2048, new SecureRandom());
+		PrivateKey key = ;
+		
+		Signature s = Signature.getInstance("SHA256withRSA"); 
+		s.initSign(key); 
+		byte buf[] = data.getBytes( ); 
+		s.update(buf); 
+		oos.writeObject(data); 
+		oos.writeObject(s.sign( )); 
+		fos.close();
 	}
 
 }

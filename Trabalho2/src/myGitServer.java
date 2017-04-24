@@ -525,7 +525,7 @@ public class myGitServer{
 				//actualiza o ficheiro para uma versao mais recente
 				date = new Date(file.lastModified());
 				
-				if (date.compareTo(messIn.fileDate[0]) < 0) {
+				if (date.before(messIn.fileDate[0])) {
 					
 					versao = countNumVersions1(pathFolder, split[split.length-1]);
 					newFile = new File(file + ".temp");
@@ -615,9 +615,9 @@ public class myGitServer{
 						if (date.before(messIn.fileDate[0])) {
 							versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i]);
 							ya[i] = true;
-							res += System.lineSeparator() + "-- O ficheiro " + messIn.fileName[0] + " foi enviado para o servidor";
+							res += System.lineSeparator() + "-- O ficheiro " + messIn.fileName[0] + " foi atualizado no servidor";
 						} else
-							res += System.lineSeparator() + "-- Não há nada a atualizar no servidor.";
+							res += System.lineSeparator() + "-- Nada a atualizar no servidor";
 					} else {
 						ya[i] = true;
 						versions[i] = 0;

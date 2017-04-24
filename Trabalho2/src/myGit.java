@@ -114,11 +114,12 @@ public class myGit{
 					repPath = new File("bin/" + LOCAL_REPS).toPath();
 
 				//executes the command
-				if(param_p)
+				if (param_p) {
 					if(args.length == 7)
 						executeCommand(args[4], args[5], args[6], args[0], outStream, inStream);
 					else if(args.length > 4)
 						executeCommand(args[4], args[5], "N", args[0], outStream, inStream);
+				}
 				else
 					if(args.length == 5)
 						executeCommand(args[2], args[3], args[4], args[0], outStream, inStream);
@@ -160,31 +161,23 @@ public class myGit{
 			//getting hash
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
 			
-			String text = null;
-			byte[] buf = null; 
-			byte[] hash = null; 
+			//user's password concatenated with nonce sent by the server 
+			String text = pwd + nonce;
+			byte[] buf = text.getBytes();
+			byte[] hash = md.digest(buf);
+			
+			outStream.writeObject(hash);
+			authentic = (boolean) inStream.readObject();
 			
 			while(!authentic){
-				
-				System.out.println("Confirma password:");
+				System.out.println("Password errada!");
+				System.out.println("Tenta novamente:");
 				pwd = scan.nextLine();
-				//user's password concatenated with nonce sent by the server 
 				text = pwd + nonce;
-				buf = text.getBytes( );
+				buf = text.getBytes();
 				hash = md.digest(buf);
-				
 				outStream.writeObject(hash);
 				authentic = (boolean) inStream.readObject();
-				if(!authentic){
-					System.out.println("Password errada!");
-					System.out.println("Tenta novamente:");
-					pwd = scan.nextLine();
-					text = pwd + nonce;
-					buf = text.getBytes( );
-					hash = md.digest(buf);
-					outStream.writeObject(hash);
-					authentic = (boolean) inStream.readObject();
-				}
 			}
 		} else {
 			
@@ -192,29 +185,27 @@ public class myGit{
 			int nonce = (int) inStream.readObject();
 			
 			//getting hash
-			MessageDigest md = MessageDigest.getInstance("SHA");
-				
-			System.out.println("Password: ");
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			
+			System.out.println("Password:");
 			pwd = scan.nextLine();
 			//user's password concatenated with nonce sent by the server 
 			String text = pwd + nonce;
-			byte[] buf = text.getBytes( );
+			byte[] buf = text.getBytes();
 			byte[] hash = md.digest(buf);
 			
 			outStream.writeObject(hash);
 			authentic = (boolean) inStream.readObject();
 			
-			while(!authentic){	
-				if(!authentic){
-					System.out.println("Password errada!");
-					System.out.println("Tenta novamente:");
-					pwd = scan.nextLine();
-					text = pwd + nonce;
-					buf = text.getBytes( );
-					hash = md.digest(buf);
-					outStream.writeObject(hash);
-					authentic = (boolean) inStream.readObject();
-				}	
+			while(!authentic){
+				System.out.println("Password errada!");
+				System.out.println("Tenta novamente:");
+				pwd = scan.nextLine();
+				text = pwd + nonce;
+				buf = text.getBytes();
+				hash = md.digest(buf);
+				outStream.writeObject(hash);
+				authentic = (boolean) inStream.readObject();
 			}
 		}
 	}

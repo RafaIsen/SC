@@ -424,8 +424,8 @@ public class myGit{
 				for (int i = 0; i < messIn.toBeUpdated.length; i++) {
 					//so a actualizar os ficheiros antigos
 					if(names != null)
-						if (i < names.length){
-							if (messIn.toBeUpdated[i] == true)
+						if (i < messIn.fileName.length)
+							if (messIn.toBeUpdated[i] == true) {
 								newFile = new File(repFiles[i] + ".temp");
 								newFile.createNewFile();
 								receiveFile(outStream, inStream, newFile);
@@ -443,7 +443,7 @@ public class myGit{
 		if(messIn.delete != null){
 			if (messIn.delete[0] == true)
 				System.out.println("-- O ficheiro " + messIn.fileName[0] + 
-						" existe localmente mas foi eliminado no servidor");
+						" existe localmente mas foi eliminado no servidor" + System.lineSeparator() + messIn.result);
 			else
 				System.out.println(messIn.result);
 		}

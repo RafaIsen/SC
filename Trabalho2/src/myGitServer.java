@@ -517,7 +517,7 @@ public class myGitServer{
 			boolean exists = file.exists();
 			
 			Message messOut = null;
-			boolean[] ya = new boolean[1];
+			boolean[] toUpdated = new boolean[1];
 			
 			int versao = 0;
 		
@@ -530,8 +530,8 @@ public class myGitServer{
 					versao = countNumVersions1(pathFolder, split[split.length-1]);
 					newFile = new File(file + ".temp");
 					
-					ya[0] = true;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi atualizado no servidor");
+					toUpdated[0] = true;
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " foi atualizado no servidor");
 					outStream.writeObject(messOut);
 					newFile.createNewFile();
 					receiveFile(outStream, inStream, newFile);
@@ -541,16 +541,16 @@ public class myGitServer{
 					
 				} else {
 					//nao actualiza o ficheiro porque nao he mais recente
-					ya[0] = false;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- Nada a atualizar no servidor");
+					toUpdated[0] = false;
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- Nada a atualizar no servidor");
 					outStream.writeObject(messOut);
 					result = 0;
 				}	
 				
 			//cria o ficheiro porque ainda existe
 			} else {
-				ya[0] = true;
-				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " foi enviado para o servidor");
+				toUpdated[0] = true;
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " foi enviado para o servidor");
 				outStream.writeObject(messOut);
 				file.createNewFile();
 				receiveFile(outStream, inStream, file);
@@ -571,7 +571,7 @@ public class myGitServer{
 			String nameAux = null;
 			
 			Message messOut = null;
-			boolean[] ya = null;
+			boolean[] toUpdated = null;
 			int[] versions = null;
 			
 			String repName = null;
@@ -604,7 +604,7 @@ public class myGitServer{
 			
 			//caso o rep venha com ficheiros
 			if (messIn.fileName != null) {
-				ya = new boolean[messIn.fileName.length];
+				toUpdated = new boolean[messIn.fileName.length];
 				versions = new int[messIn.fileName.length];
 				
 				for (int i = 0; i < messIn.fileName.length; i++) {
@@ -614,29 +614,30 @@ public class myGitServer{
 						//verificar quais os ficheiros que precisam de ser actualizados
 						if (date.before(messIn.fileDate[0])) {
 							versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i]);
-							ya[i] = true;
-							res += System.lineSeparator() + "-- O ficheiro " + messIn.fileName[0] + " foi atualizado no servidor";
+							toUpdated[i] = true;
+							res += "-- O ficheiro " + messIn.fileName[i] + " foi atualizado no servidor" + System.lineSeparator();
 						} else
-							res += System.lineSeparator() + "-- Nada a atualizar no servidor";
+							res = "-- Nada a atualizar no servidor";
 					} else {
-						ya[i] = true;
+						toUpdated[i] = true;
 						versions[i] = 0;
-						res += System.lineSeparator() + "-- O ficheiro " + messIn.fileName[0] + " foi enviado para o servidor";
+						res += "-- O ficheiro " + messIn.fileName[i] + " foi enviado para o servidor" + System.lineSeparator();
 					}
 				}
 			}
 			
 			//saber quais os ficheiros a "eliminar"
-			if (fileRep != null && ya == null)
+			if (fileRep != null && toUpdated == null) {
 				for (int j = 0; j < fileRep.length; j++)
 					if (!Arrays.asList(messIn.repName).contains(fileRep[j].getName())) {
 						nameAux = fileRep[j].getName();
 						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].getName()))));		
-						res = "-- O ficheiro " + fileRep[j].getName() + " vai ser eliminado no servidor.";
+						res += "-- O ficheiro " + fileRep[j].getName() + " vai ser eliminado no servidor" + System.lineSeparator();
 						eliminou = true;
 					}
+			}
 						
-			messOut = new Message(messIn.method, null, messIn.repName, null, ya, messIn.user, null, res);
+			messOut = new Message(messIn.method, null, messIn.repName, null, toUpdated, messIn.user, null, res);
 			outStream.writeObject(messOut);
 					
 			//receber os ficheiros para actualizar
@@ -687,9 +688,9 @@ public class myGitServer{
 			
 			boolean hasAccess = true;
 			
-			boolean[] ya = new boolean[1];
+			boolean[] toUpdated = new boolean[1];
 			
-			ya[0] = false;
+			toUpdated[0] = false;
 			
 			if(split1.length > 2){
 				otherUser = split1[0];
@@ -744,30 +745,30 @@ public class myGitServer{
 					date = new Date(file.lastModified());
 					
 					if (date.compareTo(messIn.fileDate[0]) > 0) {
-						ya[0] = true;
+						toUpdated[0] = true;
 						if(myrep)
-							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " foi copiado do servidor");
+							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O repositório " + repName + " foi copiado do servidor");
 						else
-							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O repositório " + repName + " do utilizador " + otherUser + " foi copiado do servidor");
+							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O repositório " + repName + " do utilizador " + otherUser + " foi copiado do servidor");
 						outStream.writeObject(messOut);
 						sendFile(outStream, inStream, file);
 						result = 0;				
 					} else {
 						//nao actualiza o ficheiro porque nao he mais recente
-						ya[0] = false;
-						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro do seu repositório local é o mais recente");
+						toUpdated[0] = false;
+						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro do seu repositório local é o mais recente");
 						outStream.writeObject(messOut);
 						result = 0;
 					}	
 				//erro o ficeiro nao existe
 				} else {
-					ya[0] = false;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O ficheiro " + filename + " não existe");
+					toUpdated[0] = false;
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " não existe");
 					outStream.writeObject(messOut);
 				}
 				
 			} else {
-				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, ya, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao ficheiro " + filename + " do utilizador " + otherUser);
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao ficheiro " + filename + " do utilizador " + otherUser);
 				outStream.writeObject(messOut);
 				result = -1;
 			}
@@ -833,7 +834,7 @@ public class myGitServer{
 				
 				Date date = null;
 		
-				boolean[] ya = null;
+				boolean[] toUpdated = null;
 				String[] names = null;
 				
 				String res = null;
@@ -867,10 +868,10 @@ public class myGitServer{
 				}
 				//so para actualizar os ficheiros
 				if (fileRep.length > 0) {
-					ya = new boolean[fileRep.length];
+					toUpdated = new boolean[fileRep.length];
 					names = new String[fileRep.length];
 					if(messIn.fileName != null)
-					if (fileRep.length > messIn.fileName.length)
+					if (fileRep.length < messIn.fileName.length)
 						delete = new boolean[fileRep.length];
 					else
 						delete = new boolean[messIn.fileName.length];
@@ -887,7 +888,7 @@ public class myGitServer{
 								
 								//verificar se o ficheiro precisa de ser actualizado
 								if (date.compareTo(messIn.fileDate[i]) > 0) 
-									ya[i] = true;
+									toUpdated[i] = true;
 															
 							//ficheiros que o servidor ja nao tem	
 							} else 
@@ -896,10 +897,9 @@ public class myGitServer{
 						//ficheiros novos que o cliente nao tem	
 						} else {
 							for (int j = 0;j < names.length; j++)
-								if (!Arrays.asList(names).contains(fileRep[j].getName()))
-									names[i] = fileRep[j].getName();
-					
-							ya[i] = true;
+								if (!Arrays.asList(names).contains(fileRep[j].getName())) {
+									names[j] = fileRep[j].getName();
+								}
 						}
 											
 					}
@@ -907,13 +907,11 @@ public class myGitServer{
 					if (messIn.fileName.length > fileRep.length)
 						Arrays.fill(delete, fileRep.length, delete.length-1, Boolean.TRUE);
 						
-					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, delete, res);
+					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, toUpdated, messIn.user, delete, res);
 					outStream.writeObject(messOut);
 					
-					for (int i = 0; i < ya.length; i++) {
-						if (ya[i] == true)
-							sendFile(outStream, inStream, new File(rep.toString() + "/" + names[i]));
-					}
+					for (int i = 0; i < names.length; i++) 
+						sendFile(outStream, inStream, new File(rep.toString() + "/" + names[i]));
 				
 				result = 0;
 				
@@ -924,12 +922,12 @@ public class myGitServer{
 				}
 				//para inicializar o rep
 				else {
-					ya = new boolean[fileRep.length];
+					toUpdated = new boolean[fileRep.length];
 					names = new String[fileRep.length];
-					Arrays.fill(ya, 0, ya.length-1, Boolean.TRUE);
-					for(int i = 0; i < ya.length; i++)
+					Arrays.fill(toUpdated, 0, toUpdated.length-1, Boolean.TRUE);
+					for(int i = 0; i < toUpdated.length; i++)
 						names[i] = fileRep[i].getName();
-					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, ya, messIn.user, null, res);
+					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, res);
 					outStream.writeObject(messOut);
 					
 					for (int i = 0; i < fileRep.length; i++) 

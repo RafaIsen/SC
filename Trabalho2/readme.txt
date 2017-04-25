@@ -12,6 +12,7 @@ Assim feito, terá de ser criado um par de chaves para o servidor e guardar o seu
 
 1. Criar o par de chaves RSA do servidor
 > keytool -genkeypair -alias myServer -keyalg RSA -keysize 2048 -keystore myServer.keyStore
+IMPORTANTE: a password que deverá definir para a keystore do servidor será "sc1617"!
 
 2. Exportar o certificado auto-assinado do servidor
 > keytool -exportcert -alias myServer -file myServer.cer -keystore myServer.keystore
@@ -24,6 +25,7 @@ Enquanto isso, terá de ser criado um par de chaves para o ciente e guardar o seu
 
 1. Criar o par de chaves RSA do cliente
 > keytool -genkeypair -alias myClient -keyalg RSA -keysize 2048 -keystore myClient.keyStore
+IMPORTANTE: a password que deverá definir para a keystore do cliente será "client1617"!
 
 2. Exportar o certificado auto-assinado do client
 > keytool -exportcert -alias myClient -file myClient.cer -keystore myClient.keystore

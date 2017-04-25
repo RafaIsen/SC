@@ -22,16 +22,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
@@ -108,7 +119,7 @@ public class myGitServer{
 		try {
 			
 		    System.setProperty("javax.net.ssl.keyStore", "myServer.keyStore");
-			System.setProperty("javax.net.ssl.keyStorePassword", "12345678");
+			System.setProperty("javax.net.ssl.keyStorePassword", SERVER_PASS);
 		    ServerSocketFactory ssf = SSLServerSocketFactory.getDefault( );
 		    sSoc = ssf.createServerSocket(23456);
 		    
@@ -143,7 +154,7 @@ public class myGitServer{
 	public void verifyFileIntegrity(File file, File macs, String filename) throws IOException, 
 	NoSuchAlgorithmException, InvalidKeyException {
 		
-		Scanner readFile = new Scanner(file);
+		Scanner readFile = new Scanner(new BufferedReader(new FileReader(file)));
 		
 		if (!macs.exists() && readFile.hasNextLine()) {
 			System.out.println("AVISO!!! Não existe nenhum MAC a proteger o sistema! Será criado e adicionado um ao sistema.");
@@ -196,7 +207,7 @@ public class myGitServer{
 	public void createMac(File file, File macs) throws NoSuchAlgorithmException, 
 	InvalidKeyException, IOException{
 		
-		Scanner readFile = new Scanner(file);
+		Scanner readFile = new Scanner(new BufferedReader(new FileReader(file))); 
 		
 		//opening macs file
 		FileOutputStream macsOut = new FileOutputStream(macs);
@@ -226,7 +237,7 @@ public class myGitServer{
 	public void updateMac(File file, File macs, String filename) throws NoSuchAlgorithmException, 
 	InvalidKeyException, IOException{
 		
-		Scanner readFile = new Scanner(file);
+		Scanner readFile = new Scanner(new BufferedReader(new FileReader(file))); 
 		
 		File macsTemp;
 		
@@ -484,11 +495,22 @@ public class myGitServer{
 				e.printStackTrace();
 			} catch (InvalidAlgorithmParameterException e) {
 				e.printStackTrace();
+			} catch (UnrecoverableKeyException e) {
+				e.printStackTrace();
+			} catch (KeyStoreException e) {
+				e.printStackTrace();
+			} catch (CertificateException e) {
+				e.printStackTrace();
+			} catch (IllegalBlockSizeException e) {
+				e.printStackTrace();
+			} catch (BadPaddingException e) {
+				e.printStackTrace();
 			}
 		}
 			
 		private int pushFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) 
-				throws IOException {
+				throws IOException, ClassNotFoundException, UnrecoverableKeyException, KeyStoreException, 
+				NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 			int result = -1;
 		
 			StringBuilder sb = new StringBuilder();
@@ -498,17 +520,29 @@ public class myGitServer{
 			String[] split = messIn.fileName[0].split("/");
 			
 			File file = null;
+			File sigFile = null;
+			File cifFile = null;
 			Path pathFolder = null;
 			String filename = null;
+			String pathFile = null;
 			
 			if(secondI == -1) {
 				pathFolder = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0]).toPath();
 				file = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
 				filename = split[1];
+				String[] splitName = filename.split("\\.");
+				pathFile = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/";
+				sigFile = new File(pathFile + splitName[0] + ".sig");
+				cifFile = new File(pathFile + splitName[0] + ".cif");
 			} else {
 				pathFolder = new File("bin/" + SERVER_DIR + "/" + split[0] + "/" + split[1]).toPath();
 				file = new File("bin/" + SERVER_DIR + "/" + messIn.fileName[0]);
 				filename = split[2];
+				String[] splitName = filename.split("\\.");
+				pathFile = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/" 
+				+ split[1] + "/";
+				sigFile = new File(pathFile + splitName[0] + ".sig");
+				cifFile = new File(pathFile + splitName[0] + ".cif");
 			}
 			
 			File newFile = null;
@@ -526,7 +560,7 @@ public class myGitServer{
 				date = new Date(file.lastModified());
 				
 				if (date.before(messIn.fileDate[0])) {
-					
+
 					versao = countNumVersions1(pathFolder, split[split.length-1]);
 					newFile = new File(file + ".temp");
 					
@@ -534,8 +568,8 @@ public class myGitServer{
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " foi atualizado no servidor");
 					outStream.writeObject(messOut);
 					newFile.createNewFile();
-					receiveFile(outStream, inStream, newFile);
-					file.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1] + "." + String.valueOf(versao)));
+					receiveSecureFile(outStream, inStream, newFile, sigFile, cifFile, filename, pathFile);
+					cifFile.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1] + "." + String.valueOf(versao)));
 					newFile.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1]));
 					result = 0;
 					
@@ -552,8 +586,8 @@ public class myGitServer{
 				toUpdated[0] = true;
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " foi enviado para o servidor");
 				outStream.writeObject(messOut);
-				file.createNewFile();
-				receiveFile(outStream, inStream, file);
+				cifFile.createNewFile();
+				receiveSecureFile(outStream, inStream, file, sigFile, cifFile, filename, pathFile);
 				result = 0;
 									
 			}
@@ -561,7 +595,7 @@ public class myGitServer{
 		}
 
 		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) 
-				throws IOException {
+				throws IOException, ClassNotFoundException {
 			int result = -1;
 			File rep  = null;
 			File newFile = null;
@@ -1122,12 +1156,12 @@ public class myGitServer{
         }
 
 		public int receiveFile(ObjectOutputStream  outStream, ObjectInputStream inStream, File file) 
-				throws IOException{
+				throws IOException, ClassNotFoundException{
 			int result = -1;
 				
 			FileOutputStream pdfOut = new FileOutputStream(file);
 				
-			int lengthFile = inStream.readInt();
+			int lengthFile = (int) inStream.readObject();
 				
 			int n = 0;
 				
@@ -1152,7 +1186,7 @@ public class myGitServer{
 			byte[] buf = new byte[1024];
 	        FileInputStream is = new FileInputStream(file);
 	        
-	        outStream.writeInt(lengthPdf);
+	        outStream.writeObject(lengthPdf);
 	        
 	        int n = 0;
 	        
@@ -1175,7 +1209,7 @@ public class myGitServer{
 			
 			verifyFileIntegrity(f, m, USERS_FILE);
 	
-			Scanner scan = new Scanner(f);
+			Scanner scan = new Scanner(new BufferedReader(new FileReader(f)));
 			
 			//getting hash
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -1209,7 +1243,7 @@ public class myGitServer{
 			
 			boolean result = false;
 			FileWriter fw = null;
-			Scanner scan = new Scanner(f);
+			Scanner scan = new Scanner(new BufferedReader(new FileReader(f)));
 			boolean empty = false;
 			
 			if(!scan.hasNext())
@@ -1254,7 +1288,7 @@ public class myGitServer{
 			verifyFileIntegrity(f, m, filename);
 			
 			boolean result = false;
-			Scanner scan = new Scanner(f);
+			Scanner scan = new Scanner(new BufferedReader(new FileReader(f)));
 			
 			while (scan.hasNextLine()) {
 				String[] split = scan.nextLine().split(":");
@@ -1268,5 +1302,64 @@ public class myGitServer{
 
 			return result;
 		}
+		
+		public KeyPair getKeyPair() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, 
+		IOException, UnrecoverableKeyException {
+			
+			FileInputStream is = new FileInputStream("myServer.keystore");
+
+		    KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+		    keystore.load(is, "sc1617".toCharArray());
+
+		    String alias = "myServer";
+
+		    Key key = keystore.getKey(alias, "sc1617".toCharArray());
+		    if (key instanceof PrivateKey) {
+		      //getting certificate of public key
+		      Certificate cert = keystore.getCertificate(alias);
+
+		      //getting public key
+		      PublicKey publicKey = cert.getPublicKey();
+
+		      return new KeyPair(publicKey, (PrivateKey) key);
+		    }
+		    return null;
+		}
+		
+		public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
+				File file, File sigFile, File cifFile, String filename, String pathFile) 
+						throws IOException, ClassNotFoundException, UnrecoverableKeyException, 
+						KeyStoreException, NoSuchAlgorithmException, CertificateException, 
+						NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException{
+			
+			//saves file's digital signature received from client
+			receiveFile(outStream, inStream, sigFile);
+			
+			//receives secret key
+			SecretKey secKey = (SecretKey) inStream.readObject();
+			
+			//receives ciphered file
+			receiveFile(outStream, inStream, cifFile);
+			
+			//getting public key
+			PublicKey pubKey = getKeyPair().getPublic();
+			
+			Cipher c = Cipher.getInstance("RSA"); 
+			c.init(Cipher.ENCRYPT_MODE, pubKey);
+			
+			FileOutputStream fos; 
+			CipherOutputStream cos;
+			
+			fos = new FileOutputStream(pathFile + filename + ".key.server");
+			cos = new CipherOutputStream(fos, c); 
+			
+			//ciphers secret key using public key
+			cos.write(secKey.getEncoded());
+			
+			cos.close();
+			fos.close();
+			
+		}
+		
 	}
 }

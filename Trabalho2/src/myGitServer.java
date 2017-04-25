@@ -598,14 +598,15 @@ public class myGitServer{
 		}
 
 		private int pushRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn) 
-				throws IOException, ClassNotFoundException {
+				throws IOException, ClassNotFoundException, UnrecoverableKeyException, InvalidKeyException,
+				KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, 
+				IllegalBlockSizeException, BadPaddingException {
 			int result = -1;
 			File rep  = null;
 			File newFile = null;
 			File currFile = null;
 			File[] fileRep = null;
 			Date date = null;
-			String nameAux = null;
 			
 			Message messOut = null;
 			boolean[] toUpdated = null;
@@ -613,6 +614,9 @@ public class myGitServer{
 			
 			String repName = null;
 			String res = "";
+			
+			String[] split; 
+			String filename;
 			
 			boolean eliminou = false;
 			
@@ -645,16 +649,18 @@ public class myGitServer{
 				versions = new int[messIn.fileName.length];
 				
 				for (int i = 0; i < messIn.fileName.length; i++) {
-					currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
+					split = messIn.fileName[i].split("\\.");
+					filename = split[0] + ".cif";
+					currFile = new File(rep.toString() + "/" + filename);
 					if (fileRep != null && currFile.exists()) {
 						date = new Date(currFile.lastModified());
 						//verificar quais os ficheiros que precisam de ser actualizados
 						if (date.before(messIn.fileDate[0])) {
-							versions[i] = countNumVersions1(rep.toPath(), messIn.fileName[i]);
+							versions[i] = countNumVersions1(rep.toPath(), filename);
 							toUpdated[i] = true;
 							res += "-- O ficheiro " + messIn.fileName[i] + " foi atualizado no servidor" + System.lineSeparator();
 						} else
-							res = "-- Nada a atualizar no servidor";
+							res += "-- O ficheiro " + messIn.fileName[i] + " já está atualizado no servidor" + System.lineSeparator();
 					} else {
 						toUpdated[i] = true;
 						versions[i] = 0;
@@ -665,13 +671,15 @@ public class myGitServer{
 			
 			//saber quais os ficheiros a "eliminar"
 			if (fileRep != null && toUpdated == null) {
-				for (int j = 0; j < fileRep.length; j++)
-					if (!Arrays.asList(messIn.repName).contains(fileRep[j].getName())) {
-						nameAux = fileRep[j].getName();
-						fileRep[j].renameTo(new File(rep.toPath() + "/" + nameAux + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j].getName()))));		
+				for (int j = 0; j < fileRep.length; j++){
+					split = messIn.fileName[j].split("\\.");
+					filename = split[0] + ".cif";
+					if (!Arrays.asList(messIn.repName).contains(fileRep[j])) {
+						fileRep[j].renameTo(new File(rep.toPath() + "/" + filename + "." + String.valueOf(countNumVersions1(rep.toPath(), filename))));		
 						res += "-- O ficheiro " + fileRep[j].getName() + " vai ser eliminado no servidor" + System.lineSeparator();
 						eliminou = true;
 					}
+				}
 			}
 						
 			messOut = new Message(messIn.method, null, messIn.repName, null, toUpdated, messIn.user, null, res);
@@ -680,22 +688,24 @@ public class myGitServer{
 			//receber os ficheiros para actualizar
 			if(messIn.fileName != null && !eliminou)
 				for (int i = 0; i < messIn.fileName.length; i++) {
-					
 					//saber quais os ficheiros q vai client vai mandar
 					if (messOut.toBeUpdated[i] == true) {
-						currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
-						if(!currFile.exists()){
+						
+						split = messIn.fileName[i].split("\\.");
+						filename = split[0] + ".cif";
+						currFile = new File(rep.toString() + "/" + filename);
+						File sigFile = new File(rep.toString() + "/" + split[0] + ".sig");
+						
+						if (!currFile.exists()) {
 							newFile = currFile;
 							newFile.createNewFile();
-							receiveFile(outStream, inStream, newFile);
-							
-						}else{
-							
+							receiveSecureFile(outStream, inStream, sigFile, newFile, messIn.fileName[i], rep.toString() + "/");
+						} else {
 							newFile = new File(messIn.fileName[i] + ".temp");
 							newFile.createNewFile();
-							receiveFile(outStream, inStream, newFile);
-							fileRep[i].renameTo(new File(rep.toString() + "/" + messIn.fileName[i] + "." + Integer.toString(versions[i])));
-							newFile.renameTo(new File(rep.toString() + "/" + messIn.fileName[i]));
+							receiveSecureFile(outStream, inStream, sigFile, newFile, messIn.fileName[i], rep.toString() + "/");
+							fileRep[i].renameTo(new File(rep.toString() + "/" + filename + "." + Integer.toString(versions[i])));
+							newFile.renameTo(new File(rep.toString() + "/" + filename));
 						}
 					}
 				}

@@ -313,7 +313,9 @@ public class myGit{
 
 	
 	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, 
-			String user) throws IOException, ClassNotFoundException {
+			String user) throws IOException, ClassNotFoundException, UnrecoverableKeyException, 
+	InvalidKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, 
+	SignatureException, NoSuchPaddingException {
 		int result = -1; 
 		File rep = null;
 		Message messIn = null;
@@ -350,7 +352,7 @@ public class myGit{
 			else if (messIn.toBeUpdated != null) {
 				for(int i = 0; i < messIn.toBeUpdated.length; i++) {
 					if (messIn.toBeUpdated[i] == true) 
-						sendFile(outStream, inStream, repFiles[i]);
+						sendSecureFile(outStream, inStream, repFiles[i], name[i]);
 					}
 				result = 0;
 			} 

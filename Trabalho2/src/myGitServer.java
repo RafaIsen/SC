@@ -671,12 +671,14 @@ public class myGitServer{
 			
 			//saber quais os ficheiros a "eliminar"
 			if (fileRep != null && toUpdated == null) {
-				for (int j = 0; j < fileRep.length; j++){
-					split = messIn.fileName[j].split("\\.");
+				for (int j = 0; j < fileRep.length / 3; j++){
+					split = fileRep[j*3 + 1].getName().split("\\.");
+					String fileExt = split[1];
+					split = fileRep[j*3].getName().split("\\.");
 					filename = split[0] + ".cif";
-					if (!Arrays.asList(messIn.repName).contains(fileRep[j])) {
-						fileRep[j].renameTo(new File(rep.toPath() + "/" + filename + "." + String.valueOf(countNumVersions1(rep.toPath(), filename))));		
-						res += "-- O ficheiro " + fileRep[j].getName() + " vai ser eliminado no servidor" + System.lineSeparator();
+					if (!Arrays.asList(messIn.repName).contains(fileRep[j*3])) {
+						fileRep[j*3].renameTo(new File(fileRep[j*3] + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j*3].getName()))));		
+						res += "-- O ficheiro " + split[0] + "." + fileExt + " vai ser eliminado no servidor" + System.lineSeparator();
 						eliminou = true;
 					}
 				}

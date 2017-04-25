@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
 
@@ -25,6 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -311,7 +313,6 @@ public class myGit{
 		return result;
 	}
 
-	
 	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, 
 			String user) throws IOException, ClassNotFoundException, UnrecoverableKeyException, 
 	InvalidKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, 
@@ -366,10 +367,12 @@ public class myGit{
 	}
 
 	private int pullFile(ObjectOutputStream  outStream, ObjectInputStream inStream, String filename, 
-			String user) throws IOException, ClassNotFoundException {
+			String user) throws IOException, ClassNotFoundException, InvalidKeyException, 
+	UnrecoverableKeyException, NoSuchAlgorithmException, NoSuchPaddingException, KeyStoreException, 
+	CertificateException, SignatureException {
 		int result = 0;
 		File file = new File("bin/" + LOCAL_REPS + "/" + filename);
-		File newFile = null;
+		File tempFile = null;
 		String[] split = filename.split("/");
 		String[] name = new String[1];
 		name[0] = filename;
@@ -393,12 +396,10 @@ public class myGit{
 			result = -1;
 		
 		else if (messIn.toBeUpdated[0] == true) {
-			newFile = new File("bin/" + LOCAL_REPS + "/" + filename + ".temp");
-			newFile.createNewFile();
-			receiveFile(outStream, inStream, newFile);
-			file.delete();
-			newFile.renameTo(new File("bin/" + LOCAL_REPS + "/" + filename));
-			
+			tempFile = new File("bin/" + LOCAL_REPS + "/" + filename + ".temp");
+			tempFile.createNewFile();
+			receiveSecureFile(outStream, inStream, tempFile, filename);
+			tempFile.delete();
 			result = 0;
 		} 
 		System.out.println(messIn.result);
@@ -643,7 +644,9 @@ public class myGit{
 	    return null;
 	}
 	
-	public File writeSignedFile(File f, String filename) throws NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyStoreException, CertificateException, InvalidKeyException, SignatureException { 
+	public File writeSignedFile(File f, String filename) throws NoSuchAlgorithmException, IOException, 
+	UnrecoverableKeyException, KeyStoreException, CertificateException, InvalidKeyException, 
+	SignatureException { 
 		
 		Scanner scan = new Scanner(new BufferedReader(new FileReader(f)));
 		
@@ -684,17 +687,17 @@ public class myGit{
 		String[] splitName = filename.split("\\.");
 		File sigFile = writeSignedFile(file, splitName[0]);
 		
-		//sends file's digital signature
+		//send file's digital signature
 		sendFile(outStream, inStream, sigFile);
 		sigFile.delete();
 		
-		//generates random shared secret key
+		//generate random shared secret key
 		KeyGenerator kg = KeyGenerator.getInstance("AES"); 
 		kg.init(128); 
-		SecretKey key = kg.generateKey();
+		SecretKey secKey = kg.generateKey();
 		
 		Cipher c = Cipher.getInstance("AES"); 
-		c.init(Cipher.ENCRYPT_MODE, key);
+		c.init(Cipher.ENCRYPT_MODE, secKey);
 		
 		FileInputStream fis; 
 		FileOutputStream fos; 
@@ -707,7 +710,7 @@ public class myGit{
 		byte[] b = new byte[16]; 
 		int i = 0;
 		
-		//ciphers file using secret key
+		//cipher file using secret key
 		while ( (i = fis.read(b)) != -1) 
 			cos.write(b, 0, i); 
 		
@@ -715,13 +718,68 @@ public class myGit{
 		fos.close();
 		fis.close();
 		
-		//sends secret key to the server
-		outStream.writeObject(key);
+		//send secret key to the server
+		outStream.writeObject(secKey);
 		
-		//sends ciphered file to the server
+		//send ciphered file to the server
 		File cifFile = new File("bin/" + LOCAL_REPS + "/" + splitName[0] + ".cif");
 		sendFile(outStream, inStream, cifFile);
 		cifFile.delete();
+	}
+	
+	public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
+			File file, String filename) throws ClassNotFoundException, IOException, NoSuchAlgorithmException, 
+	NoSuchPaddingException, InvalidKeyException, UnrecoverableKeyException, KeyStoreException, 
+	CertificateException, SignatureException{
+		
+		//receive ciphered file from server
+		receiveFile(outStream, inStream, file);
+		
+		//receive secret key from server
+		SecretKey secKey = (SecretKey) inStream.readObject();
+		
+		Cipher c = Cipher.getInstance("AES"); 
+		c.init(Cipher.DECRYPT_MODE, secKey);
+		
+		FileInputStream fis; 
+		FileOutputStream fos; 
+		CipherOutputStream cos;
+		
+		fis = new FileInputStream(file); 
+		fos = new FileOutputStream("bin/" + LOCAL_REPS + "/" + filename);
+		cos = new CipherOutputStream(fos, c); 
+		
+		byte[] b = new byte[16]; 
+		int i = 0;
+		
+		//decipher file using secret key
+		while ( (i = fis.read(b)) != -1) 
+			cos.write(b, 0, i); 
+		
+		cos.close();
+		fos.close();
+		fis.close();
+		
+		//prepare file's digital signature
+		String[] splitName = filename.split("\\.");
+		File sigFile = new File("bin/" + LOCAL_REPS + "/" + splitName[0] + ".server.sig");
+		
+		//receive file's digital signature 
+		receiveFile(outStream, inStream, sigFile);
+		
+		//get deciphered file
+		File decifFile = new File("bin/" + LOCAL_REPS + "/" + filename);
+		
+		//verify file signature
+		File sigVerifier = writeSignedFile(decifFile, splitName[0]);
+		
+		if (!Arrays.equals(Files.readAllBytes(sigFile.toPath()), Files.readAllBytes(sigVerifier.toPath()))) {
+			System.out.println("-- Erro! O ficheiro " + filename + " foi corrompido durante o envio do servidor."
+					+ System.lineSeparator() + "O cliente irá terminar...");
+			System.exit(-1);
+		}
+		sigVerifier.delete();
+		sigFile.delete();
 	}
 	
 }

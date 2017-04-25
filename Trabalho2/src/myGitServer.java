@@ -41,8 +41,10 @@ import java.util.Scanner;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
@@ -57,7 +59,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 //Servidor myGitServer
 public class myGitServer{
 
-	public final String SERVER_DIR = "/users"; 
+	public final String SERVER_DIR = "users"; 
 	public final String SERVER_PASS = "sc1617";
 	public final String USERS_FILE = "users.txt"; 
 	public final String USERS_FILE_CIF = "users.cif"; 
@@ -520,7 +522,6 @@ public class myGitServer{
 			String[] split = messIn.fileName[0].split("/");
 			
 			File file = null;
-			File sigFile = null;
 			File cifFile = null;
 			String cifFilename = null;
 			Path pathFolder = null;
@@ -533,7 +534,6 @@ public class myGitServer{
 				filename = split[1];
 				String[] splitName = filename.split("\\.");
 				pathFile = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/";
-				sigFile = new File(pathFile + splitName[0] + ".sig");
 				cifFilename = splitName[0] + ".cif";
 				cifFile = new File(pathFile + cifFilename);
 			} else {
@@ -543,7 +543,6 @@ public class myGitServer{
 				String[] splitName = filename.split("\\.");
 				pathFile = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/" 
 				+ split[1] + "/";
-				sigFile = new File(pathFile + splitName[0] + ".sig");
 				cifFilename = splitName[0] + ".cif";
 				cifFile = new File(pathFile + cifFilename);
 			}
@@ -571,7 +570,7 @@ public class myGitServer{
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " foi atualizado no servidor");
 					outStream.writeObject(messOut);
 					newFile.createNewFile();
-					receiveSecureFile(outStream, inStream, sigFile, newFile, filename, pathFile);
+					receiveSecureFile(outStream, inStream, newFile, filename, pathFile);
 					cifFile.renameTo(new File(pathFolder.toString() + "/" + cifFilename + "." + String.valueOf(versao)));
 					newFile.renameTo(new File(pathFolder.toString() + "/" + cifFilename));
 					result = 0;
@@ -590,7 +589,7 @@ public class myGitServer{
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " foi enviado para o servidor");
 				outStream.writeObject(messOut);
 				cifFile.createNewFile();
-				receiveSecureFile(outStream, inStream, sigFile, cifFile, filename, pathFile);
+				receiveSecureFile(outStream, inStream, cifFile, filename, pathFile);
 				result = 0;
 									
 			}
@@ -652,6 +651,7 @@ public class myGitServer{
 					split = messIn.fileName[i].split("\\.");
 					filename = split[0] + ".cif";
 					currFile = new File(rep.toString() + "/" + filename);
+					//verificar quais os ficheiros a enviar e que mensagem escrita enviar
 					if (fileRep != null && currFile.exists()) {
 						date = new Date(currFile.lastModified());
 						//verificar quais os ficheiros que precisam de ser actualizados
@@ -696,16 +696,15 @@ public class myGitServer{
 						split = messIn.fileName[i].split("\\.");
 						filename = split[0] + ".cif";
 						currFile = new File(rep.toString() + "/" + filename);
-						File sigFile = new File(rep.toString() + "/" + split[0] + ".sig");
 						
 						if (!currFile.exists()) {
 							newFile = new File(rep.toString() + "/" + filename);
 							newFile.createNewFile();
-							receiveSecureFile(outStream, inStream, sigFile, newFile, messIn.fileName[i], rep.toString() + "/");
+							receiveSecureFile(outStream, inStream, newFile, messIn.fileName[i], rep.toString() + "/");
 						} else {
 							newFile = new File(rep.toString() + "/" + messIn.fileName[i] + ".temp");
 							newFile.createNewFile();
-							receiveSecureFile(outStream, inStream, sigFile, newFile, messIn.fileName[i], rep.toString() + "/");
+							receiveSecureFile(outStream, inStream, newFile, messIn.fileName[i], rep.toString() + "/");
 							fileRep[i*3].renameTo(new File(rep.toString() + "/" + filename + "." + Integer.toString(versions[i])));
 							newFile.renameTo(new File(rep.toString() + "/" + filename));
 						}
@@ -717,19 +716,16 @@ public class myGitServer{
 
 		private int pullFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, 
 				File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, 
-		ClassNotFoundException {
+		ClassNotFoundException, UnrecoverableKeyException, KeyStoreException, CertificateException,
+		NoSuchPaddingException {
 			
-			File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
-			
-			BufferedReader br = new BufferedReader(new FileReader(shareLog));
-			
-			String currentLine = null;
-			
-			String[] split1 = messIn.fileName[0].split("/");
+			String[] split = messIn.fileName[0].split("/");
 			
 			String otherUser = null;
 			String repName = null;
 			String filename = null;
+			String name = null;
+			String pathFile = null;
 			
 			int result = -1;
 			
@@ -741,53 +737,37 @@ public class myGitServer{
 			
 			toUpdated[0] = false;
 			
-			if(split1.length > 2){
-				otherUser = split1[0];
-				repName = split1[1];
-				filename = split1[2];
+			if(split.length > 2){
+				otherUser = split[0];
+				repName = split[1];
+				filename = split[2];
+				name = filename.split("\\.")[0];
 			} else { 
-				repName = split1[0];
-				filename = split1[1];
+				repName = split[0];
+				filename = split[1];
+				name = filename.split("\\.")[0];	
 			}
 			
-			if (otherUser != null) {
-				
-				verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
-				
-				while ((currentLine = br.readLine()) != null && !hasAccess) {
-					
-					String[] split = currentLine.split(",");
-				    String[] split2 = split[0].split(":");
-				    
-				    if (split2[0].equals(otherUser)) {
-				    	
-				    	if (split2[1].equals(messIn.user[0]))
-				    		hasAccess = true;
-				    	else
-				    		for(int i = 1; i < split.length && !hasAccess; i++)
-				    			if(split[i].equals(messIn.user[0]))
-				    				hasAccess = true;
-				    }
-				}
-			}
+			hasAccess = userHasAccess(otherUser, messIn, share_mac);
+			
 			if (hasAccess) {
 			
 				File file = null;
-				String[] split = messIn.fileName[0].split("/");
 				
 				Date date = null;
 				
 				boolean myrep = false;
 				
 				//criar path para o ficheiro
-				
-				if (split.length == 3) 
-					file = new File("bin/" + SERVER_DIR + "/" + messIn.fileName[0]);
-					
-				 else {
-					file = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
+				if (split.length == 3) {
+					pathFile = "bin/" + SERVER_DIR + "/" + otherUser + "/" + repName + "/";
+					file = new File(pathFile + name + ".cif");
+				}
+				else {
+					pathFile = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + repName + "/";
+					file = new File(pathFile + name + ".cif");
 					myrep = true;
-				 }
+				}
 											
 				if (file.exists()) {
 					//actualiza o ficheiro para uma versao mais recente
@@ -796,32 +776,40 @@ public class myGitServer{
 					if (date.compareTo(messIn.fileDate[0]) > 0) {
 						toUpdated[0] = true;
 						if(myrep)
-							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O repositório " + repName + " foi copiado do servidor");
+							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, 
+									messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + 
+									" foi copiado do servidor");
 						else
-							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O repositório " + repName + " do utilizador " + otherUser + " foi copiado do servidor");
+							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, 
+									messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " 
+							+ filename + " do utilizador " + otherUser + " foi copiado do servidor");
 						outStream.writeObject(messOut);
-						sendFile(outStream, inStream, file);
+						sendSecureFile(outStream, inStream, file, filename, pathFile);
 						result = 0;				
 					} else {
 						//nao actualiza o ficheiro porque nao he mais recente
 						toUpdated[0] = false;
-						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro do seu repositório local é o mais recente");
+						messOut = new Message(messIn.method, messIn.fileName, messIn.repName, 
+								messIn.fileDate, toUpdated, messIn.user, null, 
+								"-- O ficheiro do seu repositório local é o mais recente");
 						outStream.writeObject(messOut);
 						result = 0;
 					}	
 				//erro o ficeiro nao existe
 				} else {
 					toUpdated[0] = false;
-					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " não existe");
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, 
+							toUpdated, messIn.user, null, "-- O ficheiro " + filename + " não existe no servidor");
 					outStream.writeObject(messOut);
 				}
 				
 			} else {
-				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao ficheiro " + filename + " do utilizador " + otherUser);
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, 
+						toUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + 
+						" não tem acesso ao ficheiro " + filename + " do utilizador " + otherUser);
 				outStream.writeObject(messOut);
 				result = -1;
 			}
-			br.close();
 			return result;
 		}
 
@@ -1214,6 +1202,40 @@ public class myGitServer{
 			return result;
 		}
 		
+		public boolean userHasAccess(String otherUser, Message messIn, File share_mac) 
+				throws InvalidKeyException, NoSuchAlgorithmException, IOException{
+			
+			boolean hasAccess = false;
+			
+			if (otherUser != null) {
+				
+				File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
+				verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
+				
+				BufferedReader br = new BufferedReader(new FileReader(shareLog));
+				String currentLine = null;
+				
+				while ((currentLine = br.readLine()) != null && !hasAccess) {
+					
+					String[] split = currentLine.split(",");
+				    String[] split2 = split[0].split(":");
+				    
+				    if (split2[0].equals(otherUser)) {
+				    	
+				    	if (split2[1].equals(messIn.user[0]))
+				    		hasAccess = true;
+				    	else
+				    		for(int i = 1; i < split.length && !hasAccess; i++)
+				    			if(split[i].equals(messIn.user[0]))
+				    				hasAccess = true;
+				    }
+				}
+				br.close();
+			} else
+				hasAccess = true;
+			return hasAccess;
+		}
+		
 		public boolean authenticate(User u, File f, File m, int nonce) throws IOException, InvalidKeyException, 
 		NoSuchAlgorithmException, ClassNotFoundException, InvalidKeySpecException, 
 		NoSuchPaddingException, InvalidAlgorithmParameterException{
@@ -1341,22 +1363,24 @@ public class myGitServer{
 		    return null;
 		}
 		
-		public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, File sigFile, File cifFile, 
+		public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, File cifFile, 
 				String filename, String pathFile) 
 						throws IOException, ClassNotFoundException, UnrecoverableKeyException, 
 						KeyStoreException, NoSuchAlgorithmException, CertificateException, 
 						NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException{
-			
-			//saves file's digital signature received from client
+
+			//save file's digital signature received from client
+			String[] splitName = filename.split("\\.");
+			File sigFile = new File(pathFile + splitName[0] + ".sig");
 			receiveFile(outStream, inStream, sigFile);
 			
-			//receives secret key
+			//receive secret key
 			SecretKey secKey = (SecretKey) inStream.readObject();
 			
-			//receives ciphered file
+			//receive ciphered file
 			receiveFile(outStream, inStream, cifFile);
 			
-			//getting public key
+			//get public key
 			PublicKey pubKey = getKeyPair().getPublic();
 			
 			Cipher c = Cipher.getInstance("RSA"); 
@@ -1368,11 +1392,50 @@ public class myGitServer{
 			fos = new FileOutputStream(pathFile + filename + ".key.server");
 			cos = new CipherOutputStream(fos, c); 
 			
-			//ciphers secret key using public key
+			//cipher secret key using public key
 			cos.write(secKey.getEncoded());
 			
 			cos.close();
 			fos.close();
+		}
+		
+		public void sendSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, File cifFile, 
+				String filename, String pathFile) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, NoSuchPaddingException, InvalidKeyException{
+			
+			//get private key
+			PrivateKey privKey = getKeyPair().getPrivate();
+			
+			Cipher c = Cipher.getInstance("RSA"); 
+			c.init(Cipher.DECRYPT_MODE, privKey);
+			
+			FileInputStream fis; 
+			CipherInputStream cis;
+			byte[] secKeyEncoded = new byte[16];
+			
+			fis = new FileInputStream(pathFile + filename + ".key.server");
+			cis = new CipherInputStream(fis, c); 
+			
+			//decipher secret key using private key
+			cis.read(secKeyEncoded);
+			
+			//get secret key
+			SecretKey secKey = new SecretKeySpec(secKeyEncoded, 0, secKeyEncoded.length, "AES");
+			
+			cis.close();
+			fis.close();
+			
+			//send to client the ciphered file
+			sendFile(outStream, inStream, cifFile);
+			
+			//send to client private key
+			outStream.writeObject(secKey);
+			
+			//get file's digital signature 
+			String[] splitName = filename.split("\\.");
+			File sigFile = new File(pathFile + splitName[0] + ".sig");
+			
+			//send file's digital signature
+			sendFile(outStream, inStream, sigFile);
 			
 		}
 		

@@ -522,6 +522,7 @@ public class myGitServer{
 			File file = null;
 			File sigFile = null;
 			File cifFile = null;
+			String cifFilename = null;
 			Path pathFolder = null;
 			String filename = null;
 			String pathFile = null;
@@ -533,7 +534,8 @@ public class myGitServer{
 				String[] splitName = filename.split("\\.");
 				pathFile = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/";
 				sigFile = new File(pathFile + splitName[0] + ".sig");
-				cifFile = new File(pathFile + splitName[0] + ".cif");
+				cifFilename = splitName[0] + ".cif";
+				cifFile = new File(pathFile + cifFilename);
 			} else {
 				pathFolder = new File("bin/" + SERVER_DIR + "/" + split[0] + "/" + split[1]).toPath();
 				file = new File("bin/" + SERVER_DIR + "/" + messIn.fileName[0]);
@@ -542,13 +544,14 @@ public class myGitServer{
 				pathFile = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/" 
 				+ split[1] + "/";
 				sigFile = new File(pathFile + splitName[0] + ".sig");
-				cifFile = new File(pathFile + splitName[0] + ".cif");
+				cifFilename = splitName[0] + ".cif";
+				cifFile = new File(pathFile + cifFilename);
 			}
 			
 			File newFile = null;
 		
 			Date date = null;
-			boolean exists = file.exists();
+			boolean exists = cifFile.exists();
 			
 			Message messOut = null;
 			boolean[] toUpdated = new boolean[1];
@@ -557,20 +560,20 @@ public class myGitServer{
 		
 			if (exists) {
 				//actualiza o ficheiro para uma versao mais recente
-				date = new Date(file.lastModified());
+				date = new Date(cifFile.lastModified());
 				
 				if (date.before(messIn.fileDate[0])) {
 
-					versao = countNumVersions1(pathFolder, split[split.length-1]);
+					versao = countNumVersions1(pathFolder, cifFilename);
 					newFile = new File(file + ".temp");
 					
 					toUpdated[0] = true;
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " foi atualizado no servidor");
 					outStream.writeObject(messOut);
 					newFile.createNewFile();
-					receiveSecureFile(outStream, inStream, newFile, sigFile, cifFile, filename, pathFile);
-					cifFile.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1] + "." + String.valueOf(versao)));
-					newFile.renameTo(new File(pathFolder.toString() + "/" + split[split.length-1]));
+					receiveSecureFile(outStream, inStream, sigFile, newFile, filename, pathFile);
+					cifFile.renameTo(new File(pathFolder.toString() + "/" + cifFilename + "." + String.valueOf(versao)));
+					newFile.renameTo(new File(pathFolder.toString() + "/" + cifFilename));
 					result = 0;
 					
 				} else {
@@ -587,7 +590,7 @@ public class myGitServer{
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " foi enviado para o servidor");
 				outStream.writeObject(messOut);
 				cifFile.createNewFile();
-				receiveSecureFile(outStream, inStream, file, sigFile, cifFile, filename, pathFile);
+				receiveSecureFile(outStream, inStream, sigFile, cifFile, filename, pathFile);
 				result = 0;
 									
 			}
@@ -1326,8 +1329,8 @@ public class myGitServer{
 		    return null;
 		}
 		
-		public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
-				File file, File sigFile, File cifFile, String filename, String pathFile) 
+		public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, File sigFile, File cifFile, 
+				String filename, String pathFile) 
 						throws IOException, ClassNotFoundException, UnrecoverableKeyException, 
 						KeyStoreException, NoSuchAlgorithmException, CertificateException, 
 						NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException{

@@ -697,14 +697,14 @@ public class myGitServer{
 						File sigFile = new File(rep.toString() + "/" + split[0] + ".sig");
 						
 						if (!currFile.exists()) {
-							newFile = currFile;
+							newFile = new File(rep.toString() + "/" + filename);
 							newFile.createNewFile();
 							receiveSecureFile(outStream, inStream, sigFile, newFile, messIn.fileName[i], rep.toString() + "/");
 						} else {
-							newFile = new File(messIn.fileName[i] + ".temp");
+							newFile = new File(rep.toString() + "/" + messIn.fileName[i] + ".temp");
 							newFile.createNewFile();
 							receiveSecureFile(outStream, inStream, sigFile, newFile, messIn.fileName[i], rep.toString() + "/");
-							fileRep[i].renameTo(new File(rep.toString() + "/" + filename + "." + Integer.toString(versions[i])));
+							fileRep[i*3].renameTo(new File(rep.toString() + "/" + filename + "." + Integer.toString(versions[i])));
 							newFile.renameTo(new File(rep.toString() + "/" + filename));
 						}
 					}

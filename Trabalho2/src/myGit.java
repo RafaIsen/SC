@@ -270,7 +270,9 @@ public class myGit{
 		int result = -1; 
 		Message messIn = null;
 		
-		File file = new File("bin/" + LOCAL_REPS + "/" + filename);
+		String filePath = "bin/" + LOCAL_REPS + "/";
+		
+		File file = new File(filePath + filename);
 		
 		String[] split = filename.split("/");
 		
@@ -297,7 +299,7 @@ public class myGit{
 				result = -1;
 			
 			else if (messIn.toBeUpdated[0] == true) {
-				sendSecureFile(outStream, inStream, file, filename);
+				sendSecureFile(outStream, inStream, file, filename, filePath);
 				result = 0;
 			} else
 				result = -1;
@@ -321,7 +323,9 @@ public class myGit{
 		File rep = null;
 		Message messIn = null;
 		
-		rep = new File("bin/" + LOCAL_REPS + "/" + repName);
+		String filePath = "bin/" + LOCAL_REPS + "/";
+		
+		rep = new File(filePath + repName);
 		
 		if (rep.exists()) {
 			File[] repFiles = rep.listFiles();
@@ -353,7 +357,7 @@ public class myGit{
 			else if (messIn.toBeUpdated != null) {
 				for(int i = 0; i < messIn.toBeUpdated.length; i++) {
 					if (messIn.toBeUpdated[i] == true) 
-						sendSecureFile(outStream, inStream, repFiles[i], name[i]);
+						sendSecureFile(outStream, inStream, repFiles[i], name[i], filePath);
 					}
 				result = 0;
 			} 
@@ -371,7 +375,8 @@ public class myGit{
 	UnrecoverableKeyException, NoSuchAlgorithmException, NoSuchPaddingException, KeyStoreException, 
 	CertificateException, SignatureException {
 		int result = 0;
-		File file = new File("bin/" + LOCAL_REPS + "/" + filename);
+		String filePath = "bin/" + LOCAL_REPS + "/";
+		File file = new File(filePath + filename);
 		File tempFile = null;
 		String[] split = filename.split("/");
 		String[] name = new String[1];
@@ -396,9 +401,9 @@ public class myGit{
 			result = -1;
 		
 		else if (messIn.toBeUpdated[0] == true) {
-			tempFile = new File("bin/" + LOCAL_REPS + "/" + filename + ".temp");
+			tempFile = new File(filePath + filename + ".temp");
 			tempFile.createNewFile();
-			receiveSecureFile(outStream, inStream, tempFile, filename);
+			receiveSecureFile(outStream, inStream, tempFile, filename, filePath);
 			tempFile.delete();
 			result = 0;
 		} 
@@ -407,10 +412,12 @@ public class myGit{
 	}
 
 	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, 
-			String user) throws IOException, ClassNotFoundException {
+			String user) throws IOException, ClassNotFoundException, InvalidKeyException, UnrecoverableKeyException, 
+	NoSuchAlgorithmException, NoSuchPaddingException, KeyStoreException, CertificateException, SignatureException {
 		int result = -1; 
-			
-		File rep = new File("bin/" + LOCAL_REPS + "/" + repName);
+		String filePath = "bin/" + LOCAL_REPS + "/";
+		File rep = new File(filePath + repName);
+		String path = filePath + repName + "/";
 		File newFile = null;
 		File[] repFiles = null;
 		String[] names = null;
@@ -451,32 +458,28 @@ public class myGit{
 				//a actualizar os ficheiros novos q o cliente nao tem
 				for (int i = 0; i < messIn.toBeUpdated.length; i++) {
 					//so a actualizar os ficheiros antigos
-					if(names != null)
+					if(names != null) {
 						if (i < messIn.fileName.length)
-							if (messIn.toBeUpdated[i] == true) {
-								newFile = new File(repFiles[i] + ".temp");
-								newFile.createNewFile();
-								receiveFile(outStream, inStream, newFile);
-								repFiles[i].delete();
-								newFile.renameTo(new File("bin/" + LOCAL_REPS + "/" + repName + "/" + names[i]));
+							if (messIn.toBeUpdated[i] == true)
+								if(names.length > i)
+									receiveSecureFile(outStream, inStream, newFile, repName + "/" + names[i], filePath);
+								else
+									receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i], filePath);
 							//receber ficheiros novos
-							} else {
-								newFile = new File(rep.toString() + "/" + messIn.fileName[i]);
-								newFile.createNewFile();
-								receiveFile(outStream, inStream, newFile);
+							else {
+								newFile = new File(path + messIn.fileName[i]);
+								if (!newFile.exists()) {
+									newFile.createNewFile();
+									receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i], filePath);
+								}
 							}
-						
+					} //receber ficheiros novos
+					else {
+						receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i], filePath);
+					}
 				}
 		}
-		if(messIn.delete != null){
-			if (messIn.delete[0] == true)
-				System.out.println("-- O ficheiro " + messIn.fileName[0] + 
-						" existe localmente mas foi eliminado no servidor" + System.lineSeparator() + messIn.result);
-			else
-				System.out.println(messIn.result);
-		}
-		else
-			System.out.println(messIn.result);
+		System.out.println(messIn.result);
 		return result;
 	}
 
@@ -497,8 +500,6 @@ public class myGit{
         }
         
         is.close();
-		//inStream.close();
-		//outStream.close();
 		return result;
 	}
 	
@@ -679,7 +680,7 @@ public class myGit{
 	}
 
 	public void sendSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
-			File file, String filename) throws UnrecoverableKeyException, InvalidKeyException, 
+			File file, String filename, String filePath) throws UnrecoverableKeyException, InvalidKeyException, 
 	NoSuchAlgorithmException, KeyStoreException, CertificateException, SignatureException, 
 	IOException, NoSuchPaddingException{
 		
@@ -704,7 +705,7 @@ public class myGit{
 		CipherOutputStream cos;
 		
 		fis = new FileInputStream(file); 
-		fos = new FileOutputStream("bin/" + LOCAL_REPS + "/" + splitName[0] + ".cif");
+		fos = new FileOutputStream(filePath + splitName[0] + ".cif");
 		cos = new CipherOutputStream(fos, c); 
 		
 		byte[] b = new byte[16]; 
@@ -722,18 +723,20 @@ public class myGit{
 		outStream.writeObject(secKey);
 		
 		//send ciphered file to the server
-		File cifFile = new File("bin/" + LOCAL_REPS + "/" + splitName[0] + ".cif");
+		File cifFile = new File(filePath + splitName[0] + ".cif");
 		sendFile(outStream, inStream, cifFile);
 		cifFile.delete();
 	}
 	
 	public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
-			File file, String filename) throws ClassNotFoundException, IOException, NoSuchAlgorithmException, 
+			File file, String filename, String filePath) throws ClassNotFoundException, IOException, NoSuchAlgorithmException, 
 	NoSuchPaddingException, InvalidKeyException, UnrecoverableKeyException, KeyStoreException, 
 	CertificateException, SignatureException{
 		
+		File cifFile = new File(filePath + filename.split("\\.")[0] + ".cif");
+		
 		//receive ciphered file from server
-		receiveFile(outStream, inStream, file);
+		receiveFile(outStream, inStream, cifFile);
 		
 		//receive secret key from server
 		SecretKey secKey = (SecretKey) inStream.readObject();
@@ -745,8 +748,8 @@ public class myGit{
 		FileOutputStream fos; 
 		CipherOutputStream cos;
 		
-		fis = new FileInputStream(file); 
-		fos = new FileOutputStream("bin/" + LOCAL_REPS + "/" + filename);
+		fis = new FileInputStream(cifFile); 
+		fos = new FileOutputStream(filePath + filename + ".temp");
 		cos = new CipherOutputStream(fos, c); 
 		
 		byte[] b = new byte[16]; 
@@ -762,13 +765,13 @@ public class myGit{
 		
 		//prepare file's digital signature
 		String[] splitName = filename.split("\\.");
-		File sigFile = new File("bin/" + LOCAL_REPS + "/" + splitName[0] + ".server.sig");
+		File sigFile = new File(filePath + splitName[0] + ".server.sig");
 		
 		//receive file's digital signature 
 		receiveFile(outStream, inStream, sigFile);
 		
 		//get deciphered file
-		File decifFile = new File("bin/" + LOCAL_REPS + "/" + filename);
+		File decifFile = new File(filePath + filename + ".temp");
 		
 		//verify file signature
 		File sigVerifier = writeSignedFile(decifFile, splitName[0]);
@@ -776,10 +779,19 @@ public class myGit{
 		if (!Arrays.equals(Files.readAllBytes(sigFile.toPath()), Files.readAllBytes(sigVerifier.toPath()))) {
 			System.out.println("-- Erro! O ficheiro " + filename + " foi corrompido durante o envio do servidor."
 					+ System.lineSeparator() + "O cliente irá terminar...");
+			//delete all files created in this method except the original file
+			sigVerifier.delete();
+			decifFile.delete();
+			sigFile.delete();
+			cifFile.delete();
 			System.exit(-1);
+			
 		}
+		new File(filePath + filename).delete();
+		decifFile.renameTo(new File(filePath + filename));
 		sigVerifier.delete();
 		sigFile.delete();
+		cifFile.delete();
 	}
 	
 }

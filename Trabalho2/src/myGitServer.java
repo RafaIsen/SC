@@ -35,8 +35,11 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
 
 import javax.crypto.BadPaddingException;
@@ -526,25 +529,25 @@ public class myGitServer{
 			String cifFilename = null;
 			Path pathFolder = null;
 			String filename = null;
-			String pathFile = null;
+			String filePath = null;
 			
 			if(secondI == -1) {
 				pathFolder = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0]).toPath();
 				file = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
 				filename = split[1];
 				String[] splitName = filename.split("\\.");
-				pathFile = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/";
+				filePath = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/";
 				cifFilename = splitName[0] + ".cif";
-				cifFile = new File(pathFile + cifFilename);
+				cifFile = new File(filePath + cifFilename);
 			} else {
 				pathFolder = new File("bin/" + SERVER_DIR + "/" + split[0] + "/" + split[1]).toPath();
 				file = new File("bin/" + SERVER_DIR + "/" + messIn.fileName[0]);
 				filename = split[2];
 				String[] splitName = filename.split("\\.");
-				pathFile = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/" 
+				filePath = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/" 
 				+ split[1] + "/";
 				cifFilename = splitName[0] + ".cif";
-				cifFile = new File(pathFile + cifFilename);
+				cifFile = new File(filePath + cifFilename);
 			}
 			
 			File newFile = null;
@@ -570,7 +573,7 @@ public class myGitServer{
 					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " foi atualizado no servidor");
 					outStream.writeObject(messOut);
 					newFile.createNewFile();
-					receiveSecureFile(outStream, inStream, newFile, filename, pathFile);
+					receiveSecureFile(outStream, inStream, newFile, filename, filePath);
 					cifFile.renameTo(new File(pathFolder.toString() + "/" + cifFilename + "." + String.valueOf(versao)));
 					newFile.renameTo(new File(pathFolder.toString() + "/" + cifFilename));
 					result = 0;
@@ -589,7 +592,7 @@ public class myGitServer{
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + " foi enviado para o servidor");
 				outStream.writeObject(messOut);
 				cifFile.createNewFile();
-				receiveSecureFile(outStream, inStream, cifFile, filename, pathFile);
+				receiveSecureFile(outStream, inStream, cifFile, filename, filePath);
 				result = 0;
 									
 			}
@@ -671,14 +674,16 @@ public class myGitServer{
 			
 			//saber quais os ficheiros a "eliminar"
 			if (fileRep != null && toUpdated == null) {
-				for (int j = 0; j < fileRep.length / 3; j++){
-					split = fileRep[j*3 + 1].getName().split("\\.");
+				for (int i = 0; i < fileRep.length / 3; i++){
+					split = fileRep[i*3 + 1].getName().split("\\.");
 					String fileExt = split[1];
-					split = fileRep[j*3].getName().split("\\.");
+					split = fileRep[i*3].getName().split("\\.");
 					filename = split[0] + ".cif";
-					if (!Arrays.asList(messIn.repName).contains(fileRep[j*3])) {
-						fileRep[j*3].renameTo(new File(fileRep[j*3] + "." + String.valueOf(countNumVersions1(rep.toPath(), fileRep[j*3].getName()))));		
-						res += "-- O ficheiro " + split[0] + "." + fileExt + " vai ser eliminado no servidor" + System.lineSeparator();
+					if (!Arrays.asList(messIn.repName).contains(fileRep[i*3])) {
+						fileRep[i*3].renameTo(new File(fileRep[i*3] + "." 
+					+ String.valueOf(countNumVersions1(rep.toPath(), fileRep[i*3].getName()))));		
+						res += "-- O ficheiro " + split[0] + "." + fileExt 
+								+ " vai ser eliminado no servidor" + System.lineSeparator();
 						eliminou = true;
 					}
 				}
@@ -725,7 +730,7 @@ public class myGitServer{
 			String repName = null;
 			String filename = null;
 			String name = null;
-			String pathFile = null;
+			String filePath = null;
 			
 			int result = -1;
 			
@@ -760,12 +765,12 @@ public class myGitServer{
 				
 				//criar path para o ficheiro
 				if (split.length == 3) {
-					pathFile = "bin/" + SERVER_DIR + "/" + otherUser + "/" + repName + "/";
-					file = new File(pathFile + name + ".cif");
+					filePath = "bin/" + SERVER_DIR + "/" + otherUser + "/" + repName + "/";
+					file = new File(filePath + name + ".cif");
 				}
 				else {
-					pathFile = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + repName + "/";
-					file = new File(pathFile + name + ".cif");
+					filePath = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + repName + "/";
+					file = new File(filePath + name + ".cif");
 					myrep = true;
 				}
 											
@@ -777,14 +782,14 @@ public class myGitServer{
 						toUpdated[0] = true;
 						if(myrep)
 							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, 
-									messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename + 
-									" foi copiado do servidor");
+									messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " + filename 
+									+ " foi copiado do servidor");
 						else
 							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, 
 									messIn.fileDate, toUpdated, messIn.user, null, "-- O ficheiro " 
 							+ filename + " do utilizador " + otherUser + " foi copiado do servidor");
 						outStream.writeObject(messOut);
-						sendSecureFile(outStream, inStream, file, filename, pathFile);
+						sendSecureFile(outStream, inStream, file, filename, filePath);
 						result = 0;				
 					} else {
 						//nao actualiza o ficheiro porque nao he mais recente
@@ -815,13 +820,8 @@ public class myGitServer{
 
 		private int pullRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, 
 				File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, 
-		ClassNotFoundException {
-			
-			File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
-			
-			BufferedReader br = new BufferedReader(new FileReader(shareLog));
-			
-			String currentLine = null;
+		ClassNotFoundException, UnrecoverableKeyException, KeyStoreException, CertificateException, 
+		NoSuchPaddingException {
 			
 			String[] split1 = messIn.repName.split("/");
 			
@@ -842,26 +842,7 @@ public class myGitServer{
 			} else
 				repName = split1[0];
 			
-			if (otherUser != null) {
-				
-				verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
-				
-				while ((currentLine = br.readLine()) != null && !hasAccess) {
-					
-					String[] split = currentLine.split(",");
-				    String[] split2 = split[0].split(":");
-				    
-				    if (split2[0].equals(otherUser)) {
-				    	
-				    	if (split2[1].equals(messIn.user[0]))
-				    		hasAccess = true;
-				    	else
-				    		for(int i = 1; i < split.length && !hasAccess; i++)
-				    			if(split[i].equals(messIn.user[0]))
-				    				hasAccess = true;
-				    }	
-				}   
-			}
+			hasAccess = userHasAccess(otherUser, messIn, share_mac);
 			
 			if (hasAccess) {
 		
@@ -879,108 +860,172 @@ public class myGitServer{
 				//criar path para o rep
 				if (messIn.repName.contains("/")) {
 					rep = new File("bin/" + SERVER_DIR + "/" + messIn.repName);
-					res = "-- O respositório " + messIn.repName.split("/")[1] + " do utilizador " + messIn.repName.split("/")[0] + " foi copiado do servidor";
+					res = "-- O respositório " + messIn.repName.split("/")[1] + " do utilizador " 
+					+ messIn.repName.split("/")[0] + " foi copiado do servidor";
 				}
 				//rep do user
 				else {
 					rep = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
-					res = "-- O respositório " + messIn.repName + " do utilizador " + messIn.user[0] + " foi copiado do servidor";
+					res = "-- O respositório " + messIn.repName + " do utilizador " + messIn.user[0] 
+							+ " foi copiado do servidor";
 				}
 				//erro caso o rep nao exista
 				if (!rep.exists()) {
-				    br.close();
 					return -1;
 				}
 				//criar lista com todos os ficheiros
 				else {
-					//final String nameOfFile = filename;
-		
 		             fileRep = rep.listFiles(new FilenameFilter() {
 		                @Override
 		                public boolean accept(File dir, String nameA) {
 		                    return nameA.matches("([.[^.\\//]]+.\\D+)|([.[^.\\//]]+.[.[^.\\//]]+.\\D+)");
-		                	//return !nameA.matches("(\\w*.\\w+.\\d)|(\\w+.\\d)");
 		                }
 		             });
 				}
+				
+				//number of cif files
+				int numFiles = 0;
+				
+				for(int i = 0; i < fileRep.length; i++)
+					if(fileRep[i].getName().contains(".cif"))
+						numFiles++;
+				
+				//file rep with cif files
+				ArrayList<File> newFileRep = new ArrayList<File>(numFiles);
+				
+				//file rep with key server files
+				ArrayList<File> keyFileRep = new ArrayList<File>(numFiles);
+				
+				for (int i = 0; i < fileRep.length; i++) {
+					if (fileRep[i].getName().contains(".cif")) {
+						newFileRep.add(fileRep[i]);
+						String cifFileName = fileRep[i].getName().split("\\.")[0];
+						String keyFileName = null;
+						String keyExt = null;
+						String[] keySplit = null;
+						for (int j = 0; j < fileRep.length; j++) {
+							keySplit = fileRep[j].getName().split("\\.");
+							keyFileName = keySplit[0];
+							if(keySplit.length > 2) {
+								keyExt = fileRep[j].getName().split("\\.")[2];
+								if(cifFileName.equals(keyFileName) && keyExt.equals("key"))
+									keyFileRep.add(fileRep[j]);
+							}
+						}
+					}
+				}
+				
 				//so para actualizar os ficheiros
-				if (fileRep.length > 0) {
-					toUpdated = new boolean[fileRep.length];
-					names = new String[fileRep.length];
+				if (numFiles > 0) {
+					toUpdated = new boolean[numFiles];
+					names = new String[numFiles];
 					if(messIn.fileName != null)
-					if (fileRep.length < messIn.fileName.length)
-						delete = new boolean[fileRep.length];
+					if (numFiles < messIn.fileName.length)
+						delete = new boolean[numFiles];
 					else
 						delete = new boolean[messIn.fileName.length];
-					//
-					for (int i = 0; i < fileRep.length; i++) {
-						if(messIn.fileName != null)
-						if (i < messIn.fileName.length) {
-							names[i] = messIn.fileName[i];
-							currFile = new File(rep.toString() + "/" + messIn.fileName[i]);
+					if(messIn.fileName != null) {
+						
+						HashMap<String, Date> mapaDatas = new HashMap<String, Date>();
+						
+						for (int i = 0; i < numFiles; i++) {
+							if(messIn.fileName.length > i)
+								names[i] = messIn.fileName[i];
+							currFile = new File(newFileRep.get(i).getPath());
 							
 							//se o ficheiro ainda existe no servidor
 							if (currFile.exists()) {
 								date = new Date(currFile.lastModified());
 								
-								//verificar se o ficheiro precisa de ser actualizado
-								if (date.compareTo(messIn.fileDate[i]) > 0) 
-									toUpdated[i] = true;
-															
+								String currName = currFile.getName().split("\\.")[0];
+								String currExt = keyFileRep.get(i).getName().split("\\.")[1];
+								String currFileName = currName + "." + currExt;
+								
+								if(messIn.fileName.length > i) {
+									if(!names[i].equals(currFileName)) {
+										//caso em que ficheiro não existe no cliente
+										//guarda a data e o nome do ficheiro para verificar mais tarde
+										mapaDatas.put(names[i], messIn.fileDate[i]);
+										names[i] = currFileName;
+									}
+									else
+										//verificar se o ficheiro precisa de ser actualizado
+										if (date.compareTo(messIn.fileDate[i]) > 0) 
+											toUpdated[i] = true;
+								} else {
+									names[i] = currFileName;
+
+									//verificar se o ficheiro precisa de ser actualizado
+									if(messIn.fileName.length > i) {
+										if (date.compareTo(messIn.fileDate[i]) > 0) 
+											toUpdated[i] = true;
+									} else 
+										if (date.compareTo(mapaDatas.get(currFileName)) > 0) 
+											toUpdated[i] = true;
+								}						
 							//ficheiros que o servidor ja nao tem	
 							} else 
-								delete[i] = true;	
-							
-						//ficheiros novos que o cliente nao tem	
-						} else {
-							for (int j = 0;j < names.length; j++)
-								if (!Arrays.asList(names).contains(fileRep[j].getName())) {
-									names[j] = fileRep[j].getName();
-								}
+								delete[i] = true;		
 						}
-											
 					}
+					else
+						//ficheiros novos que o cliente nao tem	
+						for (int i = 0; i < names.length; i++)
+							if (!Arrays.asList(names).contains(newFileRep.get(i).getName())) {
+								String name = newFileRep.get(i).getName().split("\\.")[0];
+								String ext = keyFileRep.get(i).getName().split("\\.")[1];
+								names[i] = name + "." + ext;
+							}
+					
 					if(messIn.fileName != null)
-					if (messIn.fileName.length > fileRep.length)
-						Arrays.fill(delete, fileRep.length, delete.length-1, Boolean.TRUE);
+						if (messIn.fileName.length > numFiles)
+							Arrays.fill(delete, numFiles, delete.length-1, Boolean.TRUE);
 						
-					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, toUpdated, messIn.user, delete, res);
+					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, toUpdated, 
+							messIn.user, delete, res);
 					outStream.writeObject(messOut);
 					
 					for (int i = 0; i < names.length; i++) 
-						sendFile(outStream, inStream, new File(rep.toString() + "/" + names[i]));
+						sendSecureFile(outStream, inStream, new File(newFileRep.get(i).getPath()), 
+								names[i], rep.toString() + "/");
 				
-				result = 0;
+					result = 0;
 				
-				} else if(rep.listFiles() != null){
-					delete = new boolean[1];
-					delete[0] = true;
-					res = "-- O ficheiro " + messIn.fileName[0] + " existe localmente mas foi eliminado no servidor ";
+				} else if(messIn.fileName != null){
+					res = "";
+					for(int i = 0; i < messIn.fileName.length; i++) {
+						delete = new boolean[messIn.fileName.length];
+						delete[i] = true;
+						res += "-- O ficheiro " + messIn.fileName[i] + " existe localmente mas foi eliminado no servidor "
+								+ System.lineSeparator();
+					}
+					messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, 
+							messIn.toBeUpdated, messIn.user, null, res);
 				}
 				//para inicializar o rep
 				else {
-					toUpdated = new boolean[fileRep.length];
-					names = new String[fileRep.length];
+					toUpdated = new boolean[numFiles];
+					names = new String[numFiles];
 					Arrays.fill(toUpdated, 0, toUpdated.length-1, Boolean.TRUE);
 					for(int i = 0; i < toUpdated.length; i++)
-						names[i] = fileRep[i].getName();
-					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, toUpdated, messIn.user, null, res);
+						names[i] = newFileRep.get(i).getName();
+					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, toUpdated,
+							messIn.user, null, res);
 					outStream.writeObject(messOut);
 					
-					for (int i = 0; i < fileRep.length; i++) 
-						sendFile(outStream, inStream, fileRep[i]);
+					for (int i = 0; i < numFiles; i++) 
+						sendFile(outStream, inStream, newFileRep.get(i));
 									
 					result = 0;
 				}
 			} else {
-				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
+				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, 
+						messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] 
+								+ " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
 				outStream.writeObject(messOut);
-				br.close();
 				return -1;
 			} 
-			messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, messIn.toBeUpdated, messIn.user, delete, "-- O utilizador " + messIn.user[0] + " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
 			outStream.writeObject(messOut);
-			br.close();
 			return result;
 		}
 
@@ -1364,14 +1409,14 @@ public class myGitServer{
 		}
 		
 		public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, File cifFile, 
-				String filename, String pathFile) 
+				String filename, String filePath) 
 						throws IOException, ClassNotFoundException, UnrecoverableKeyException, 
 						KeyStoreException, NoSuchAlgorithmException, CertificateException, 
 						NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException{
 
 			//save file's digital signature received from client
 			String[] splitName = filename.split("\\.");
-			File sigFile = new File(pathFile + splitName[0] + ".sig");
+			File sigFile = new File(filePath + splitName[0] + ".sig");
 			receiveFile(outStream, inStream, sigFile);
 			
 			//receive secret key
@@ -1389,7 +1434,7 @@ public class myGitServer{
 			FileOutputStream fos; 
 			CipherOutputStream cos;
 			
-			fos = new FileOutputStream(pathFile + filename + ".key.server");
+			fos = new FileOutputStream(filePath + filename + ".key.server");
 			cos = new CipherOutputStream(fos, c); 
 			
 			//cipher secret key using public key
@@ -1400,7 +1445,7 @@ public class myGitServer{
 		}
 		
 		public void sendSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, File cifFile, 
-				String filename, String pathFile) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, NoSuchPaddingException, InvalidKeyException{
+				String filename, String filePath) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, NoSuchPaddingException, InvalidKeyException{
 			
 			//get private key
 			PrivateKey privKey = getKeyPair().getPrivate();
@@ -1412,7 +1457,7 @@ public class myGitServer{
 			CipherInputStream cis;
 			byte[] secKeyEncoded = new byte[16];
 			
-			fis = new FileInputStream(pathFile + filename + ".key.server");
+			fis = new FileInputStream(filePath + filename + ".key.server");
 			cis = new CipherInputStream(fis, c); 
 			
 			//decipher secret key using private key
@@ -1432,7 +1477,7 @@ public class myGitServer{
 			
 			//get file's digital signature 
 			String[] splitName = filename.split("\\.");
-			File sigFile = new File(pathFile + splitName[0] + ".sig");
+			File sigFile = new File(filePath + splitName[0] + ".sig");
 			
 			//send file's digital signature
 			sendFile(outStream, inStream, sigFile);

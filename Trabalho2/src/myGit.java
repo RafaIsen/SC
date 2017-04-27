@@ -66,13 +66,13 @@ public class myGit{
 		//creates a local repository
 		if (args[0].equals("-init")){
 
-			rep = new File(args[1]);
+			rep = new File(args[1] + "/keys");
 			
 			if (rep.exists())
 				System.out.println("-- O repositório " + args[1] + 
 						" ja existe. Escolha outro nome por favor.");
 			else {
-				rep.mkdir();
+				rep.mkdirs();
 				System.out.println("-- O repositório " + args[1] + " foi criado localmente ");
 			}
 		}
@@ -92,7 +92,7 @@ public class myGit{
 				port = Integer.parseInt(ip[1]);
 				
 				//verifies the certificate sent by the server
-				System.setProperty("javax.net.ssl.trustStore", args[1] + "/myClient.keyStore");
+				System.setProperty("javax.net.ssl.trustStore", args[3].split("/")[0] + "/keys/myClient.keyStore");
 				//creates the socket
 				SocketFactory sf = SSLSocketFactory.getDefault();
 				Socket cSoc = sf.createSocket(ip[0], port);
@@ -276,7 +276,7 @@ public class myGit{
 				result = -1;
 			
 			else if (messIn.toBeUpdated[0] == true) {
-				sendSecureFile(outStream, inStream, file, filename);
+				sendSecureFile(outStream, inStream, file, filename.split("/")[1]);
 				result = 0;
 			} else
 				result = -1;
@@ -594,10 +594,10 @@ public class myGit{
 		
 	}
 	
-	public KeyPair getKeyPair() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, 
+	public KeyPair getKeyPair(String rep) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, 
 	IOException, UnrecoverableKeyException {
 		
-		FileInputStream is = new FileInputStream("myClient.keystore");
+		FileInputStream is = new FileInputStream(rep + "/keys/myClient.keystore");
 
 	    KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 	    keystore.load(is, "client1617".toCharArray());
@@ -621,7 +621,7 @@ public class myGit{
 	    return null;
 	}
 	
-	public File writeSignedFile(File f, String filename) throws NoSuchAlgorithmException, IOException, 
+	public File writeSignedFile(File f, String filename, String repName) throws NoSuchAlgorithmException, IOException, 
 	UnrecoverableKeyException, KeyStoreException, CertificateException, InvalidKeyException, 
 	SignatureException { 
 		
@@ -641,10 +641,10 @@ public class myGit{
 		}
 		scan.close();
 		
-		FileOutputStream fos = new FileOutputStream(filename + ".sig"); 
+		FileOutputStream fos = new FileOutputStream(repName + "/" + filename + ".sig"); 
 		ObjectOutputStream oos = new ObjectOutputStream(fos); 
 		
-		PrivateKey key = getKeyPair().getPrivate();
+		PrivateKey key = getKeyPair(filename.split("/")[0]).getPrivate();
 		
 		Signature s = Signature.getInstance("SHA256withRSA"); 
 		s.initSign(key); 
@@ -652,7 +652,7 @@ public class myGit{
 		oos.writeObject(s.sign( )); 
 		fos.close();
 		
-		return new File(filename + ".sig");
+		return new File(repName + "/" + filename + ".sig");
 	}
 
 	public void sendSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
@@ -662,7 +662,7 @@ public class myGit{
 		
 		//generates file's digital signature
 		String[] splitName = filename.split("\\.");
-		File sigFile = writeSignedFile(file, splitName[0]);
+		File sigFile = writeSignedFile(file, filename);
 		
 		//send file's digital signature
 		sendFile(outStream, inStream, sigFile);

@@ -534,6 +534,13 @@ public class myGitServer{
 			String filename = null;
 			String filePath = null;
 			String user = null;
+			File rep = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + split[0]);
+			
+			//criar rep caso nao exista
+			if (!rep.exists()){
+				rep.mkdir();
+				System.out.println("-- O repositório " + split[0] + " foi criado no servidor");
+			}
 			
 			if(secondI == -1) {
 				pathFolder = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + split[0]).toPath();

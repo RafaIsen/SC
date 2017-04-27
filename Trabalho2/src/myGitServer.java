@@ -534,10 +534,9 @@ public class myGitServer{
 			Path pathFolder = null;
 			String filename = null;
 			String filePath = null;
-			String otherUser = null;
+			String user = null;
 			
 			if(secondI == -1) {
-				otherUser = split[0];
 				pathFolder = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0]).toPath();
 				file = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
 				filename = split[1];
@@ -546,17 +545,17 @@ public class myGitServer{
 				cifFilename = splitName[0] + ".cif";
 				cifFile = new File(filePath + cifFilename);
 			} else {
+				user = split[0];
 				pathFolder = new File("bin/" + SERVER_DIR + "/" + split[0] + "/" + split[1]).toPath();
 				file = new File("bin/" + SERVER_DIR + "/" + messIn.fileName[0]);
 				filename = split[2];
 				String[] splitName = filename.split("\\.");
-				filePath = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/" 
-				+ split[1] + "/";
+				filePath = "bin/" + SERVER_DIR + "/" + split[0] + "/" + split[1] + "/";
 				cifFilename = splitName[0] + ".cif";
 				cifFile = new File(filePath + cifFilename);
 			}
 			
-			boolean hasAccess = userHasAccess(otherUser, messIn, share_mac);
+			boolean hasAccess = userHasAccess(user, messIn, share_mac);
 			
 			File newFile = null;
 		
@@ -609,7 +608,7 @@ public class myGitServer{
 			} else {
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, 
 						toUpdate, messIn.user, null, "-- O utilizador " + messIn.user[0] + 
-						" não tem acesso ao ficheiro " + filename + " do utilizador " + otherUser);
+						" não tem acesso ao ficheiro " + filename + " do utilizador " + user);
 				outStream.writeObject(messOut);
 				result = -1;
 			}
@@ -637,24 +636,25 @@ public class myGitServer{
 			
 			String[] split = messIn.repName.split("/"); 
 			String filename = null;
-			String otherUser = null;
+			String user = null;
 			
 			boolean eliminou = false;
 			
-			boolean hasAccess = userHasAccess(otherUser, messIn, share_mac);
+			//criar path para o rep
+			if (messIn.repName.contains("/")) {
+				rep = new File("bin/" + SERVER_DIR + "/" + messIn.repName);
+				user = split[0];
+				repName = split[1];
+			}	
+			else {
+				rep = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
+				repName = messIn.repName;
+			}
+			
+			boolean hasAccess = userHasAccess(user, messIn, share_mac);
 			
 			if (hasAccess) {
-			
-				//criar path para o rep
-				if (messIn.repName.contains("/")) {
-					rep = new File("bin/" + SERVER_DIR + "/" + messIn.repName);
-					otherUser = split[0];
-					repName = split[1];
-				}	
-				else {
-					rep = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
-					repName = messIn.repName;
-				}
+				
 				//criar rep caso nao exista
 				if (!rep.exists()){
 					rep.mkdir();
@@ -742,7 +742,7 @@ public class myGitServer{
 			} else {
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, 
 						messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] 
-								+ " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
+								+ " não tem acesso ao repositório " + repName + " do utilizador " + user);
 				outStream.writeObject(messOut);
 				result = -1;
 			} 
@@ -756,7 +756,7 @@ public class myGitServer{
 			
 			String[] split = messIn.fileName[0].split("/");
 			
-			String otherUser = null;
+			String user = null;
 			String repName = null;
 			String filename = null;
 			String name = null;
@@ -773,7 +773,7 @@ public class myGitServer{
 			toUpdate[0] = false;
 			
 			if(split.length > 2){
-				otherUser = split[0];
+				user = split[0];
 				repName = split[1];
 				filename = split[2];
 				name = filename.split("\\.")[0];
@@ -783,7 +783,7 @@ public class myGitServer{
 				name = filename.split("\\.")[0];	
 			}
 			
-			hasAccess = userHasAccess(otherUser, messIn, share_mac);
+			hasAccess = userHasAccess(user, messIn, share_mac);
 			
 			if (hasAccess) {
 			
@@ -795,7 +795,7 @@ public class myGitServer{
 				
 				//criar path para o ficheiro
 				if (split.length == 3) {
-					filePath = "bin/" + SERVER_DIR + "/" + otherUser + "/" + repName + "/";
+					filePath = "bin/" + SERVER_DIR + "/" + user + "/" + repName + "/";
 					file = new File(filePath + name + ".cif");
 				}
 				else {
@@ -817,7 +817,7 @@ public class myGitServer{
 						else
 							messOut = new Message(messIn.method, messIn.fileName, messIn.repName, 
 									messIn.fileDate, toUpdate, messIn.user, null, "-- O ficheiro " 
-							+ filename + " do utilizador " + otherUser + " foi copiado do servidor");
+							+ filename + " do utilizador " + user + " foi copiado do servidor");
 						outStream.writeObject(messOut);
 						sendSecureFile(outStream, inStream, file, filename, filePath);
 						result = 0;				
@@ -841,7 +841,7 @@ public class myGitServer{
 			} else {
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, 
 						toUpdate, messIn.user, null, "-- O utilizador " + messIn.user[0] + 
-						" não tem acesso ao ficheiro " + filename + " do utilizador " + otherUser);
+						" não tem acesso ao ficheiro " + filename + " do utilizador " + user);
 				outStream.writeObject(messOut);
 				result = -1;
 			}
@@ -855,7 +855,7 @@ public class myGitServer{
 			
 			String[] split1 = messIn.repName.split("/");
 			
-			String otherUser = null;
+			String user = null;
 			String repName = null;
 			
 			int result = -1;
@@ -867,12 +867,12 @@ public class myGitServer{
 			boolean[] delete = null;
 			
 			if(split1.length > 1){
-				otherUser = split1[0];
+				user = split1[0];
 				repName = split1[1];
 			} else
 				repName = split1[0];
 			
-			hasAccess = userHasAccess(otherUser, messIn, share_mac);
+			hasAccess = userHasAccess(user, messIn, share_mac);
 			
 			if (hasAccess) {
 		
@@ -884,7 +884,6 @@ public class myGitServer{
 		
 				boolean[] toUpdate = null;
 				String[] names = null;
-				ArrayList<String> delNames = new ArrayList<String>();
 				
 				String res = null;
 				
@@ -1054,7 +1053,7 @@ public class myGitServer{
 			} else {
 				messOut = new Message(messIn.method, messIn.fileName, messIn.repName, messIn.fileDate, 
 						messIn.toBeUpdated, messIn.user, null, "-- O utilizador " + messIn.user[0] 
-								+ " não tem acesso ao repositório " + repName + " do utilizador " + otherUser);
+								+ " não tem acesso ao repositório " + repName + " do utilizador " + user);
 				outStream.writeObject(messOut);
 				return -1;
 			} 
@@ -1280,12 +1279,12 @@ public class myGitServer{
 			return result;
 		}
 		
-		public boolean userHasAccess(String otherUser, Message messIn, File share_mac) 
+		public boolean userHasAccess(String user, Message messIn, File share_mac) 
 				throws InvalidKeyException, NoSuchAlgorithmException, IOException{
 			
 			boolean hasAccess = false;
 			
-			if (otherUser != null) {
+			if (user != null) {
 				
 				File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
 				verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
@@ -1298,7 +1297,7 @@ public class myGitServer{
 					String[] split = currentLine.split(",");
 				    String[] split2 = split[0].split(":");
 				    
-				    if (split2[0].equals(otherUser)) {
+				    if (split2[0].equals(user)) {
 				    	
 				    	if (split2[1].equals(messIn.user[0]))
 				    		hasAccess = true;

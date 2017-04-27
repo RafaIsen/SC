@@ -11,6 +11,7 @@ import java.net.Socket;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
@@ -46,8 +47,6 @@ import java.security.cert.CertificateException;
 //Cliente myGit
 public class myGit{
 	
-	public final String LOCAL_REPS = "localreps";
-	
 	public static void main(String[] args) throws IOException, ClassNotFoundException, 
 	URISyntaxException, NoSuchAlgorithmException, UnrecoverableKeyException,
 	InvalidKeyException, KeyStoreException, CertificateException, SignatureException, NoSuchPaddingException{
@@ -62,36 +61,19 @@ public class myGit{
 			
 		String[] ip = null;
 		int port = 0;
-		File localreps = null;
 		File rep = null;
-		Path repPath = null;
 		
 		//creates a local repository
 		if (args[0].equals("-init")){
-			localreps = new File("bin/" + LOCAL_REPS);
-			if (!localreps.exists()) {
-				new File(localreps.toString()).mkdir();
-				rep = new File(localreps.toString() + "/" + args[1]);
-				
-				if (rep.exists())
-					System.out.println("-- O repositório " + args[1] + 
-							" ja existe. Escolha outro nome por favor");
-				else {
-					rep.mkdir();
-					repPath = rep.toPath();
-					System.out.println("-- O repositório " + args[1] + " foi criado localmente ");
-				}
-			} else {
-				rep = new File(localreps.toString() + "/" + args[1]);
-				
-				if (rep.exists())
-					System.out.println("-- O repositório " + args[1] + 
-							" ja existe. Escolha outro nome por favor");
-				else {
-					rep.mkdir();
-					repPath = rep.toPath();
-					System.out.println("-- O repositório " + args[1] + " foi criado localmente ");
-				}
+
+			rep = new File(args[1]);
+			
+			if (rep.exists())
+				System.out.println("-- O repositório " + args[1] + 
+						" ja existe. Escolha outro nome por favor.");
+			else {
+				rep.mkdir();
+				System.out.println("-- O repositório " + args[1] + " foi criado localmente ");
 			}
 		}
 		else {
@@ -110,7 +92,7 @@ public class myGit{
 				port = Integer.parseInt(ip[1]);
 				
 				//verifies the certificate sent by the server
-				System.setProperty("javax.net.ssl.trustStore", "myClient.keyStore");
+				System.setProperty("javax.net.ssl.trustStore", args[1] + "/myClient.keyStore");
 				//creates the socket
 				SocketFactory sf = SSLSocketFactory.getDefault();
 				Socket cSoc = sf.createSocket(ip[0], port);
@@ -132,9 +114,6 @@ public class myGit{
 				boolean exists = (boolean) inStream.readObject();
 				
 				authenticateUser(exists, param_p, args[0], args[2], args[3], outStream , inStream, scan);
-				
-				if (repPath == null)
-					repPath = new File("bin/" + LOCAL_REPS).toPath();
 
 				//executes the command
 				if (param_p) {
@@ -270,9 +249,7 @@ public class myGit{
 		int result = -1; 
 		Message messIn = null;
 		
-		String filePath = "bin/" + LOCAL_REPS + "/";
-		
-		File file = new File(filePath + filename);
+		File file = new File(filename);
 		
 		String[] split = filename.split("/");
 		
@@ -299,7 +276,7 @@ public class myGit{
 				result = -1;
 			
 			else if (messIn.toBeUpdated[0] == true) {
-				sendSecureFile(outStream, inStream, file, filename, filePath);
+				sendSecureFile(outStream, inStream, file, filename);
 				result = 0;
 			} else
 				result = -1;
@@ -322,10 +299,8 @@ public class myGit{
 		int result = -1; 
 		File rep = null;
 		Message messIn = null;
-		
-		String filePath = "bin/" + LOCAL_REPS + "/";
-		
-		rep = new File(filePath + repName);
+
+		rep = new File(repName);
 		
 		if (rep.exists()) {
 			File[] repFiles = rep.listFiles();
@@ -357,7 +332,7 @@ public class myGit{
 			else if (messIn.toBeUpdated != null) {
 				for(int i = 0; i < messIn.toBeUpdated.length; i++) {
 					if (messIn.toBeUpdated[i] == true) 
-						sendSecureFile(outStream, inStream, repFiles[i], name[i], filePath);
+						sendSecureFile(outStream, inStream, repFiles[i], name[i]);
 					}
 				result = 0;
 			} 
@@ -375,8 +350,7 @@ public class myGit{
 	UnrecoverableKeyException, NoSuchAlgorithmException, NoSuchPaddingException, KeyStoreException, 
 	CertificateException, SignatureException {
 		int result = 0;
-		String filePath = "bin/" + LOCAL_REPS + "/";
-		File file = new File(filePath + filename);
+		File file = new File(filename);
 		File tempFile = null;
 		String[] split = filename.split("/");
 		String[] name = new String[1];
@@ -401,9 +375,9 @@ public class myGit{
 			result = -1;
 		
 		else if (messIn.toBeUpdated[0] == true) {
-			tempFile = new File(filePath + filename + ".temp");
+			tempFile = new File(filename + ".temp");
 			tempFile.createNewFile();
-			receiveSecureFile(outStream, inStream, tempFile, filename, filePath);
+			receiveSecureFile(outStream, inStream, tempFile, filename);
 			tempFile.delete();
 			result = 0;
 		} 
@@ -415,9 +389,8 @@ public class myGit{
 			String user) throws IOException, ClassNotFoundException, InvalidKeyException, UnrecoverableKeyException, 
 	NoSuchAlgorithmException, NoSuchPaddingException, KeyStoreException, CertificateException, SignatureException {
 		int result = -1; 
-		String filePath = "bin/" + LOCAL_REPS + "/";
-		File rep = new File(filePath + repName);
-		String path = filePath + repName + "/";
+		File rep = new File(repName);
+		String path = repName + "/";
 		File newFile = null;
 		File[] repFiles = null;
 		String[] names = null;
@@ -462,20 +435,20 @@ public class myGit{
 						if (i < messIn.fileName.length)
 							if (messIn.toBeUpdated[i] == true)
 								if(names.length > i)
-									receiveSecureFile(outStream, inStream, newFile, repName + "/" + names[i], filePath);
+									receiveSecureFile(outStream, inStream, newFile, repName + "/" + names[i]);
 								else
-									receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i], filePath);
+									receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i]);
 							//receber ficheiros novos
 							else {
 								newFile = new File(path + messIn.fileName[i]);
 								if (!newFile.exists()) {
 									newFile.createNewFile();
-									receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i], filePath);
+									receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i]);
 								}
 							}
 					} //receber ficheiros novos
 					else {
-						receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i], filePath);
+						receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i]);
 					}
 				}
 		}
@@ -629,7 +602,10 @@ public class myGit{
 	    KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 	    keystore.load(is, "client1617".toCharArray());
 
-	    String alias = "myClient";
+	    Enumeration<String> enumeration = keystore.aliases();
+	    String alias = null;
+        while(enumeration.hasMoreElements())
+            alias = (String)enumeration.nextElement();
 
 	    Key key = keystore.getKey(alias, "client1617".toCharArray());
 	    if (key instanceof PrivateKey) {
@@ -665,7 +641,7 @@ public class myGit{
 		}
 		scan.close();
 		
-		FileOutputStream fos = new FileOutputStream("bin/" + LOCAL_REPS + "/" + filename + ".sig"); 
+		FileOutputStream fos = new FileOutputStream(filename + ".sig"); 
 		ObjectOutputStream oos = new ObjectOutputStream(fos); 
 		
 		PrivateKey key = getKeyPair().getPrivate();
@@ -676,11 +652,11 @@ public class myGit{
 		oos.writeObject(s.sign( )); 
 		fos.close();
 		
-		return new File("bin/" + LOCAL_REPS + "/" + filename + ".sig");
+		return new File(filename + ".sig");
 	}
 
 	public void sendSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
-			File file, String filename, String filePath) throws UnrecoverableKeyException, InvalidKeyException, 
+			File file, String filename) throws UnrecoverableKeyException, InvalidKeyException, 
 	NoSuchAlgorithmException, KeyStoreException, CertificateException, SignatureException, 
 	IOException, NoSuchPaddingException{
 		
@@ -705,7 +681,7 @@ public class myGit{
 		CipherOutputStream cos;
 		
 		fis = new FileInputStream(file); 
-		fos = new FileOutputStream(filePath + splitName[0] + ".cif");
+		fos = new FileOutputStream(splitName[0] + ".cif");
 		cos = new CipherOutputStream(fos, c); 
 		
 		byte[] b = new byte[16]; 
@@ -723,17 +699,17 @@ public class myGit{
 		outStream.writeObject(secKey);
 		
 		//send ciphered file to the server
-		File cifFile = new File(filePath + splitName[0] + ".cif");
+		File cifFile = new File(splitName[0] + ".cif");
 		sendFile(outStream, inStream, cifFile);
 		cifFile.delete();
 	}
 	
 	public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
-			File file, String filename, String filePath) throws ClassNotFoundException, IOException, NoSuchAlgorithmException, 
+			File file, String filename) throws ClassNotFoundException, IOException, NoSuchAlgorithmException, 
 	NoSuchPaddingException, InvalidKeyException, UnrecoverableKeyException, KeyStoreException, 
 	CertificateException, SignatureException{
 		
-		File cifFile = new File(filePath + filename.split("\\.")[0] + ".cif");
+		File cifFile = new File(filename.split("\\.")[0] + ".cif");
 		
 		//receive ciphered file from server
 		receiveFile(outStream, inStream, cifFile);
@@ -749,7 +725,7 @@ public class myGit{
 		CipherOutputStream cos;
 		
 		fis = new FileInputStream(cifFile); 
-		fos = new FileOutputStream(filePath + filename + ".temp");
+		fos = new FileOutputStream(filename + ".temp");
 		cos = new CipherOutputStream(fos, c); 
 		
 		byte[] b = new byte[16]; 
@@ -765,13 +741,13 @@ public class myGit{
 		
 		//prepare file's digital signature
 		String[] splitName = filename.split("\\.");
-		File sigFile = new File(filePath + splitName[0] + ".server.sig");
+		File sigFile = new File(splitName[0] + ".server.sig");
 		
 		//receive file's digital signature 
 		receiveFile(outStream, inStream, sigFile);
 		
 		//get deciphered file
-		File decifFile = new File(filePath + filename + ".temp");
+		File decifFile = new File(filename + ".temp");
 		
 		//verify file signature
 		File sigVerifier = writeSignedFile(decifFile, splitName[0]);
@@ -787,8 +763,8 @@ public class myGit{
 			System.exit(-1);
 			
 		}
-		new File(filePath + filename).delete();
-		decifFile.renameTo(new File(filePath + filename));
+		new File(filename).delete();
+		decifFile.renameTo(new File(filename));
 		sigVerifier.delete();
 		sigFile.delete();
 		cifFile.delete();

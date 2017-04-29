@@ -24,9 +24,11 @@ import javax.net.ssl.SSLSocketFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidKeyException;
@@ -92,7 +94,10 @@ public class myGit{
 				port = Integer.parseInt(ip[1]);
 				
 				//verifies the certificate sent by the server
-				System.setProperty("javax.net.ssl.trustStore", args[3].split("/")[0] + "/keys/myClient.keyStore");
+				if(param_p)
+					System.setProperty("javax.net.ssl.trustStore", args[5].split("/")[0] + "/keys/myClient.keyStore");
+				else
+					System.setProperty("javax.net.ssl.trustStore", args[3].split("/")[0] + "/keys/myClient.keyStore");
 				//creates the socket
 				SocketFactory sf = SSLSocketFactory.getDefault();
 				Socket cSoc = sf.createSocket(ip[0], port);
@@ -305,7 +310,12 @@ public class myGit{
 		rep = new File(repPath);
 		
 		if (rep.exists()) {
-			File[] repFiles = rep.listFiles();
+			File[] repFiles = rep.listFiles(new FileFilter() {
+			    @Override
+			    public boolean accept(File pathname) {
+			        return pathname.isFile();
+			    }
+			});
 			int numFiles = repFiles.length;
 			
 			String[] name = null;
@@ -322,10 +332,16 @@ public class myGit{
 				dates = new Date[numFiles];
 			}	
 			
-			for(int i = 0; i < numFiles; i++) {
-				name[i] = repFiles[i].getName();
+			name = rep.list(new FilenameFilter() {
+				  @Override
+				  public boolean accept(File current, String name) {
+				    return new File(current, name).isFile();
+				  }
+				});
+			
+			for (int i = 0; i < numFiles; i++)
 				dates[i] = new Date(repFiles[i].lastModified());
-			}
+
 			Message messOut = new Message("pushRep", name, repPath, dates, null, users, null, null);
 			
 			outStream.writeObject(messOut);
@@ -652,7 +668,7 @@ public class myGit{
 		FileOutputStream fos = new FileOutputStream(repName + "/" + filename + ".sig"); 
 		ObjectOutputStream oos = new ObjectOutputStream(fos); 
 		
-		PrivateKey key = getKeyPair(filename.split("/")[0]).getPrivate();
+		PrivateKey key = getKeyPair(repName).getPrivate();
 		
 		Signature s = Signature.getInstance("SHA256withRSA"); 
 		s.initSign(key); 
@@ -689,7 +705,7 @@ public class myGit{
 		CipherOutputStream cos;
 		
 		fis = new FileInputStream(file); 
-		fos = new FileOutputStream(splitName[0] + ".cif");
+		fos = new FileOutputStream(repName + "/" + splitName[0] + ".cif");
 		cos = new CipherOutputStream(fos, c); 
 		
 		byte[] b = new byte[16]; 
@@ -707,7 +723,7 @@ public class myGit{
 		outStream.writeObject(secKey);
 		
 		//send ciphered file to the server
-		File cifFile = new File(splitName[0] + ".cif");
+		File cifFile = new File(repName + "/" + splitName[0] + ".cif");
 		sendFile(outStream, inStream, cifFile);
 		cifFile.delete();
 	}

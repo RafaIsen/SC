@@ -422,7 +422,12 @@ public class myGit{
 		users[0] = user;
 		
 		if (rep.exists()) {
-			repFiles = rep.listFiles();
+			repFiles = rep.listFiles(new FileFilter() {
+			    @Override
+			    public boolean accept(File pathname) {
+			        return pathname.isFile();
+			    }
+			});
 			int numFiles = repFiles.length;
 			
 			if (numFiles != 0) {

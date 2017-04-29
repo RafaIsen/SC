@@ -30,7 +30,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -733,7 +732,8 @@ public class myGit{
 	NoSuchPaddingException, InvalidKeyException, UnrecoverableKeyException, KeyStoreException, 
 	CertificateException, SignatureException{
 		
-		File cifFile = new File(filename.split("\\.")[0] + ".cif");
+		String[] splitName = filename.split("\\.");
+		File cifFile = new File(splitName[0] + ".cif");
 		
 		//receive ciphered file from server
 		receiveFile(outStream, inStream, cifFile);
@@ -764,7 +764,6 @@ public class myGit{
 		fis.close();
 		
 		//prepare file's digital signature
-		String[] splitName = filename.split("\\.");
 		File sigFile = new File(splitName[0] + ".server.sig");
 		
 		//receive file's digital signature 
@@ -774,7 +773,7 @@ public class myGit{
 		File decifFile = new File(filename + ".temp");
 		
 		//verify file signature
-		File sigVerifier = writeSignedFile(decifFile, splitName[0], repName);
+		File sigVerifier = writeSignedFile(decifFile, splitName[0].split("/")[1], repName);
 		
 		if (!Arrays.equals(Files.readAllBytes(sigFile.toPath()), Files.readAllBytes(sigVerifier.toPath()))) {
 			System.out.println("-- Erro! O ficheiro " + filename + " foi corrompido durante o envio do servidor."

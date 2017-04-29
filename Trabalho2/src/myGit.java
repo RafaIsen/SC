@@ -250,6 +250,7 @@ public class myGit{
 		Message messIn = null;
 		
 		File file = new File(filename);
+		String repName;
 		
 		String[] split = filename.split("/");
 		
@@ -264,9 +265,9 @@ public class myGit{
 			
 			String[] users = new String[1];
 			users[0] = user;
+			repName = split[split.length-2];
 			
-			Message messOut = new Message("pushFile", name, split[split.length-2], dates, null,
-					users, null, null);
+			Message messOut = new Message("pushFile", name, repName, dates, null, users, null, null);
 			
 			outStream.writeObject(messOut);
 			
@@ -276,7 +277,7 @@ public class myGit{
 				result = -1;
 			
 			else if (messIn.toBeUpdated[0] == true) {
-				sendSecureFile(outStream, inStream, file, filename.split("/")[1]);
+				sendSecureFile(outStream, inStream, file, filename.split("/")[1], repName);
 				result = 0;
 			} else
 				result = -1;
@@ -292,15 +293,16 @@ public class myGit{
 		return result;
 	}
 
-	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, 
+	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repPath, 
 			String user) throws IOException, ClassNotFoundException, UnrecoverableKeyException, 
 	InvalidKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, 
 	SignatureException, NoSuchPaddingException {
 		int result = -1; 
 		File rep = null;
+		String repName;
 		Message messIn = null;
 
-		rep = new File(repName);
+		rep = new File(repPath);
 		
 		if (rep.exists()) {
 			File[] repFiles = rep.listFiles();
@@ -312,6 +314,9 @@ public class myGit{
 			String[] users = new String[1];
 			users[0] = user;
 			
+			String[] splitRep = repPath.split("/");
+			repName = splitRep[splitRep.length-1];
+			
 			if (numFiles != 0) {
 				name = new String[numFiles];
 				dates = new Date[numFiles];
@@ -321,7 +326,7 @@ public class myGit{
 				name[i] = repFiles[i].getName();
 				dates[i] = new Date(repFiles[i].lastModified());
 			}
-			Message messOut = new Message("pushRep", name, repName, dates, null, users, null, null);
+			Message messOut = new Message("pushRep", name, repPath, dates, null, users, null, null);
 			
 			outStream.writeObject(messOut);
 			
@@ -332,7 +337,7 @@ public class myGit{
 			else if (messIn.toBeUpdated != null) {
 				for(int i = 0; i < messIn.toBeUpdated.length; i++) {
 					if (messIn.toBeUpdated[i] == true) 
-						sendSecureFile(outStream, inStream, repFiles[i], name[i]);
+						sendSecureFile(outStream, inStream, repFiles[i], name[i], repName);
 					}
 				result = 0;
 			} 
@@ -355,6 +360,7 @@ public class myGit{
 		String[] split = filename.split("/");
 		String[] name = new String[1];
 		name[0] = filename;
+		String repName = split[split.length-2];
 		
 		Date[] dates = new Date[1];
 		Date date = new Date(file.lastModified());
@@ -363,7 +369,7 @@ public class myGit{
 		String[] users = new String[1];
 		users[0] = user;
 		
-		Message messOut = new Message("pullFile", name, split[split.length-2], dates, null, 
+		Message messOut = new Message("pullFile", name, repName, dates, null, 
 				users, null, null);
 		Message messIn = null;
 		
@@ -377,7 +383,7 @@ public class myGit{
 		else if (messIn.toBeUpdated[0] == true) {
 			tempFile = new File(filename + ".temp");
 			tempFile.createNewFile();
-			receiveSecureFile(outStream, inStream, tempFile, filename);
+			receiveSecureFile(outStream, inStream, tempFile, filename, repName);
 			tempFile.delete();
 			result = 0;
 		} 
@@ -385,12 +391,14 @@ public class myGit{
 		return result;
 	}
 
-	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, 
+	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repPath, 
 			String user) throws IOException, ClassNotFoundException, InvalidKeyException, UnrecoverableKeyException, 
 	NoSuchAlgorithmException, NoSuchPaddingException, KeyStoreException, CertificateException, SignatureException {
 		int result = -1; 
-		File rep = new File(repName);
-		String path = repName + "/";
+		File rep = new File(repPath);
+		String path = repPath + "/";
+		String[] splitRep = repPath.split("/");
+		String repName = splitRep[splitRep.length-1];
 		File newFile = null;
 		File[] repFiles = null;
 		String[] names = null;
@@ -415,7 +423,7 @@ public class myGit{
 			names = new String[0];
 			dates = new Date[0];
 		}
-		Message messOut = new Message("pullRep", names, repName, dates, null, users, null, null);
+		Message messOut = new Message("pullRep", names, repPath, dates, null, users, null, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -435,20 +443,20 @@ public class myGit{
 						if (i < messIn.fileName.length)
 							if (messIn.toBeUpdated[i] == true)
 								if(names.length > i)
-									receiveSecureFile(outStream, inStream, newFile, repName + "/" + names[i]);
+									receiveSecureFile(outStream, inStream, newFile, repPath + "/" + names[i], repName);
 								else
-									receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i]);
+									receiveSecureFile(outStream, inStream, newFile, repPath + "/" + messIn.fileName[i], repName);
 							//receber ficheiros novos
 							else {
 								newFile = new File(path + messIn.fileName[i]);
 								if (!newFile.exists()) {
 									newFile.createNewFile();
-									receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i]);
+									receiveSecureFile(outStream, inStream, newFile, repPath + "/" + messIn.fileName[i], repName);
 								}
 							}
 					} //receber ficheiros novos
 					else {
-						receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i]);
+						receiveSecureFile(outStream, inStream, newFile, repPath + "/" + messIn.fileName[i], repName);
 					}
 				}
 		}
@@ -656,13 +664,13 @@ public class myGit{
 	}
 
 	public void sendSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
-			File file, String filename) throws UnrecoverableKeyException, InvalidKeyException, 
+			File file, String filename, String repName) throws UnrecoverableKeyException, InvalidKeyException, 
 	NoSuchAlgorithmException, KeyStoreException, CertificateException, SignatureException, 
 	IOException, NoSuchPaddingException{
 		
 		//generates file's digital signature
 		String[] splitName = filename.split("\\.");
-		File sigFile = writeSignedFile(file, filename);
+		File sigFile = writeSignedFile(file, filename, repName);
 		
 		//send file's digital signature
 		sendFile(outStream, inStream, sigFile);
@@ -705,7 +713,7 @@ public class myGit{
 	}
 	
 	public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
-			File file, String filename) throws ClassNotFoundException, IOException, NoSuchAlgorithmException, 
+			File file, String filename, String repName) throws ClassNotFoundException, IOException, NoSuchAlgorithmException, 
 	NoSuchPaddingException, InvalidKeyException, UnrecoverableKeyException, KeyStoreException, 
 	CertificateException, SignatureException{
 		
@@ -750,7 +758,7 @@ public class myGit{
 		File decifFile = new File(filename + ".temp");
 		
 		//verify file signature
-		File sigVerifier = writeSignedFile(decifFile, splitName[0]);
+		File sigVerifier = writeSignedFile(decifFile, splitName[0], repName);
 		
 		if (!Arrays.equals(Files.readAllBytes(sigFile.toPath()), Files.readAllBytes(sigVerifier.toPath()))) {
 			System.out.println("-- Erro! O ficheiro " + filename + " foi corrompido durante o envio do servidor."

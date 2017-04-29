@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Scanner;
 
 import javax.crypto.BadPaddingException;
@@ -47,7 +46,6 @@ import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
@@ -62,7 +60,8 @@ import javax.net.ssl.SSLServerSocketFactory;
 //Servidor myGitServer
 public class myGitServer{
 
-	public final String SERVER_DIR = "users"; 
+	public final String SERVER_DIR = "server"; 
+	public final String USERS_DIR = "users"; 
 	public final String SERVER_PASS = "sc1617";
 	public final String USERS_FILE = "users.txt"; 
 	public final String USERS_FILE_CIF = "users.cif"; 
@@ -94,24 +93,24 @@ public class myGitServer{
 		System.out.println("Entrou no servidor...");
 		
 		//creates the directory users if it does not exist
-		File usersDir = new File("bin/" + SERVER_DIR);
+		File usersDir = new File(SERVER_DIR + "/" + USERS_DIR);
 		if(!usersDir.exists())
 			usersDir.mkdir();
 		//creates the text file users if it does not exist
-		File users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE_CIF);
+		File users = new File(SERVER_DIR + "/" + USERS_DIR + "/" + USERS_FILE_CIF);
 		if (!users.exists()) {
-			users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE);
+			users = new File(SERVER_DIR + "/" + USERS_DIR + "/" + USERS_FILE);
 			users.createNewFile();
 		}
 		else
 			users = decipher(users, USERS_FILE_NAME);
 		//creates the text file shareLog if it does not exist
-		File shareLog = new File("bin/" + SERVER_DIR + "/" + SHARE_FILE);
+		File shareLog = new File(SERVER_DIR + "/" + USERS_DIR + "/" + SHARE_FILE);
 		if(!shareLog.exists())
 			shareLog.createNewFile();
 		
-		File users_mac = new File("bin/" + SERVER_DIR + "/" + USERS_MAC_FILE);
-		File share_mac = new File("bin/" + SERVER_DIR + "/" + SHARE_MAC_FILE);
+		File users_mac = new File(SERVER_DIR + "/" + USERS_DIR + "/" + USERS_MAC_FILE);
+		File share_mac = new File(SERVER_DIR + "/" + USERS_DIR + "/" + SHARE_MAC_FILE);
 		
 		verifyFileIntegrity(users, users_mac, USERS_FILE);
 		
@@ -123,7 +122,7 @@ public class myGitServer{
 		
 		try {
 			
-		    System.setProperty("javax.net.ssl.keyStore", "myServer.keyStore");
+		    System.setProperty("javax.net.ssl.keyStore", SERVER_DIR + "/myServer.keyStore");
 			System.setProperty("javax.net.ssl.keyStorePassword", SERVER_PASS);
 		    ServerSocketFactory ssf = SSLServerSocketFactory.getDefault( );
 		    sSoc = ssf.createServerSocket(23456);
@@ -248,9 +247,9 @@ public class myGitServer{
 		File macsTemp;
 		
 		if (filename.equals(USERS_FILE)) 
-			macsTemp = new File("bin/" + SERVER_DIR + "/users_mac.temp");
+			macsTemp = new File(SERVER_DIR + "/" + USERS_DIR + "/users_mac.temp");
 		else 
-			macsTemp = new File("bin/" + SERVER_DIR + "/share_mac.temp");	
+			macsTemp = new File(SERVER_DIR + "/" + USERS_DIR + "/share_mac.temp");	
 		
 		//opening macs file
 		FileOutputStream macsOut = new FileOutputStream(macsTemp);
@@ -310,7 +309,7 @@ public class myGitServer{
 			Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
 			c.init(Cipher.ENCRYPT_MODE, key, spec);
 			
-		    FileOutputStream fos = new FileOutputStream("bin/" + SERVER_DIR + "/" + filename + ".cif");
+		    FileOutputStream fos = new FileOutputStream(SERVER_DIR + "/" + USERS_DIR + "/" + filename + ".cif");
 		    CipherOutputStream cos = new CipherOutputStream(fos, c);
 		     
 		    while (i != -1) {
@@ -323,10 +322,10 @@ public class myGitServer{
 		    
 		    file.delete();
 		    
-		    return new File("bin/" + SERVER_DIR + "/" + filename + ".cif");
+		    return new File(SERVER_DIR + "/" + USERS_DIR + "/" + filename + ".cif");
 		    
 		} else {
-			File f = new File("bin/" + SERVER_DIR + "/" + filename + ".cif");
+			File f = new File(SERVER_DIR + "/" + USERS_DIR + "/" + filename + ".cif");
 			f.createNewFile();
 			fis.close();
 			file.delete();
@@ -357,7 +356,7 @@ public class myGitServer{
 		c.init(Cipher.DECRYPT_MODE, key, spec);
 		
 		FileInputStream fis = new FileInputStream(file);
-	    FileOutputStream fos = new FileOutputStream("bin/" + SERVER_DIR + "/" + filename + ".txt");
+	    FileOutputStream fos = new FileOutputStream(SERVER_DIR + "/" + USERS_DIR + "/" + filename + ".txt");
 	    CipherOutputStream cos = new CipherOutputStream(fos, c);
 	    
 	    byte[] b = new byte[16];  
@@ -372,7 +371,7 @@ public class myGitServer{
 	    
 	    file.delete();
 	    
-	    return new File("bin/" + SERVER_DIR + "/" + filename + ".txt");
+	    return new File(SERVER_DIR + "/" + USERS_DIR + "/" + filename + ".txt");
 		
 	}
 	
@@ -408,10 +407,10 @@ public class myGitServer{
 				
 				String username = (String) inStream.readObject();
 				
-				File users = new File("bin/" + SERVER_DIR + "/" + USERS_FILE_CIF);
+				File users = new File(SERVER_DIR + "/" + USERS_DIR + "/" + USERS_FILE_CIF);
 				
-				File users_mac = new File("bin/" + SERVER_DIR + "/" + USERS_MAC_FILE);
-				File share_mac = new File("bin/" + SERVER_DIR + "/" + SHARE_MAC_FILE);
+				File users_mac = new File(SERVER_DIR + "/" + USERS_DIR + "/" + USERS_MAC_FILE);
+				File share_mac = new File(SERVER_DIR + "/" + USERS_DIR + "/" + SHARE_MAC_FILE);
 
 				boolean foundU = checkUser(username, users, users_mac, USERS_FILE);
 				
@@ -535,22 +534,29 @@ public class myGitServer{
 			String filename = null;
 			String filePath = null;
 			String user = null;
+			File rep = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + split[0]);
+			
+			//criar rep caso nao exista
+			if (!rep.exists()){
+				rep.mkdir();
+				System.out.println("-- O repositório " + split[0] + " foi criado no servidor");
+			}
 			
 			if(secondI == -1) {
-				pathFolder = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0]).toPath();
-				file = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
+				pathFolder = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + split[0]).toPath();
+				file = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
 				filename = split[1];
 				String[] splitName = filename.split("\\.");
-				filePath = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + split[0] + "/";
+				filePath = SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + split[0] + "/";
 				cifFilename = splitName[0] + ".cif";
 				cifFile = new File(filePath + cifFilename);
 			} else {
 				user = split[0];
-				pathFolder = new File("bin/" + SERVER_DIR + "/" + split[0] + "/" + split[1]).toPath();
-				file = new File("bin/" + SERVER_DIR + "/" + messIn.fileName[0]);
+				pathFolder = new File(SERVER_DIR + "/" + USERS_DIR + "/" + split[0] + "/" + split[1]).toPath();
+				file = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.fileName[0]);
 				filename = split[2];
 				String[] splitName = filename.split("\\.");
-				filePath = "bin/" + SERVER_DIR + "/" + split[0] + "/" + split[1] + "/";
+				filePath = SERVER_DIR + "/" + USERS_DIR + "/" + split[0] + "/" + split[1] + "/";
 				cifFilename = splitName[0] + ".cif";
 				cifFile = new File(filePath + cifFilename);
 			}
@@ -642,12 +648,12 @@ public class myGitServer{
 			
 			//criar path para o rep
 			if (messIn.repName.contains("/")) {
-				rep = new File("bin/" + SERVER_DIR + "/" + messIn.repName);
+				rep = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.repName);
 				user = split[0];
 				repName = split[1];
 			}	
 			else {
-				rep = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
+				rep = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
 				repName = messIn.repName;
 			}
 			
@@ -795,11 +801,11 @@ public class myGitServer{
 				
 				//criar path para o ficheiro
 				if (split.length == 3) {
-					filePath = "bin/" + SERVER_DIR + "/" + user + "/" + repName + "/";
+					filePath = SERVER_DIR + "/" + USERS_DIR + "/" + user + "/" + repName + "/";
 					file = new File(filePath + name + ".cif");
 				}
 				else {
-					filePath = "bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + repName + "/";
+					filePath = SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + repName + "/";
 					file = new File(filePath + name + ".cif");
 					myrep = true;
 				}
@@ -889,13 +895,13 @@ public class myGitServer{
 				
 				//criar path para o rep
 				if (messIn.repName.contains("/")) {
-					rep = new File("bin/" + SERVER_DIR + "/" + messIn.repName);
+					rep = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.repName);
 					res = "-- O respositório " + messIn.repName.split("/")[1] + " do utilizador " 
 					+ messIn.repName.split("/")[0] + " foi copiado do servidor";
 				}
 				//rep do user
 				else {
-					rep = new File("bin/" + SERVER_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
+					rep = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + messIn.repName);
 					res = "-- O respositório " + messIn.repName + " do utilizador " + messIn.user[0] 
 							+ " foi copiado do servidor";
 				}
@@ -1078,7 +1084,7 @@ public class myGitServer{
 
 					String userToAdd = messIn.user[1];
 
-					File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
+					File shareLog = new File(SERVER_DIR + "/" + USERS_DIR + "/shareLog.txt");
 					
 					verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
 
@@ -1092,7 +1098,7 @@ public class myGitServer{
 						res = "-- O repositório " + repName + " foi partilhado com o utilizador " + messIn.user[1];
 						fw.close();
 					} else {
-						File tempFile = new File("bin/" + SERVER_DIR + "/shareLog.temp");
+						File tempFile = new File(SERVER_DIR + "/" + USERS_DIR + "/shareLog.temp");
 						tempFile.createNewFile();
 						BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
 						do {
@@ -1153,11 +1159,11 @@ public class myGitServer{
 				
 				if (foundUser) {
 					
-					File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
+					File shareLog = new File(SERVER_DIR + "/" + USERS_DIR + "/shareLog.txt");
 						
 					if (checkUser(messIn.user[0], shareLog, share_mac, SHARE_FILE)) {
 						
-						File tempFile = new File("bin/" + SERVER_DIR + "/shareLog.temp");
+						File tempFile = new File(SERVER_DIR + "/" + USERS_DIR + "/shareLog.temp");
 						tempFile.createNewFile();
 	
 						BufferedReader reader = new BufferedReader(new FileReader(shareLog));
@@ -1286,7 +1292,7 @@ public class myGitServer{
 			
 			if (user != null) {
 				
-				File shareLog = new File("bin/" + SERVER_DIR + "/shareLog.txt");
+				File shareLog = new File(SERVER_DIR + "/" + USERS_DIR + "/shareLog.txt");
 				verifyFileIntegrity(shareLog, share_mac, SHARE_FILE);
 				
 				BufferedReader br = new BufferedReader(new FileReader(shareLog));
@@ -1374,7 +1380,7 @@ public class myGitServer{
 				    fw.flush();
 				    fw.close();
 					//creates a directory to the user
-					new File("bin/" + SERVER_DIR + "/" + u.name).mkdir();
+					new File(SERVER_DIR + "/" + USERS_DIR + "/" + u.name).mkdir();
 					result = true;	
 				}
 			} catch (IOException e) {
@@ -1420,7 +1426,7 @@ public class myGitServer{
 		public KeyPair getKeyPair() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, 
 		IOException, UnrecoverableKeyException {
 			
-			FileInputStream is = new FileInputStream("myServer.keystore");
+			FileInputStream is = new FileInputStream(SERVER_DIR + "/myServer.keystore");
 
 		    KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 		    keystore.load(is, "sc1617".toCharArray());

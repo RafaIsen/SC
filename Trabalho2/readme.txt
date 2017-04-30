@@ -59,10 +59,11 @@ IMPORTANTE: a password que deverá definir para a keystore do cliente e do alias 
 (SHARE)
 IMPORTANTE: Sempre que algum utilizador der acesso a outro através de um share terá de ser inserido este código na consola:
 						
-		> keytool -importcert -alias <alias> -keystore <rep>/myServer.keyStore -file <rep_name>/keys/myClient.cer
+		> keytool -importcert -alias <alias> -keystore <rep>/keys/myClient.keyStore -file <rep_name>/keys/myClient.cer
 			
-		<alias> = alias do keystore do utilizador que faz share
-		<rep> = repositório do utilizador a quem quer dar acesso
+		<alias> = alias do keystore do utilizador que quer dar acesso a outro
+		<rep_outro> = repositório do utilizador a quem quer dar acesso
+		<rep_name> = repositório do utilizador que quer dar acesso
 
 PASSO 4 (MOVER OS REPOSITÓRIOS CRIADOS PARA UMA PASTA EM "Trabalho2" COM O NOME DO UTILIZADOR QUE TERÁ DE CRIAR):
 

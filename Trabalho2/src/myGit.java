@@ -9,9 +9,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
@@ -22,6 +24,7 @@ import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -408,8 +411,8 @@ public class myGit{
 		int result = -1; 
 		File rep = new File(user + "/" + repPath);
 		String path = user + "/" + repPath + "/";
-		String[] splitRep = repPath.split("/");
-		String repName = splitRep[splitRep.length-1];
+		//String[] splitRep = repPath.split("/");
+		//String repName = splitRep[splitRep.length-1];
 		File newFile = null;
 		File[] repFiles = null;
 		String[] names = null;
@@ -446,6 +449,8 @@ public class myGit{
 		
 		messIn = (Message) inStream.readObject();
 		
+		boolean haAtualizar = false;
+		
 		if (messIn == null)
 			result = -1;
 		else {
@@ -457,30 +462,37 @@ public class myGit{
 					//so a actualizar os ficheiros antigos
 					if(names != null) {
 						if (i < messIn.fileName.length)
-							if (messIn.toBeUpdated[i] == true)
+							if (messIn.toBeUpdated[i] == true) {
+								haAtualizar = true;
 								if(names.length > i)
 									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + names[i], 
-											user + "/" + repName);
+											user + "/" + repPath);
 								else
 									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + messIn.fileName[i], 
-											user + "/" + repName);
+											user + "/" + repPath);
+							}
 							//receber ficheiros novos
 							else {
 								newFile = new File(path + messIn.fileName[i]);
 								if (!newFile.exists()) {
+									haAtualizar = true;
 									newFile.createNewFile();
-									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + messIn.fileName[i], 
-											user + "/" + repName);
+									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" 
+											+ messIn.fileName[i], user + "/" + repPath);
 								}
 							}
 					} //receber ficheiros novos
 					else {
+						haAtualizar = true;
 						receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + messIn.fileName[i], 
-								user + "/" + repName);
+								user + "/" + repPath);
 					}
 				}
 		}
-		System.out.println(messIn.result);
+		if(haAtualizar)
+			System.out.println(messIn.result);
+		else
+			System.out.println("-- Nada há a atualizar");
 		return result;
 	}
 
@@ -622,65 +634,105 @@ public class myGit{
 		
 	}
 	
-	public KeyPair getKeyPair(String rep) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, 
+	public PrivateKey getPrivateKey(String user) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, 
 	IOException, UnrecoverableKeyException {
 		
-		FileInputStream is = new FileInputStream(rep + "/keys/myClient.keystore");
+		FileInputStream is = new FileInputStream(user + "/keys/myClient.keystore");
 
 	    KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 	    keystore.load(is, "client1617".toCharArray());
 
 	    Enumeration<String> enumeration = keystore.aliases();
+	    PrivateKey key = null;
 	    String alias = null;
-        while(enumeration.hasMoreElements())
+        while(enumeration.hasMoreElements()) {
             alias = (String)enumeration.nextElement();
-
-	    Key key = keystore.getKey(alias, "client1617".toCharArray());
-	    if (key instanceof PrivateKey) {
-	      // Get certificate of public key
-	      Certificate cert = keystore.getCertificate(alias);
-
-	      // Get public key
-	      PublicKey publicKey = cert.getPublicKey();
-
-	      // Return a key pair
-	      return new KeyPair(publicKey, (PrivateKey) key);
-	    }
-	    return null;
+            key = (PrivateKey) keystore.getKey(alias, "client1617".toCharArray());
+            if (key instanceof PrivateKey)
+            	return key;
+        }
+	    return key;
 	}
 	
-	public File writeSignedFile(File f, String filename, String repName) throws NoSuchAlgorithmException, IOException, 
+	public ArrayList<PublicKey> getPublicKey(String user) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, 
+	IOException, UnrecoverableKeyException {
+		
+		FileInputStream is = new FileInputStream(user + "/keys/myClient.keystore");
+
+	    KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+	    keystore.load(is, "client1617".toCharArray());
+	    
+	    ArrayList<PublicKey> pubKeys = new ArrayList<PublicKey>(); 
+
+	    Enumeration<String> enumeration = keystore.aliases();
+	    String alias = null;
+        while(enumeration.hasMoreElements()) {
+            alias = (String)enumeration.nextElement();
+            Certificate c = keystore.getCertificate(alias);
+            pubKeys.add(c.getPublicKey());
+ 
+        }
+        return pubKeys;
+	}
+	
+	public File signFile(File f, String filename, String repName) throws NoSuchAlgorithmException, IOException, 
 	UnrecoverableKeyException, KeyStoreException, CertificateException, InvalidKeyException, 
 	SignatureException { 
-		
-		Scanner scan = new Scanner(new BufferedReader(new FileReader(f)));
-		
-		//getting hash
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
-		
-		String text = null;
-		byte[] buf = null; 
-		byte[] hash = null; 
-		
-		while (scan.hasNextLine()) {
-			text = scan.nextLine();
-			buf = text.getBytes();
-			hash = md.digest(buf);
-		}
-		scan.close();
-		
-		FileOutputStream fos = new FileOutputStream(repName + "/" + filename + ".sig"); 
-		ObjectOutputStream oos = new ObjectOutputStream(fos); 
-		
-		PrivateKey key = getKeyPair(repName.split("/")[0]).getPrivate();
+
+		PrivateKey key = getPrivateKey(repName.split("/")[0]);
 		
 		Signature s = Signature.getInstance("SHA256withRSA"); 
-		s.initSign(key); 
-		s.update(hash, 0, hash.length); 
-		oos.writeObject(s.sign( )); 
+		s.initSign(key);
+		
+		FileInputStream fis = new FileInputStream(f);
+		BufferedInputStream bufin = new BufferedInputStream(fis);
+		byte[] buffer = new byte[256];
+		int len;
+		while ((len = bufin.read(buffer)) >= 0) {
+		    s.update(buffer, 0, len);
+		};
+		bufin.close();
+		
+		FileOutputStream fos = new FileOutputStream(repName + "/" + filename + ".sig"); 
+		fos.write(buffer);
 		fos.close();
 		
 		return new File(repName + "/" + filename + ".sig");
+	}
+	
+	public boolean verifySignedFile(File decifFile, File sigFile, String repName) throws NoSuchAlgorithmException, IOException, 
+	UnrecoverableKeyException, KeyStoreException, CertificateException, InvalidKeyException, 
+	SignatureException { 
+		
+		FileInputStream sigfis = new FileInputStream(sigFile);
+		byte[] sigToVerify = new byte[sigfis.available()]; 
+		sigfis.read(sigToVerify);
+		sigfis.close();
+		
+		ArrayList<PublicKey> pubKeys = getPublicKey(repName.split("/")[0]);
+		Iterator<PublicKey> iterator = pubKeys.iterator();
+		
+		boolean passed = false;
+		
+		while(iterator.hasNext() && !passed) {
+		
+			Signature s = Signature.getInstance("SHA256withRSA"); 
+			s.initVerify(iterator.next()); 
+			
+			FileInputStream datafis = new FileInputStream(decifFile);
+			BufferedInputStream bufin = new BufferedInputStream(datafis);
+	
+			byte[] buffer = new byte[256];
+			int len;
+			while (bufin.available() != 0) {
+			    len = bufin.read(buffer);
+			    s.update(buffer, 0, len);
+			};
+			bufin.close();
+			passed = Arrays.equals(buffer, sigToVerify);
+		}
+			
+		return passed;
 	}
 
 	public void sendSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
@@ -690,7 +742,7 @@ public class myGit{
 		
 		//generates file's digital signature
 		String[] splitName = filename.split("\\.");
-		File sigFile = writeSignedFile(file, filename, repName);
+		File sigFile = signFile(file, filename, repName);
 		
 		//send file's digital signature
 		sendFile(outStream, inStream, sigFile);
@@ -777,25 +829,18 @@ public class myGit{
 		//get deciphered file
 		File decifFile = new File(filename + ".temp");
 		
-		String[] splitPath = splitName[0].split("/");
-		
 		//verify file signature
-		File sigVerifier = writeSignedFile(decifFile, splitPath[splitPath.length-1], repName);
-		
-		if (!Arrays.equals(Files.readAllBytes(sigFile.toPath()), Files.readAllBytes(sigVerifier.toPath()))) {
+		if (!verifySignedFile(decifFile, sigFile, repName)) {
 			System.out.println("-- Erro! O ficheiro " + filename + " foi corrompido durante o envio do servidor."
 					+ System.lineSeparator() + "O cliente irá terminar...");
 			//delete all files created in this method except the original file
-			sigVerifier.delete();
 			decifFile.delete();
 			sigFile.delete();
 			cifFile.delete();
 			System.exit(-1);
-			
 		}
 		new File(filename).delete();
 		decifFile.renameTo(new File(filename));
-		sigVerifier.delete();
 		sigFile.delete();
 		cifFile.delete();
 	}

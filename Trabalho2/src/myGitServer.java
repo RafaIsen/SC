@@ -683,11 +683,12 @@ public class myGitServer{
 				//file rep with cif files
 				ArrayList<File> newFileRep = new ArrayList<File>();
 				
-				for (int i = 0; i < fileRep.length; i++)
-					if (fileRep[i].getName().contains(".cif")) {
-						numFiles++;
-						newFileRep.add(fileRep[i]);
-					}
+				if(fileRep != null)
+					for (int i = 0; i < fileRep.length; i++)
+						if (fileRep[i].getName().contains(".cif")) {
+							numFiles++;
+							newFileRep.add(fileRep[i]);
+						}
 				
 				//file rep with client files
 				ArrayList<String> clientFileRep = new ArrayList<String>(messIn.fileName.length);

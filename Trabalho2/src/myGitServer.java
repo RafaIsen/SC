@@ -124,6 +124,8 @@ public class myGitServer{
 			
 		    System.setProperty("javax.net.ssl.keyStore", SERVER_DIR + "/myServer.keyStore");
 			System.setProperty("javax.net.ssl.keyStorePassword", SERVER_PASS);
+			System.setProperty("javax.net.ssl.trustStore", SERVER_DIR + "/myServer.keyStore");
+			System.setProperty("javax.net.ssl.trustStorePassword", SERVER_PASS);
 		    ServerSocketFactory ssf = SSLServerSocketFactory.getDefault( );
 		    sSoc = ssf.createServerSocket(23456);
 		    
@@ -675,6 +677,44 @@ public class myGitServer{
 			         });
 				}
 				
+				//number of cif files
+				int numFiles = 0;
+				
+				//file rep with cif files
+				ArrayList<File> newFileRep = new ArrayList<File>();
+				
+				for (int i = 0; i < fileRep.length; i++)
+					if (fileRep[i].getName().contains(".cif")) {
+						numFiles++;
+						newFileRep.add(fileRep[i]);
+					}
+				
+				//file rep with client files
+				ArrayList<String> clientFileRep = new ArrayList<String>(messIn.fileName.length);
+				
+				for (int i = 0; i < messIn.fileName.length; i++)
+					clientFileRep.add(messIn.fileName[i]);
+				
+				//file rep with key server files
+				ArrayList<File> keyFileRep = new ArrayList<File>(numFiles);
+				
+				String cifFileName;
+				String keyFileName;
+				String keyExt;
+				String[] keySplit;
+				
+				//get key files
+				for (int j = 0; j < fileRep.length; j++) {
+					cifFileName = fileRep[j].getName().split("\\.")[0];
+					keySplit = fileRep[j].getName().split("\\.");
+					keyFileName = keySplit[0];
+					if(keySplit.length > 2) {
+						keyExt = fileRep[j].getName().split("\\.")[2];
+						if(cifFileName.equals(keyFileName) && keyExt.equals("key"))
+							keyFileRep.add(fileRep[j]);
+					}
+				}
+				
 				//caso o rep venha com ficheiros
 				if (messIn.fileName != null) {
 					toUpdate = new boolean[messIn.fileName.length];
@@ -688,7 +728,7 @@ public class myGitServer{
 						if (fileRep != null && currFile.exists()) {
 							date = new Date(currFile.lastModified());
 							//verificar quais os ficheiros que precisam de ser actualizados
-							if (date.before(messIn.fileDate[0])) {
+							if (date.before(messIn.fileDate[i])) {
 								versions[i] = countNumVersions1(rep.toPath(), filename);
 								toUpdate[i] = true;
 								res += "-- O ficheiro " + messIn.fileName[i] + " foi atualizado no servidor" + System.lineSeparator();
@@ -704,14 +744,14 @@ public class myGitServer{
 				
 				//saber quais os ficheiros a "eliminar"
 				if (fileRep != null && toUpdate == null) {
-					for (int i = 0; i < fileRep.length / 3; i++){
-						split = fileRep[i*3 + 1].getName().split("\\.");
+					for (int i = 0; i < numFiles; i++){
+						split = keyFileRep.get(i).getName().split("\\.");
 						String fileExt = split[1];
-						split = fileRep[i*3].getName().split("\\.");
+						split = newFileRep.get(i).getName().split("\\.");
 						filename = split[0] + ".cif";
-						if (!Arrays.asList(messIn.repName).contains(fileRep[i*3])) {
-							fileRep[i*3].renameTo(new File(fileRep[i*3] + "." 
-						+ String.valueOf(countNumVersions1(rep.toPath(), fileRep[i*3].getName()))));		
+						if (!Arrays.asList(messIn.repName).contains(newFileRep.get(i))) {
+							newFileRep.get(i).renameTo(new File(newFileRep.get(i) + "." 
+						+ String.valueOf(countNumVersions1(rep.toPath(), newFileRep.get(i).getName()))));		
 							res += "-- O ficheiro " + split[0] + "." + fileExt 
 									+ " vai ser eliminado no servidor" + System.lineSeparator();
 							eliminou = true;
@@ -740,7 +780,7 @@ public class myGitServer{
 								newFile = new File(rep.toString() + "/" + messIn.fileName[i] + ".temp");
 								newFile.createNewFile();
 								receiveSecureFile(outStream, inStream, newFile, messIn.fileName[i], rep.toString() + "/");
-								fileRep[i*3].renameTo(new File(rep.toString() + "/" + filename + "." + Integer.toString(versions[i])));
+								newFileRep.get(i).renameTo(new File(rep.toString() + "/" + filename + "." + Integer.toString(versions[i])));
 								newFile.renameTo(new File(rep.toString() + "/" + filename));
 							}
 						}
@@ -799,18 +839,22 @@ public class myGitServer{
 				
 				boolean myrep = false;
 				
+				File keyFile;
+				
 				//criar path para o ficheiro
 				if (split.length == 3) {
 					filePath = SERVER_DIR + "/" + USERS_DIR + "/" + user + "/" + repName + "/";
 					file = new File(filePath + name + ".cif");
+					keyFile = new File(filePath + filename + ".key.server");
 				}
 				else {
 					filePath = SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + repName + "/";
 					file = new File(filePath + name + ".cif");
+					keyFile = new File(filePath + filename + ".key.server");
 					myrep = true;
 				}
-											
-				if (file.exists()) {
+				
+				if (file.exists() && keyFile.exists()) {
 					//actualiza o ficheiro para uma versao mais recente
 					date = new Date(file.lastModified());
 					
@@ -922,32 +966,38 @@ public class myGitServer{
 				//number of cif files
 				int numFiles = 0;
 				
-				for(int i = 0; i < fileRep.length; i++)
-					if(fileRep[i].getName().contains(".cif"))
-						numFiles++;
-				
 				//file rep with cif files
-				ArrayList<File> newFileRep = new ArrayList<File>(numFiles);
+				ArrayList<File> newFileRep = new ArrayList<File>();
+				
+				for (int i = 0; i < fileRep.length; i++)
+					if (fileRep[i].getName().contains(".cif")) {
+						numFiles++;
+						newFileRep.add(fileRep[i]);
+					}
+				
+				//file rep with client files
+				ArrayList<String> clientFileRep = new ArrayList<String>(messIn.fileName.length);
+				
+				for (int i = 0; i < messIn.fileName.length; i++)
+					clientFileRep.add(messIn.fileName[i]);
 				
 				//file rep with key server files
 				ArrayList<File> keyFileRep = new ArrayList<File>(numFiles);
 				
-				for (int i = 0; i < fileRep.length; i++) {
-					if (fileRep[i].getName().contains(".cif")) {
-						newFileRep.add(fileRep[i]);
-						String cifFileName = fileRep[i].getName().split("\\.")[0];
-						String keyFileName = null;
-						String keyExt = null;
-						String[] keySplit = null;
-						for (int j = 0; j < fileRep.length; j++) {
-							keySplit = fileRep[j].getName().split("\\.");
-							keyFileName = keySplit[0];
-							if(keySplit.length > 2) {
-								keyExt = fileRep[j].getName().split("\\.")[2];
-								if(cifFileName.equals(keyFileName) && keyExt.equals("key"))
-									keyFileRep.add(fileRep[j]);
-							}
-						}
+				String cifFileName;
+				String keyFileName;
+				String keyExt;
+				String[] keySplit;
+				
+				//get key files
+				for (int j = 0; j < fileRep.length; j++) {
+					cifFileName = fileRep[j].getName().split("\\.")[0];
+					keySplit = fileRep[j].getName().split("\\.");
+					keyFileName = keySplit[0];
+					if(keySplit.length > 2) {
+						keyExt = fileRep[j].getName().split("\\.")[2];
+						if(cifFileName.equals(keyFileName) && keyExt.equals("key"))
+							keyFileRep.add(fileRep[j]);
 					}
 				}
 				
@@ -1023,10 +1073,11 @@ public class myGitServer{
 							messIn.user, delete, res);
 					outStream.writeObject(messOut);
 					
-					for (int i = 0; i < names.length; i++) 
-						sendSecureFile(outStream, inStream, new File(newFileRep.get(i).getPath()), 
-								names[i], rep.toString() + "/");
-				
+					for (int i = 0; i < names.length; i++)
+						if (!(clientFileRep.contains(names[i]) && !toUpdate[i]))
+							sendSecureFile(outStream, inStream, new File(newFileRep.get(i).getPath()), 
+									names[i], rep.toString() + "/");
+					
 					result = 0;
 				
 				} else if(messIn.fileName != null){

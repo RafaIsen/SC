@@ -93,10 +93,8 @@ public class myGit{
 				port = Integer.parseInt(ip[1]);
 				
 				//verifies the certificate sent by the server
-				if(param_p)
-					System.setProperty("javax.net.ssl.trustStore", args[5].split("/")[0] + "/keys/myClient.keyStore");
-				else
-					System.setProperty("javax.net.ssl.trustStore", args[3].split("/")[0] + "/keys/myClient.keyStore");
+				System.setProperty("javax.net.ssl.trustStore", args[0] + "/keys/myClient.keyStore");
+	
 				//creates the socket
 				SocketFactory sf = SSLSocketFactory.getDefault();
 				Socket cSoc = sf.createSocket(ip[0], port);
@@ -136,7 +134,7 @@ public class myGit{
 				scan.close();
 			
 			} catch (IOException e) {
-				System.out.println("O servidor está em baixo.");
+				e.printStackTrace();
 			}
 		}
 				
@@ -253,7 +251,7 @@ public class myGit{
 		int result = -1; 
 		Message messIn = null;
 		
-		File file = new File(filename);
+		File file = new File(user + "/" + filename);
 		String repName;
 		
 		String[] split = filename.split("/");
@@ -281,7 +279,7 @@ public class myGit{
 				result = -1;
 			
 			else if (messIn.toBeUpdated[0] == true) {
-				sendSecureFile(outStream, inStream, file, filename.split("/")[1], repName);
+				sendSecureFile(outStream, inStream, file, filename.split("/")[1], user + "/" + repName);
 				result = 0;
 			} else
 				result = -1;
@@ -306,7 +304,7 @@ public class myGit{
 		String repName;
 		Message messIn = null;
 
-		rep = new File(repPath);
+		rep = new File(user + "/" + repPath);
 		
 		if (rep.exists()) {
 			File[] repFiles = rep.listFiles(new FileFilter() {
@@ -327,16 +325,14 @@ public class myGit{
 			repName = splitRep[splitRep.length-1];
 			
 			if (numFiles != 0) {
-				name = new String[numFiles];
+				name = rep.list(new FilenameFilter() {
+					@Override
+					public boolean accept(File current, String name) {
+						return new File(current, name).isFile();
+					}
+					});
 				dates = new Date[numFiles];
 			}	
-			
-			name = rep.list(new FilenameFilter() {
-				  @Override
-				  public boolean accept(File current, String name) {
-				    return new File(current, name).isFile();
-				  }
-				});
 			
 			for (int i = 0; i < numFiles; i++)
 				dates[i] = new Date(repFiles[i].lastModified());
@@ -352,7 +348,7 @@ public class myGit{
 			else if (messIn.toBeUpdated != null) {
 				for(int i = 0; i < messIn.toBeUpdated.length; i++) {
 					if (messIn.toBeUpdated[i] == true) 
-						sendSecureFile(outStream, inStream, repFiles[i], name[i], repName);
+						sendSecureFile(outStream, inStream, repFiles[i], name[i], user + "/" + repName);
 					}
 				result = 0;
 			} 
@@ -370,7 +366,7 @@ public class myGit{
 	UnrecoverableKeyException, NoSuchAlgorithmException, NoSuchPaddingException, KeyStoreException, 
 	CertificateException, SignatureException {
 		int result = 0;
-		File file = new File(filename);
+		File file = new File(user + "/" + filename);
 		File tempFile = null;
 		String[] split = filename.split("/");
 		String[] name = new String[1];
@@ -396,9 +392,9 @@ public class myGit{
 			result = -1;
 		
 		else if (messIn.toBeUpdated[0] == true) {
-			tempFile = new File(filename + ".temp");
+			tempFile = new File(user + "/" + filename + ".temp");
 			tempFile.createNewFile();
-			receiveSecureFile(outStream, inStream, tempFile, filename, repName);
+			receiveSecureFile(outStream, inStream, tempFile, user + "/" + filename, user + "/" + repName);
 			tempFile.delete();
 			result = 0;
 		} 
@@ -410,8 +406,8 @@ public class myGit{
 			String user) throws IOException, ClassNotFoundException, InvalidKeyException, UnrecoverableKeyException, 
 	NoSuchAlgorithmException, NoSuchPaddingException, KeyStoreException, CertificateException, SignatureException {
 		int result = -1; 
-		File rep = new File(repPath);
-		String path = repPath + "/";
+		File rep = new File(user + "/" + repPath);
+		String path = user + "/" + repPath + "/";
 		String[] splitRep = repPath.split("/");
 		String repName = splitRep[splitRep.length-1];
 		File newFile = null;
@@ -463,20 +459,24 @@ public class myGit{
 						if (i < messIn.fileName.length)
 							if (messIn.toBeUpdated[i] == true)
 								if(names.length > i)
-									receiveSecureFile(outStream, inStream, newFile, repPath + "/" + names[i], repName);
+									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + names[i], 
+											user + "/" + repName);
 								else
-									receiveSecureFile(outStream, inStream, newFile, repPath + "/" + messIn.fileName[i], repName);
+									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + messIn.fileName[i], 
+											user + "/" + repName);
 							//receber ficheiros novos
 							else {
 								newFile = new File(path + messIn.fileName[i]);
 								if (!newFile.exists()) {
 									newFile.createNewFile();
-									receiveSecureFile(outStream, inStream, newFile, repPath + "/" + messIn.fileName[i], repName);
+									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + messIn.fileName[i], 
+											user + "/" + repName);
 								}
 							}
 					} //receber ficheiros novos
 					else {
-						receiveSecureFile(outStream, inStream, newFile, repPath + "/" + messIn.fileName[i], repName);
+						receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + messIn.fileName[i], 
+								user + "/" + repName);
 					}
 				}
 		}
@@ -672,7 +672,7 @@ public class myGit{
 		FileOutputStream fos = new FileOutputStream(repName + "/" + filename + ".sig"); 
 		ObjectOutputStream oos = new ObjectOutputStream(fos); 
 		
-		PrivateKey key = getKeyPair(repName).getPrivate();
+		PrivateKey key = getKeyPair(repName.split("/")[0]).getPrivate();
 		
 		Signature s = Signature.getInstance("SHA256withRSA"); 
 		s.initSign(key); 
@@ -777,8 +777,10 @@ public class myGit{
 		//get deciphered file
 		File decifFile = new File(filename + ".temp");
 		
+		String[] splitPath = splitName[0].split("/");
+		
 		//verify file signature
-		File sigVerifier = writeSignedFile(decifFile, splitName[0].split("/")[1], repName);
+		File sigVerifier = writeSignedFile(decifFile, splitPath[splitPath.length-1], repName);
 		
 		if (!Arrays.equals(Files.readAllBytes(sigFile.toPath()), Files.readAllBytes(sigVerifier.toPath()))) {
 			System.out.println("-- Erro! O ficheiro " + filename + " foi corrompido durante o envio do servidor."

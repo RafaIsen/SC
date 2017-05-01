@@ -1,6 +1,8 @@
 /*****************************************
 *   Seguranca e Confiabilidade 2016/17
 *
+*			   myGit.java
+*
 *				Grupo 34
 *****************************************/
 
@@ -25,17 +27,12 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FilenameFilter;
-import java.nio.file.Files;
 import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
@@ -304,7 +301,6 @@ public class myGit{
 	SignatureException, NoSuchPaddingException {
 		int result = -1; 
 		File rep = null;
-		String repName;
 		Message messIn = null;
 
 		rep = new File(user + "/" + repPath);
@@ -323,9 +319,6 @@ public class myGit{
 			
 			String[] users = new String[1];
 			users[0] = user;
-			
-			String[] splitRep = repPath.split("/");
-			repName = splitRep[splitRep.length-1];
 			
 			if (numFiles != 0) {
 				name = rep.list(new FilenameFilter() {
@@ -351,7 +344,7 @@ public class myGit{
 			else if (messIn.toBeUpdated != null) {
 				for(int i = 0; i < messIn.toBeUpdated.length; i++) {
 					if (messIn.toBeUpdated[i] == true) 
-						sendSecureFile(outStream, inStream, repFiles[i], name[i], user + "/" + repName);
+						sendSecureFile(outStream, inStream, repFiles[i], name[i], user + "/" + repPath);
 					}
 				result = 0;
 			} 
@@ -449,8 +442,6 @@ public class myGit{
 		
 		messIn = (Message) inStream.readObject();
 		
-		boolean haAtualizar = false;
-		
 		if (messIn == null)
 			result = -1;
 		else {
@@ -463,7 +454,6 @@ public class myGit{
 					if(names != null) {
 						if (i < messIn.fileName.length)
 							if (messIn.toBeUpdated[i] == true) {
-								haAtualizar = true;
 								if(names.length > i)
 									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + names[i], 
 											user + "/" + repPath);
@@ -475,7 +465,6 @@ public class myGit{
 							else {
 								newFile = new File(path + messIn.fileName[i]);
 								if (!newFile.exists()) {
-									haAtualizar = true;
 									newFile.createNewFile();
 									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" 
 											+ messIn.fileName[i], user + "/" + repPath);
@@ -483,16 +472,12 @@ public class myGit{
 							}
 					} //receber ficheiros novos
 					else {
-						haAtualizar = true;
 						receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + messIn.fileName[i], 
 								user + "/" + repPath);
 					}
 				}
 		}
-		if(haAtualizar)
-			System.out.println(messIn.result);
-		else
-			System.out.println("-- Nada há a atualizar");
+		System.out.println(messIn.result);
 		return result;
 	}
 

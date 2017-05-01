@@ -1,6 +1,8 @@
 /*****************************************
 *   Seguranca e Confiabilidade 2016/17
 *
+*			myGitServer.java
+*
 *				Grupo 34
 *****************************************/
 
@@ -206,8 +208,23 @@ public class myGitServer{
 			readFile.close();
 		}
 		else {
-			System.out.println("AVISO!!! Não existe nenhum MAC a proteger o ficheiro " + filename + "! Será criado e adicionado um MAC ao sistema.");
-			createMac(file, macs);
+			System.out.println("AVISO!!! Não existe nenhum MAC a proteger o ficheiro " + filename + "!");
+			System.out.println("Escolha uma das opções: Terminar (n) ou Calcular MAC "
+					+ "e adiciona-lo ao sistema (y)");
+			
+			Scanner sc = new Scanner(System.in);
+			   String resposta = null;
+			   while (sc.hasNextLine()) {
+			    resposta = sc.nextLine();
+			    if (resposta.equals("y") || resposta.equals("Y")) {
+			    	System.out.println("A calcular MAC e adiciona-lo ao sistema");
+			    	createMac(file, macs);
+			    } else {
+			    	System.out.println("A terminar o servidor...");
+			    	System.exit(-1);
+			    }
+			   }
+			   sc.close();
 		}
 	}
 	
@@ -977,10 +994,11 @@ public class myGitServer{
 					}
 				
 				//file rep with client files
-				ArrayList<String> clientFileRep = new ArrayList<String>(messIn.fileName.length);
+				ArrayList<String> clientFileRep = new ArrayList<String>();
 				
-				for (int i = 0; i < messIn.fileName.length; i++)
-					clientFileRep.add(messIn.fileName[i]);
+				if (messIn.fileName != null)
+					for (int i = 0; i < messIn.fileName.length; i++)
+						clientFileRep.add(messIn.fileName[i]);
 				
 				//file rep with key server files
 				ArrayList<File> keyFileRep = new ArrayList<File>(numFiles);

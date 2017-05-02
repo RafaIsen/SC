@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 Ü'ç>é¹Í-ìfªvY¡y
+=======
+*Æñ°‰JÙö¡Â±pG/;í>á´¿yþìSµ_SÅ
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC

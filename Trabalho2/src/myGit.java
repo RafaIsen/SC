@@ -1,6 +1,8 @@
 /*****************************************
 *   Seguranca e Confiabilidade 2016/17
 *
+*			   myGit.java
+*
 *				Grupo 34
 *****************************************/
 
@@ -9,9 +11,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
+<<<<<<< HEAD
+=======
+import java.util.Iterator;
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
@@ -22,16 +29,13 @@ import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.FilenameFilter;
 import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
@@ -92,7 +96,12 @@ public class myGit{
 				port = Integer.parseInt(ip[1]);
 				
 				//verifies the certificate sent by the server
+<<<<<<< HEAD
 				System.setProperty("javax.net.ssl.trustStore", args[3].split("/")[0] + "/keys/myClient.keyStore");
+=======
+				System.setProperty("javax.net.ssl.trustStore", args[0] + "/keys/myClient.keyStore");
+	
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 				//creates the socket
 				SocketFactory sf = SSLSocketFactory.getDefault();
 				Socket cSoc = sf.createSocket(ip[0], port);
@@ -132,7 +141,7 @@ public class myGit{
 				scan.close();
 			
 			} catch (IOException e) {
-				System.out.println("O servidor está em baixo.");
+				e.printStackTrace();
 			}
 		}
 				
@@ -249,7 +258,12 @@ public class myGit{
 		int result = -1; 
 		Message messIn = null;
 		
+<<<<<<< HEAD
 		File file = new File(filename);
+=======
+		File file = new File(user + "/" + filename);
+		String repName;
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 		
 		String[] split = filename.split("/");
 		
@@ -264,9 +278,9 @@ public class myGit{
 			
 			String[] users = new String[1];
 			users[0] = user;
+			repName = split[split.length-2];
 			
-			Message messOut = new Message("pushFile", name, split[split.length-2], dates, null,
-					users, null, null);
+			Message messOut = new Message("pushFile", name, repName, dates, null, users, null, null);
 			
 			outStream.writeObject(messOut);
 			
@@ -276,7 +290,11 @@ public class myGit{
 				result = -1;
 			
 			else if (messIn.toBeUpdated[0] == true) {
+<<<<<<< HEAD
 				sendSecureFile(outStream, inStream, file, filename.split("/")[1]);
+=======
+				sendSecureFile(outStream, inStream, file, filename.split("/")[1], user + "/" + repName);
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 				result = 0;
 			} else
 				result = -1;
@@ -292,7 +310,7 @@ public class myGit{
 		return result;
 	}
 
-	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, 
+	private int pushRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repPath, 
 			String user) throws IOException, ClassNotFoundException, UnrecoverableKeyException, 
 	InvalidKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException, 
 	SignatureException, NoSuchPaddingException {
@@ -300,10 +318,19 @@ public class myGit{
 		File rep = null;
 		Message messIn = null;
 
+<<<<<<< HEAD
 		rep = new File(repName);
+=======
+		rep = new File(user + "/" + repPath);
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 		
 		if (rep.exists()) {
-			File[] repFiles = rep.listFiles();
+			File[] repFiles = rep.listFiles(new FileFilter() {
+			    @Override
+			    public boolean accept(File pathname) {
+			        return pathname.isFile();
+			    }
+			});
 			int numFiles = repFiles.length;
 			
 			String[] name = null;
@@ -313,15 +340,19 @@ public class myGit{
 			users[0] = user;
 			
 			if (numFiles != 0) {
-				name = new String[numFiles];
+				name = rep.list(new FilenameFilter() {
+					@Override
+					public boolean accept(File current, String name) {
+						return new File(current, name).isFile();
+					}
+					});
 				dates = new Date[numFiles];
 			}	
 			
-			for(int i = 0; i < numFiles; i++) {
-				name[i] = repFiles[i].getName();
+			for (int i = 0; i < numFiles; i++)
 				dates[i] = new Date(repFiles[i].lastModified());
-			}
-			Message messOut = new Message("pushRep", name, repName, dates, null, users, null, null);
+
+			Message messOut = new Message("pushRep", name, repPath, dates, null, users, null, null);
 			
 			outStream.writeObject(messOut);
 			
@@ -332,7 +363,11 @@ public class myGit{
 			else if (messIn.toBeUpdated != null) {
 				for(int i = 0; i < messIn.toBeUpdated.length; i++) {
 					if (messIn.toBeUpdated[i] == true) 
+<<<<<<< HEAD
 						sendSecureFile(outStream, inStream, repFiles[i], name[i]);
+=======
+						sendSecureFile(outStream, inStream, repFiles[i], name[i], user + "/" + repPath);
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 					}
 				result = 0;
 			} 
@@ -350,11 +385,16 @@ public class myGit{
 	UnrecoverableKeyException, NoSuchAlgorithmException, NoSuchPaddingException, KeyStoreException, 
 	CertificateException, SignatureException {
 		int result = 0;
+<<<<<<< HEAD
 		File file = new File(filename);
+=======
+		File file = new File(user + "/" + filename);
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 		File tempFile = null;
 		String[] split = filename.split("/");
 		String[] name = new String[1];
 		name[0] = filename;
+		String repName = split[split.length-2];
 		
 		Date[] dates = new Date[1];
 		Date date = new Date(file.lastModified());
@@ -363,7 +403,7 @@ public class myGit{
 		String[] users = new String[1];
 		users[0] = user;
 		
-		Message messOut = new Message("pullFile", name, split[split.length-2], dates, null, 
+		Message messOut = new Message("pullFile", name, repName, dates, null, 
 				users, null, null);
 		Message messIn = null;
 		
@@ -375,9 +415,17 @@ public class myGit{
 			result = -1;
 		
 		else if (messIn.toBeUpdated[0] == true) {
+<<<<<<< HEAD
 			tempFile = new File(filename + ".temp");
+=======
+			tempFile = new File(user + "/" + filename + ".temp");
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 			tempFile.createNewFile();
+<<<<<<< HEAD
 			receiveSecureFile(outStream, inStream, tempFile, filename);
+=======
+			receiveSecureFile(outStream, inStream, tempFile, user + "/" + filename, user + "/" + repName);
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 			tempFile.delete();
 			result = 0;
 		} 
@@ -385,12 +433,19 @@ public class myGit{
 		return result;
 	}
 
-	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repName, 
+	private int pullRep(ObjectOutputStream  outStream, ObjectInputStream inStream, String repPath, 
 			String user) throws IOException, ClassNotFoundException, InvalidKeyException, UnrecoverableKeyException, 
 	NoSuchAlgorithmException, NoSuchPaddingException, KeyStoreException, CertificateException, SignatureException {
 		int result = -1; 
+<<<<<<< HEAD
 		File rep = new File(repName);
 		String path = repName + "/";
+=======
+		File rep = new File(user + "/" + repPath);
+		String path = user + "/" + repPath + "/";
+		//String[] splitRep = repPath.split("/");
+		//String repName = splitRep[splitRep.length-1];
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 		File newFile = null;
 		File[] repFiles = null;
 		String[] names = null;
@@ -399,7 +454,12 @@ public class myGit{
 		users[0] = user;
 		
 		if (rep.exists()) {
-			repFiles = rep.listFiles();
+			repFiles = rep.listFiles(new FileFilter() {
+			    @Override
+			    public boolean accept(File pathname) {
+			        return pathname.isFile();
+			    }
+			});
 			int numFiles = repFiles.length;
 			
 			if (numFiles != 0) {
@@ -415,7 +475,7 @@ public class myGit{
 			names = new String[0];
 			dates = new Date[0];
 		}
-		Message messOut = new Message("pullRep", names, repName, dates, null, users, null, null);
+		Message messOut = new Message("pullRep", names, repPath, dates, null, users, null, null);
 		Message messIn = null;
 		
 		outStream.writeObject(messOut);
@@ -433,22 +493,43 @@ public class myGit{
 					//so a actualizar os ficheiros antigos
 					if(names != null) {
 						if (i < messIn.fileName.length)
-							if (messIn.toBeUpdated[i] == true)
+							if (messIn.toBeUpdated[i] == true) {
 								if(names.length > i)
+<<<<<<< HEAD
 									receiveSecureFile(outStream, inStream, newFile, repName + "/" + names[i]);
+=======
+									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + names[i], 
+											user + "/" + repPath);
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 								else
+<<<<<<< HEAD
 									receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i]);
+=======
+									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + messIn.fileName[i], 
+											user + "/" + repPath);
+							}
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 							//receber ficheiros novos
 							else {
 								newFile = new File(path + messIn.fileName[i]);
 								if (!newFile.exists()) {
 									newFile.createNewFile();
+<<<<<<< HEAD
 									receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i]);
+=======
+									receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" 
+											+ messIn.fileName[i], user + "/" + repPath);
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 								}
 							}
 					} //receber ficheiros novos
 					else {
+<<<<<<< HEAD
 						receiveSecureFile(outStream, inStream, newFile, repName + "/" + messIn.fileName[i]);
+=======
+						receiveSecureFile(outStream, inStream, newFile, user + "/" + repPath + "/" + messIn.fileName[i], 
+								user + "/" + repPath);
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 					}
 				}
 		}
@@ -594,15 +675,24 @@ public class myGit{
 		
 	}
 	
+<<<<<<< HEAD
 	public KeyPair getKeyPair(String rep) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, 
+=======
+	public PrivateKey getPrivateKey(String user) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, 
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 	IOException, UnrecoverableKeyException {
 		
+<<<<<<< HEAD
 		FileInputStream is = new FileInputStream(rep + "/keys/myClient.keystore");
+=======
+		FileInputStream is = new FileInputStream(user + "/keys/myClient.keystore");
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 
 	    KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
 	    keystore.load(is, "client1617".toCharArray());
 
 	    Enumeration<String> enumeration = keystore.aliases();
+<<<<<<< HEAD
 	    String alias = null;
         while(enumeration.hasMoreElements())
             alias = (String)enumeration.nextElement();
@@ -619,26 +709,101 @@ public class myGit{
 	      return new KeyPair(publicKey, (PrivateKey) key);
 	    }
 	    return null;
+=======
+	    PrivateKey key = null;
+	    String alias = null;
+        while(enumeration.hasMoreElements()) {
+            alias = (String)enumeration.nextElement();
+            key = (PrivateKey) keystore.getKey(alias, "client1617".toCharArray());
+            if (key instanceof PrivateKey)
+            	return key;
+        }
+	    return key;
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 	}
 	
+<<<<<<< HEAD
 	public File writeSignedFile(File f, String filename, String repName) throws NoSuchAlgorithmException, IOException, 
+=======
+	public ArrayList<PublicKey> getPublicKey(String user) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, 
+	IOException, UnrecoverableKeyException {
+		
+		FileInputStream is = new FileInputStream(user + "/keys/myClient.keystore");
+
+	    KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+	    keystore.load(is, "client1617".toCharArray());
+	    
+	    ArrayList<PublicKey> pubKeys = new ArrayList<PublicKey>(); 
+
+	    Enumeration<String> enumeration = keystore.aliases();
+	    String alias = null;
+        while(enumeration.hasMoreElements()) {
+            alias = (String)enumeration.nextElement();
+            Certificate c = keystore.getCertificate(alias);
+            pubKeys.add(c.getPublicKey());
+ 
+        }
+        return pubKeys;
+	}
+	
+	public File signFile(File f, String filename, String repName) throws NoSuchAlgorithmException, IOException, 
+	UnrecoverableKeyException, KeyStoreException, CertificateException, InvalidKeyException, 
+	SignatureException { 
+
+		PrivateKey key = getPrivateKey(repName.split("/")[0]);
+		
+		Signature s = Signature.getInstance("SHA256withRSA"); 
+		s.initSign(key);
+		
+		FileInputStream fis = new FileInputStream(f);
+		BufferedInputStream bufin = new BufferedInputStream(fis);
+		byte[] buffer = new byte[256];
+		int len;
+		while ((len = bufin.read(buffer)) >= 0) {
+		    s.update(buffer, 0, len);
+		};
+		bufin.close();
+		
+		FileOutputStream fos = new FileOutputStream(repName + "/" + filename + ".sig"); 
+		fos.write(buffer);
+		fos.close();
+		
+		return new File(repName + "/" + filename + ".sig");
+	}
+	
+	public boolean verifySignedFile(File decifFile, File sigFile, String repName) throws NoSuchAlgorithmException, IOException, 
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 	UnrecoverableKeyException, KeyStoreException, CertificateException, InvalidKeyException, 
 	SignatureException { 
 		
-		Scanner scan = new Scanner(new BufferedReader(new FileReader(f)));
+		FileInputStream sigfis = new FileInputStream(sigFile);
+		byte[] sigToVerify = new byte[sigfis.available()]; 
+		sigfis.read(sigToVerify);
+		sigfis.close();
 		
-		//getting hash
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		ArrayList<PublicKey> pubKeys = getPublicKey(repName.split("/")[0]);
+		Iterator<PublicKey> iterator = pubKeys.iterator();
 		
-		String text = null;
-		byte[] buf = null; 
-		byte[] hash = null; 
+		boolean passed = false;
 		
-		while (scan.hasNextLine()) {
-			text = scan.nextLine();
-			buf = text.getBytes();
-			hash = md.digest(buf);
+		while(iterator.hasNext() && !passed) {
+		
+			Signature s = Signature.getInstance("SHA256withRSA"); 
+			s.initVerify(iterator.next()); 
+			
+			FileInputStream datafis = new FileInputStream(decifFile);
+			BufferedInputStream bufin = new BufferedInputStream(datafis);
+	
+			byte[] buffer = new byte[256];
+			int len;
+			while (bufin.available() != 0) {
+			    len = bufin.read(buffer);
+			    s.update(buffer, 0, len);
+			};
+			bufin.close();
+			passed = Arrays.equals(buffer, sigToVerify);
 		}
+<<<<<<< HEAD
 		scan.close();
 		
 		FileOutputStream fos = new FileOutputStream(repName + "/" + filename + ".sig"); 
@@ -653,16 +818,28 @@ public class myGit{
 		fos.close();
 		
 		return new File(repName + "/" + filename + ".sig");
+=======
+			
+		return passed;
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 	}
 
 	public void sendSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
+<<<<<<< HEAD
 			File file, String filename) throws UnrecoverableKeyException, InvalidKeyException, 
+=======
+			File file, String filename, String repName) throws UnrecoverableKeyException, InvalidKeyException, 
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 	NoSuchAlgorithmException, KeyStoreException, CertificateException, SignatureException, 
 	IOException, NoSuchPaddingException{
 		
 		//generates file's digital signature
 		String[] splitName = filename.split("\\.");
+<<<<<<< HEAD
 		File sigFile = writeSignedFile(file, filename);
+=======
+		File sigFile = signFile(file, filename, repName);
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 		
 		//send file's digital signature
 		sendFile(outStream, inStream, sigFile);
@@ -681,7 +858,11 @@ public class myGit{
 		CipherOutputStream cos;
 		
 		fis = new FileInputStream(file); 
+<<<<<<< HEAD
 		fos = new FileOutputStream(splitName[0] + ".cif");
+=======
+		fos = new FileOutputStream(repName + "/" + splitName[0] + ".cif");
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 		cos = new CipherOutputStream(fos, c); 
 		
 		byte[] b = new byte[16]; 
@@ -699,17 +880,30 @@ public class myGit{
 		outStream.writeObject(secKey);
 		
 		//send ciphered file to the server
+<<<<<<< HEAD
 		File cifFile = new File(splitName[0] + ".cif");
+=======
+		File cifFile = new File(repName + "/" + splitName[0] + ".cif");
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 		sendFile(outStream, inStream, cifFile);
 		cifFile.delete();
 	}
 	
 	public void receiveSecureFile(ObjectOutputStream outStream, ObjectInputStream inStream, 
+<<<<<<< HEAD
 			File file, String filename) throws ClassNotFoundException, IOException, NoSuchAlgorithmException, 
+=======
+			File file, String filename, String repName) throws ClassNotFoundException, IOException, NoSuchAlgorithmException, 
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 	NoSuchPaddingException, InvalidKeyException, UnrecoverableKeyException, KeyStoreException, 
 	CertificateException, SignatureException{
 		
+<<<<<<< HEAD
 		File cifFile = new File(filename.split("\\.")[0] + ".cif");
+=======
+		String[] splitName = filename.split("\\.");
+		File cifFile = new File(splitName[0] + ".cif");
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 		
 		//receive ciphered file from server
 		receiveFile(outStream, inStream, cifFile);
@@ -740,7 +934,10 @@ public class myGit{
 		fis.close();
 		
 		//prepare file's digital signature
+<<<<<<< HEAD
 		String[] splitName = filename.split("\\.");
+=======
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 		File sigFile = new File(splitName[0] + ".server.sig");
 		
 		//receive file's digital signature 
@@ -750,22 +947,21 @@ public class myGit{
 		File decifFile = new File(filename + ".temp");
 		
 		//verify file signature
-		File sigVerifier = writeSignedFile(decifFile, splitName[0]);
-		
-		if (!Arrays.equals(Files.readAllBytes(sigFile.toPath()), Files.readAllBytes(sigVerifier.toPath()))) {
+		if (!verifySignedFile(decifFile, sigFile, repName)) {
 			System.out.println("-- Erro! O ficheiro " + filename + " foi corrompido durante o envio do servidor."
 					+ System.lineSeparator() + "O cliente irá terminar...");
 			//delete all files created in this method except the original file
-			sigVerifier.delete();
 			decifFile.delete();
 			sigFile.delete();
 			cifFile.delete();
 			System.exit(-1);
-			
 		}
 		new File(filename).delete();
 		decifFile.renameTo(new File(filename));
+<<<<<<< HEAD
 		sigVerifier.delete();
+=======
+>>>>>>> branch 'Rafa' of https://github.com/RafaIsen/SC
 		sigFile.delete();
 		cifFile.delete();
 	}

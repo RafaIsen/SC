@@ -1,5 +1,10 @@
 grant codeBase "file:bin/*" {
+	permission java.util.PropertyPermission "javax.net.ssl.keyStore", "read, write";
+	permission java.util.PropertyPermission "javax.net.ssl.keyStorePassword", "read, write";
+	permission java.util.PropertyPermission "javax.net.ssl.trustStore", "read, write";
+	permission java.util.PropertyPermission "javax.net.ssl.trustStorePassword", "read, write";
 	permission java.net.SocketPermission "*:1024-", "connect";
-	permission java.io.FilePermission "${user.home}/git/SC/Trabalho2/bin/-", "read, write";
+	permission java.io.FilePermission "${user.home}/git/SC/Trabalho2/-", "read, write, delete";
+	permission java.util.PropertyPermission "user.dir", "read";
 	permission java.lang.RuntimePermission "getProtectionDomain";
 };

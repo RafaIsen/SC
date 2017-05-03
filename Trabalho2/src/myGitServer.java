@@ -91,7 +91,6 @@ public class myGitServer{
 			do System.out.println("Errado! Digite novamente a password do servidor:");
 			while(!scan.nextLine().equals(SERVER_PASS));
 		}
-		scan.close();
 		System.out.println("Entrou no servidor...");
 		
 		//creates the directory users if it does not exist
@@ -160,7 +159,7 @@ public class myGitServer{
 		}
 	
 	public void verifyFileIntegrity(File file, File macs, String filename) throws IOException, 
-	NoSuchAlgorithmException, InvalidKeyException {
+	NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException {
 		
 		Scanner readFile = new Scanner(new BufferedReader(new FileReader(file)));
 		
@@ -213,18 +212,18 @@ public class myGitServer{
 					+ "e adiciona-lo ao sistema (y)");
 			
 			Scanner sc = new Scanner(System.in);
-			   String resposta = null;
-			   while (sc.hasNextLine()) {
-			    resposta = sc.nextLine();
-			    if (resposta.equals("y") || resposta.equals("Y")) {
-			    	System.out.println("A calcular MAC e adiciona-lo ao sistema");
-			    	createMac(file, macs);
-			    } else {
-			    	System.out.println("A terminar o servidor...");
-			    	System.exit(-1);
-			    }
-			   }
-			   sc.close();
+			String resposta = sc.nextLine();
+			if (resposta.equals("y") || resposta.equals("Y")) {
+				System.out.println("A calcular MAC e adiciona-lo ao sistema...");
+				createMac(file, macs);
+			} else {
+				System.out.println("A terminar o servidor...");
+				cipher(file, USERS_FILE_NAME);
+				file.delete();
+				System.exit(-1);
+			}
+				sc.close();
+
 		}
 	}
 	
@@ -536,7 +535,7 @@ public class myGitServer{
 				File share_mac) 
 				throws IOException, ClassNotFoundException, UnrecoverableKeyException, KeyStoreException, 
 				NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, InvalidKeyException, 
-				IllegalBlockSizeException, BadPaddingException {
+				IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException, InvalidAlgorithmParameterException {
 			
 			int result = -1;
 		
@@ -644,7 +643,7 @@ public class myGitServer{
 				File share_mac) 
 				throws IOException, ClassNotFoundException, UnrecoverableKeyException, InvalidKeyException,
 				KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchPaddingException, 
-				IllegalBlockSizeException, BadPaddingException {
+				IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException, InvalidAlgorithmParameterException {
 			int result = -1;
 			File rep  = null;
 			File newFile = null;
@@ -816,7 +815,7 @@ public class myGitServer{
 		private int pullFile(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, 
 				File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, 
 		ClassNotFoundException, UnrecoverableKeyException, KeyStoreException, CertificateException,
-		NoSuchPaddingException {
+		NoSuchPaddingException, InvalidKeySpecException, InvalidAlgorithmParameterException {
 			
 			String[] split = messIn.fileName[0].split("/");
 			
@@ -919,7 +918,7 @@ public class myGitServer{
 		private int pullRep(ObjectOutputStream outStream, ObjectInputStream inStream, Message messIn, 
 				File share_mac) throws IOException, InvalidKeyException, NoSuchAlgorithmException, 
 		ClassNotFoundException, UnrecoverableKeyException, KeyStoreException, CertificateException, 
-		NoSuchPaddingException {
+		NoSuchPaddingException, InvalidKeySpecException, InvalidAlgorithmParameterException {
 			
 			String[] split1 = messIn.repName.split("/");
 			
@@ -1356,7 +1355,7 @@ public class myGitServer{
 		}
 		
 		public boolean userHasAccess(String user, Message messIn, File share_mac) 
-				throws InvalidKeyException, NoSuchAlgorithmException, IOException{
+				throws InvalidKeyException, NoSuchAlgorithmException, IOException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException{
 			
 			boolean hasAccess = false;
 			

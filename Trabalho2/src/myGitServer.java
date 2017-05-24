@@ -566,18 +566,18 @@ public class myGitServer{
 				file = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + messIn.fileName[0]);
 				filename = split[1];
 				String[] splitName = filename.split("\\.");
-				filePath = SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + split[0] + "/";
+				filePath = SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + split[0];
 				cifFilename = splitName[0] + ".cif";
-				cifFile = new File(filePath + cifFilename);
+				cifFile = new File(filePath + "/" + cifFilename);
 			} else {
 				user = split[0];
 				pathFolder = new File(SERVER_DIR + "/" + USERS_DIR + "/" + split[0] + "/" + split[1]).toPath();
 				file = new File(SERVER_DIR + "/" + USERS_DIR + "/" + messIn.fileName[0]);
 				filename = split[2];
 				String[] splitName = filename.split("\\.");
-				filePath = SERVER_DIR + "/" + USERS_DIR + "/" + split[0] + "/" + split[1] + "/";
+				filePath = SERVER_DIR + "/" + USERS_DIR + "/" + split[0] + "/" + split[1];
 				cifFilename = splitName[0] + ".cif";
-				cifFile = new File(filePath + cifFilename);
+				cifFile = new File(filePath + "/" + cifFilename);
 			}
 			
 			boolean hasAccess = userHasAccess(user, messIn, share_mac);
@@ -683,7 +683,7 @@ public class myGitServer{
 				//criar rep caso nao exista
 				if (!rep.exists()){
 					rep.mkdir();
-					res = "-- O repositório " + repName + " foi criado no servidor";
+					res = "-- O repositório " + repName + " foi criado no servidor" + System.lineSeparator();
 				}
 				else {
 			         fileRep = rep.listFiles(new FilenameFilter() {
@@ -762,13 +762,14 @@ public class myGitServer{
 				}
 				
 				//saber quais os ficheiros a "eliminar"
-				if (fileRep != null && toUpdate == null) {
+				if (fileRep != null) {
 					for (int i = 0; i < numFiles; i++){
 						split = keyFileRep.get(i).getName().split("\\.");
 						String fileExt = split[1];
 						split = newFileRep.get(i).getName().split("\\.");
 						filename = split[0] + ".cif";
-						if (!Arrays.asList(messIn.repName).contains(newFileRep.get(i))) {
+						if (!clientFileRep.contains(split[0] + "." + fileExt)) {
+						//if (!Arrays.asList(messIn.repName).contains(newFileRep.get(i))) {
 							newFileRep.get(i).renameTo(new File(newFileRep.get(i) + "." 
 						+ String.valueOf(countNumVersions1(rep.toPath(), newFileRep.get(i).getName()))));		
 							res += "-- O ficheiro " + split[0] + "." + fileExt 
@@ -794,11 +795,11 @@ public class myGitServer{
 							if (!currFile.exists()) {
 								newFile = new File(rep.toString() + "/" + filename);
 								newFile.createNewFile();
-								receiveSecureFile(outStream, inStream, newFile, messIn.fileName[i], rep.toString() + "/");
+								receiveSecureFile(outStream, inStream, newFile, messIn.fileName[i], rep.toString());
 							} else {
 								newFile = new File(rep.toString() + "/" + messIn.fileName[i] + ".temp");
 								newFile.createNewFile();
-								receiveSecureFile(outStream, inStream, newFile, messIn.fileName[i], rep.toString() + "/");
+								receiveSecureFile(outStream, inStream, newFile, messIn.fileName[i], rep.toString());
 								newFileRep.get(i).renameTo(new File(rep.toString() + "/" + filename + "." + Integer.toString(versions[i])));
 								newFile.renameTo(new File(rep.toString() + "/" + filename));
 							}
@@ -862,14 +863,14 @@ public class myGitServer{
 				
 				//criar path para o ficheiro
 				if (split.length == 3) {
-					filePath = SERVER_DIR + "/" + USERS_DIR + "/" + user + "/" + repName + "/";
-					file = new File(filePath + name + ".cif");
-					keyFile = new File(filePath + filename + ".key.server");
+					filePath = SERVER_DIR + "/" + USERS_DIR + "/" + user + "/" + repName;
+					file = new File(filePath + "/" + name + ".cif");
+					keyFile = new File(filePath + "/" + filename + ".key.server");
 				}
 				else {
-					filePath = SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + repName + "/";
-					file = new File(filePath + name + ".cif");
-					keyFile = new File(filePath + filename + ".key.server");
+					filePath = SERVER_DIR + "/" + USERS_DIR + "/" + messIn.user[0] + "/" + repName;
+					file = new File(filePath + "/" + name + ".cif");
+					keyFile = new File(filePath + "/" + filename + ".key.server");
 					myrep = true;
 				}
 				
@@ -1085,9 +1086,9 @@ public class myGitServer{
 								names[i] = name + "." + ext;
 							}
 					
-					if(messIn.fileName != null)
+					/*if(messIn.fileName != null)
 						if (messIn.fileName.length > numFiles)
-							Arrays.fill(delete, numFiles, delete.length-1, Boolean.TRUE);
+							Arrays.fill(delete, numFiles, delete.length-1, Boolean.TRUE);*/
 						
 					messOut = new Message(messIn.method, names, messIn.repName, messIn.fileDate, toUpdate, 
 							messIn.user, delete, res);
@@ -1096,7 +1097,7 @@ public class myGitServer{
 					for (int i = 0; i < names.length; i++)
 						if (!(clientFileRep.contains(names[i]) && !toUpdate[i]))
 							sendSecureFile(outStream, inStream, new File(newFileRep.get(i).getPath()), 
-									names[i], rep.toString() + "/");
+									names[i], rep.toString());
 					
 					result = 0;
 				
@@ -1525,7 +1526,7 @@ public class myGitServer{
 
 			//save file's digital signature received from client
 			String[] splitName = filename.split("\\.");
-			File sigFile = new File(filePath + splitName[0] + ".sig");
+			File sigFile = new File(filePath + "/" + splitName[0] + ".sig");
 			receiveFile(outStream, inStream, sigFile);
 			
 			//receive secret key
@@ -1543,7 +1544,7 @@ public class myGitServer{
 			FileOutputStream fos; 
 			CipherOutputStream cos;
 			
-			fos = new FileOutputStream(filePath + filename + ".key.server");
+			fos = new FileOutputStream(filePath + "/" + filename + ".key.server");
 			cos = new CipherOutputStream(fos, c); 
 			
 			//cipher secret key using public key
@@ -1566,7 +1567,7 @@ public class myGitServer{
 			CipherInputStream cis;
 			byte[] secKeyEncoded = new byte[16];
 			
-			fis = new FileInputStream(filePath + filename + ".key.server");
+			fis = new FileInputStream(filePath + "/" + filename + ".key.server");
 			cis = new CipherInputStream(fis, c); 
 			
 			//decipher secret key using private key
@@ -1586,7 +1587,7 @@ public class myGitServer{
 			
 			//get file's digital signature 
 			String[] splitName = filename.split("\\.");
-			File sigFile = new File(filePath + splitName[0] + ".sig");
+			File sigFile = new File(filePath + "/" + splitName[0] + ".sig");
 			
 			//send file's digital signature
 			sendFile(outStream, inStream, sigFile);

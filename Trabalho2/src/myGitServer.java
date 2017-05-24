@@ -721,16 +721,17 @@ public class myGitServer{
 				String[] keySplit;
 				
 				//get key files
-				for (int j = 0; j < fileRep.length; j++) {
-					cifFileName = fileRep[j].getName().split("\\.")[0];
-					keySplit = fileRep[j].getName().split("\\.");
-					keyFileName = keySplit[0];
-					if(keySplit.length > 2) {
-						keyExt = fileRep[j].getName().split("\\.")[2];
-						if(cifFileName.equals(keyFileName) && keyExt.equals("key"))
-							keyFileRep.add(fileRep[j]);
+				if(fileRep != null)
+					for (int j = 0; j < fileRep.length; j++) {
+						cifFileName = fileRep[j].getName().split("\\.")[0];
+						keySplit = fileRep[j].getName().split("\\.");
+						keyFileName = keySplit[0];
+						if(keySplit.length > 2) {
+							keyExt = fileRep[j].getName().split("\\.")[2];
+							if(cifFileName.equals(keyFileName) && keyExt.equals("key"))
+								keyFileRep.add(fileRep[j]);
+						}
 					}
-				}
 				
 				//caso o rep venha com ficheiros
 				if (messIn.fileName != null) {
